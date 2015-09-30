@@ -1,0 +1,67 @@
+import subprocess
+import time
+
+def memcheck():
+    process = subprocess.Popen("free -b",
+                               shell=True,
+                               stdout=subprocess.PIPE)
+    stdout_list = process.communicate()[0].split('\n')
+    mem_current = stdout_list[1].split()
+    mem_total = int(mem_current[1])
+    mem_used = int(mem_current[2])
+    mem_available = int(mem_current[3])
+    #print "Total Memory = " + str(mem_total) + " byte(s)."
+    #print "Used Memory = " + str(mem_used) + " byte(s)."
+    #print "Available Memory = " + str(mem_available) + " byte(s)."
+
+    return (mem_total,mem_used,mem_available)
+
+
+def main():
+    startTime = time.time()
+
+    start_mem_total = 0
+    start_mem_used = 0
+    start_mem_available = 0
+
+    (start_mem_total,start_mem_used,start_mem_available) = memcheck()
+
+    current_mem_total = 0
+    current_mem_used = 0
+    current_mem_available = 0
+
+    while (True):
+        (current_mem_total,current_mem_used,current_mem_available) = memcheck()
+        
+        currentTime = time.time()
+
+        if (current_mem_available < start_mem_available):
+          # we have less memory than when we started
+          totalSeconds = (currentTime - startTime)
+          usedAvailable = (start_mem_available - current_mem_available)
+          remainUnits = float(current_mem_available) / float(usedAvailable)
+          secondsRemaining = (totalSeconds * remainUnits)
+          minutesRemaining = (secondsRemaining / 60)
+          current_mem_total_gb = float(current_mem_total) / 1024 / 1024 / 1024
+          current_mem_available_gb = float(current_mem_available) / 1024 / 1024 / 1024
+          print "Total=%10.4fGB, Available=%10.4fGB, Minutes to out of RAM=%10.2f" % (current_mem_total_gb,current_mem_available_gb,minutesRemaining)
+          #print "  * currentTime=%10.4f" % (currentTime)
+          #print "  * startTime=%10.4f" % (startTime)
+          #print "  * totalSeconds=%10.4f" % (totalSeconds)
+          #print "  * usedAvailable=%10.4f" % (usedAvailable)
+          #print "  * remainUnits=%10.4f" % (remainUnits)
+          #print "  * secondsRemaining=%10.4f" % (secondsRemaining)
+          #print "  * minutesRemaining=%10.4f" % (minutesRemaining)
+          #print "  * current_mem_total_gb=%10.4f" % (current_mem_total_gb)
+          #print "  * current_mem_available_gb=%10.4f" % (current_mem_available_gb)
+          #print "  * current_mem_available=%10.4f" % (current_mem_available)
+
+        else:
+          # we have more memory than when we started
+          print "Current available memory >= starting available memory, cannot calculate out of memory time..."
+
+        time.sleep(10)
+
+
+if __name__ == '__main__':
+    main()

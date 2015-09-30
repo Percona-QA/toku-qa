@@ -1,0 +1,15 @@
+#! /bin/bash
+
+sudo /opt/MegaRAID/MegaCli/MegaCli64 -AdpAllInfo -aALL | head -n 30
+
+sudo /opt/MegaRAID/MegaCli/MegaCli64 -AdpAllInfo -aALL | grep "BBU              :"
+sudo /opt/MegaRAID/MegaCli/MegaCli64 -AdpAllInfo -aALL | grep "NVRAM            :"
+sudo /opt/MegaRAID/MegaCli/MegaCli64 -AdpAllInfo -aALL | grep "Memory Size      :"
+
+sudo /opt/MegaRAID/MegaCli/MegaCli64 -LDPDInfo -aALL | grep "RAID Level          :"
+sudo /opt/MegaRAID/MegaCli/MegaCli64 -LDPDInfo -aALL | grep "Sector Size         :"
+sudo /opt/MegaRAID/MegaCli/MegaCli64 -LDPDInfo -aALL | grep "State               :"
+sudo /opt/MegaRAID/MegaCli/MegaCli64 -LDPDInfo -aALL | grep "Strip Size          :"
+sudo /opt/MegaRAID/MegaCli/MegaCli64 -LDPDInfo -aALL | grep "Default Cache Policy:"
+sudo /opt/MegaRAID/MegaCli/MegaCli64 -LDPDInfo -aALL | grep "Current Cache Policy:"
+sudo /opt/MegaRAID/MegaCli/MegaCli64 -LDPDInfo -aALL | grep "Disk Cache Policy   :"

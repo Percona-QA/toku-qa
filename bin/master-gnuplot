@@ -1,0 +1,166 @@
+#!/bin/bash
+
+if [ $# -eq 0 ]; then
+  echo "usage: master-gnuplot <dir1> <name1> <dir2> <name2> <prefix> <graph-title>"
+  exit 1
+fi
+
+dirGnuplotScript=/home/tcallaghan/mystuff/personal/tokutek/gnuplot/gnuplot-simple.txt
+export gnuplot_image_size="1800,1200"
+
+dir1=$1
+export gnuplot_name1=$2
+dir2=$3
+export gnuplot_name2=$4
+prefixName=$5
+graphTitle=$6
+
+# pre-process files : dir1
+for i in ${dir1}/*.fileinfo; do
+  tail -n +2 ${i} > ${i}.noheader
+done
+for i in ${dir1}/*.sysinfo; do
+  file-averager-cumulative.py ${i} 10 1 > ${i}.avgcpu
+done
+for i in ${dir1}/*.engine_status; do
+  parse_engine_checkpoints.pl ${i} > ${i}.checkpoints
+done
+parse_tpcc.pl tps ${dir1}
+mv *.tps ${dir1}
+for i in ${dir1}/*.tps; do
+  file-averager-cumulative.py ${i} 2 1 > ${i}.avg
+done
+
+# pre-process files : dir2
+for i in ${dir2}/*.fileinfo; do
+  tail -n +2 ${i} > ${i}.noheader
+done
+for i in ${dir2}/*.sysinfo; do
+  file-averager-cumulative.py ${i} 10 1 > ${i}.avgcpu
+done
+for i in ${dir2}/*.engine_status; do
+  parse_engine_checkpoints.pl ${i} > ${i}.checkpoints
+done
+parse_tpcc.pl tps ${dir2}
+mv *.tps ${dir2}
+for i in ${dir2}/*.tps; do
+  file-averager-cumulative.py ${i} 2 1 > ${i}.avg
+done
+
+
+
+
+# plot space usage
+#   allocated MB
+export gnuplot_title="Space Allocated (MB) - ${graphTitle}"
+export gnuplot_image="${prefixName}-space_allocated"
+export gnuplot_xlabel="minutes"
+export gnuplot_ylabel="MB"
+for i in ${dir1}/*.fileinfo.noheader; do
+  export gnuplot_file1=${i}
+done
+for i in ${dir2}/*.fileinfo.noheader; do
+  export gnuplot_file2=${i}
+done
+export gnuplot_cols="2"
+gnuplot ${dirGnuplotScript}
+
+# plot space usage
+#   apparent MB
+export gnuplot_title="Space Apparent (MB) - ${graphTitle}"
+export gnuplot_image="${prefixName}-space_apparent"
+export gnuplot_xlabel="minutes"
+export gnuplot_ylabel="MB"
+for i in ${dir1}/*.fileinfo.noheader; do
+  export gnuplot_file1=${i}
+done
+for i in ${dir2}/*.fileinfo.noheader; do
+  export gnuplot_file2=${i}
+done
+export gnuplot_cols="3"
+gnuplot ${dirGnuplotScript}
+
+# plot space usage
+#   fragmentation %
+export gnuplot_title="Space Fragmentation (percentage) - ${graphTitle}"
+export gnuplot_image="${prefixName}-space_fragmentation"
+export gnuplot_xlabel="minutes"
+export gnuplot_ylabel="fragmentation %"
+for i in ${dir1}/*.fileinfo.noheader; do
+  export gnuplot_file1=${i}
+done
+for i in ${dir2}/*.fileinfo.noheader; do
+  export gnuplot_file2=${i}
+done
+export gnuplot_cols="6"
+gnuplot ${dirGnuplotScript}
+
+# plot transactional throughput - interval
+export gnuplot_title="Transactional Throughput (interval) - ${graphTitle}"
+export gnuplot_image="${prefixName}-tps_raw"
+export gnuplot_xlabel="seconds"
+export gnuplot_ylabel="new orders per 10 sec"
+for i in ${dir1}/*.tps; do
+  export gnuplot_file1=${i}
+done
+for i in ${dir2}/*.tps; do
+  export gnuplot_file2=${i}
+done
+export gnuplot_cols="1:2"
+gnuplot ${dirGnuplotScript}
+
+# plot transactional throughput - average
+export gnuplot_title="Transactional Throughput (cumulative average) - ${graphTitle}"
+export gnuplot_image="${prefixName}-tps_avg"
+export gnuplot_xlabel="seconds"
+export gnuplot_ylabel="new orders per 10 sec"
+for i in ${dir1}/*.tps.avg; do
+  export gnuplot_file1=${i}
+done
+for i in ${dir2}/*.tps.avg; do
+  export gnuplot_file2=${i}
+done
+export gnuplot_cols="1:2"
+gnuplot ${dirGnuplotScript}
+
+# plot cpu utilization - interval
+export gnuplot_title="CPU Utilization (interval) - ${graphTitle}"
+export gnuplot_image="${prefixName}-cpu_raw"
+export gnuplot_xlabel="minutes"
+export gnuplot_ylabel="CPU utilization"
+for i in ${dir1}/*.sysinfo; do
+  export gnuplot_file1=${i}
+done
+for i in ${dir2}/*.sysinfo; do
+  export gnuplot_file2=${i}
+done
+export gnuplot_cols="10"
+gnuplot ${dirGnuplotScript}
+
+# plot cpu utilization - cumulative average
+export gnuplot_title="CPU Utilization (cumulative average) - ${graphTitle}"
+export gnuplot_image="${prefixName}-cpu_avg"
+export gnuplot_xlabel="minutes"
+export gnuplot_ylabel="CPU utilization"
+for i in ${dir1}/*.avgcpu; do
+  export gnuplot_file1=${i}
+done
+for i in ${dir2}/*.avgcpu; do
+  export gnuplot_file2=${i}
+done
+export gnuplot_cols="2"
+gnuplot ${dirGnuplotScript}
+
+# plot checkpoint time
+export gnuplot_title="Checkpoint duration (seconds) - ${graphTitle}"
+export gnuplot_image="${prefixName}-checkpoint_time"
+export gnuplot_xlabel="seconds"
+export gnuplot_ylabel="checkpoint seconds"
+for i in ${dir1}/*.checkpoints; do
+  export gnuplot_file1=${i}
+done
+for i in ${dir2}/*.checkpoints; do
+  export gnuplot_file2=${i}
+done
+export gnuplot_cols="2:3"
+gnuplot ${dirGnuplotScript}

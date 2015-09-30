@@ -1,0 +1,69 @@
+#! /bin/bash
+
+# pass the .cnf file you want to use, otherwise MySQL picks up whatever one it wants
+# run it from the mysql directory
+
+if [ -z "${MYSQL_SOCKET}" ]; then
+    echo "Need to set MYSQL_SOCKET"
+    exit 1
+fi
+if [ -z "${MYSQL_PORT}" ]; then
+    echo "Need to set MYSQL_PORT"
+    exit 1
+fi
+
+MALLOC_LIBRARY=""
+# if jemalloc exists, use it!
+if [ -e $PWD/lib/mysql/libjemalloc.so ]; then
+    echo "found lib/mysql/libjemalloc.so, providing it to mysqld_safe"
+    MALLOC_LIBRARY=--malloc-lib=$PWD/lib/mysql/libjemalloc.so
+fi
+
+
+# if libHotBackup.so exists, preload it!
+if [ -e $PWD/lib/mysql/libHotBackup.so ]; then
+    echo "found lib/mysql/libHotBackup.so, adding to LD_PRELOAD"
+    export LD_PRELOAD=$PWD/lib/mysql/libHotBackup.so:$LD_PRELOAD
+fi
+
+
+# if running WiredTiger, jemalloc must be present
+
+wtJemalloc="/usr/lib/x86_64-linux-gnu/libjemalloc.so"
+if [ -d ${DB_DIR}/wt ]; then
+    echo "running a wiredtiger build, checking for ${wtJemalloc}"
+    if [ ! -e ${wtJemalloc} ]; then
+        echo "ERROR: cannot find ${wtJemalloc}, exiting."
+    fi
+        echo "Found ${wtJemalloc}, setting LD_PRELOAD."
+    export LD_PRELOAD=${wtJemalloc}:$LD_PRELOAD
+    export LD_LIBRARY_PATH=${DB_DIR}/wt/lib:$LD_LIBRARY_PATH
+fi
+
+if [ -f my.cnf ]; then
+    bin/mysqld_safe --defaults-file=my.cnf --basedir=$PWD --core-file --core-file-size=unlimited --socket=${MYSQL_SOCKET} --port=${MYSQL_PORT} ${MALLOC_LIBRARY} &
+elif [ $# -eq 1 ]; then
+    bin/mysqld_safe --defaults-file=$1 --basedir=$PWD --core-file --core-file-size=unlimited --socket=${MYSQL_SOCKET} --port=${MYSQL_PORT} ${MALLOC_LIBRARY} &
+else
+    echo "you must supply a configuration file!!!"
+    exit
+fi
+
+echo "waiting for mysql to start..."
+sleep 2
+while ! [ -S "${MYSQL_SOCKET}" ]; do
+    sleep 2
+done
+sleep 5
+
+bin/mysql --user=root --socket=${MYSQL_SOCKET} -e "show engines;" | grep TokuDB > /dev/null 2>&1
+if [ "$?" -eq "0" ]; then
+    printf "\nTokuDB engine loaded.\n\n"
+else
+    printf "\nTokuDB engine IS NOT loaded.\n\n"
+fi    
+
+bin/mysql --user=root --socket=${MYSQL_SOCKET} -e "show engines;" | grep -i wiredtiger > /dev/null 2>&1
+if [ "$?" -eq "0" ]; then
+    printf "\nWiredTiger engine loaded.\n\n"
+fi    

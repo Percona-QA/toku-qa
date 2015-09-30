@@ -1,0 +1,5 @@
+#!/bin/bash
+
+$MONGO_DIR/bin/mongo admin --eval 'printjson(db.createUser( { user: "admin", pwd: "admin", roles: [ "userAdminAnyDatabase", "clusterAdmin", "readWriteAnyDatabase" ] } ))'
+
+$MONGO_DIR/bin/mongo --username=admin --password=admin admin --eval "db=db.getSiblingDB(\"${DB_NAME}\"); printjson(db.createUser( { user: \"${MONGO_USERNAME}\", pwd: \"${MONGO_PASSWORD}\", roles: [ \"readWrite\" ] } ))"

@@ -1,0 +1,20 @@
+#!/bin/bash
+
+filePattern=$1
+searchPattern=$2
+parseType=$3
+
+for i in * ; do
+  if [ -d "$i" ]; then
+    #echo "directory $i"
+    arrDirName=(${i//-/ })
+    echo ${arrDirName[4]}
+    for j in `ls ${i}/*${1}*.engine_status` ; do
+      #echo "file $j"
+      #parse_engine_what.pl $j "$2" | tail -n 1
+      parse_engine_what.pl $j "$2" $3
+    
+    done
+  fi
+done
+

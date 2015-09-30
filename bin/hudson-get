@@ -1,0 +1,4 @@
+# Grab given server out of the Hudson active pool - replace $1
+
+curl "http://newbobbi:8080/computer/$1/toggleOffline?json=%7B%22offlineMessage%22%3A%20%22QA%20PRO%20Kit%20is%20being%20built%20(contact%20sebc%20for%20information)%22%7D&offlineMessage=QA%20PRO%20Kit%20is%20being%20built%20(contact%20sebc%20for%20information)"
+

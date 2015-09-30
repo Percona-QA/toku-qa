@@ -1,0 +1,17 @@
+#!/bin/bash
+
+VM_FOLDER="/home/tcallaghan/vms"
+RAR_FOLDER="/home/tcallaghan/holder/holder/vm_backups"
+#VMS="ubuntu-10.04-desktop-64bit ubuntu-12.04-desktop-64bit windows7-office2010 windows8-64bit"
+VMS="windows7-office2010"
+#VMS="windows7-stripped"
+#VMS="ubuntu-14.04.1-server"
+
+for thisVM in VMS; do
+    for dir in ${VM_FOLDER}/${VMS}/ ; do
+        dir=${dir%*/}
+        echo "Creating RAR for ${dir##*/}"
+        rar a -m1 -agYYYYMMDD $RAR_FOLDER/${dir##*/}-.rar $VM_FOLDER/${dir##*/}/*
+    done
+done
+

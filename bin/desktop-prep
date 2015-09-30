@@ -1,0 +1,16 @@
+# all the stuff I do to my desktop
+
+# directories
+mkdir temp
+mkdir git
+
+
+# symbolic links
+ln -s /home/tcallaghan/mystuff/personal/tmc/dox _1dox
+ln -s /home/tcallaghan/mystuff/personal/tokutek _1tokutek
+ln -s /home/tcallaghan/mystuff/personal/tmc/scripts bin
+
+ln -s /mnt/2tb 2tb
+ln -s /mnt/2tb/backups/benchmark.results benchmark.results
+ln -s /mnt/2tb/tcallaghan/holder holder
+

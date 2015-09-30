@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# copy a particular one-off build from tokubuild@lex1
+
+$DB_DIR/bin/mysql --user=root --socket=${MYSQL_SOCKET} -e "select variable_name from information_schema.global_status where variable_name like '%tokudb%' order by 1;" | tail -n +2 > tokudb_global_status.txt
+
+$DB_DIR/bin/mysql --user=root --socket=${MYSQL_SOCKET} -e "show engine tokudb status;" | tail -n +2 | cut -f 2 | sort > tokudb_engine_status.txt
+
+$DB_DIR/bin/mysql --user=root --socket=${MYSQL_SOCKET} -e "show variables like '%tokudb%';" | tail -n +1 | cut -f 1 | sort > tokudb_variables.txt
+

@@ -1,0 +1,29 @@
+#! /bin/bash
+
+# get all the public repos from GitHub
+
+GIT_DIR="${HOME}/git"
+
+# check that $GIT_DIR exists
+if [ ! -d "$GIT_DIR" ]; then
+    echo "Need to create directory ${GIT_DIR}"
+    exit 1
+fi
+
+repoList="backup-community backup-enterprise ft-engine ft-index mariadb mysql jemalloc presentations tokudocs"
+
+pushd ${GIT_DIR}
+
+for repo in ${repoList} ; do
+    # check that the repo directory exists
+    if [ ! -d "$repo" ]; then
+        echo "No directory found for repo ${repo}, skipping pull"
+        exit 1
+    fi
+
+    pushd ${repo}
+    git pull
+    popd
+done
+
+popd ${GIT_DIR}

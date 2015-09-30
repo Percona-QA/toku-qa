@@ -1,0 +1,27 @@
+#!/bin/bash
+
+if [ -n "$(pgrep -U $USER mongod)" ]; then
+    echo "MongoDB is running, what are you trying to do?"
+    exit 1
+fi
+
+if [ -z "$MONGO_DATA_DIR" ]; then
+    echo "Need to set MONGO_DATA_DIR"
+    exit 1
+fi
+if [ -d "$MONGO_DATA_DIR" ]; then
+    echo "Directory $MONGO_DATA_DIR already exists, what are you trying to do?"
+    exit 1
+fi
+
+if [ -z "$MONGO_DIR" ]; then
+    echo "Need to set MONGO_DIR"
+    exit 1
+fi
+if [ -d "$MONGO_DIR" ]; then
+    echo "Directory $MONGO_DIR already exists, what are you trying to do?"
+    exit 1
+fi
+
+mkdir -p $MONGO_DATA_DIR
+mkdir -p $MONGO_DIR

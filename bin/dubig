@@ -1,0 +1,17 @@
+#! /bin/bash
+
+if [ $# -eq 0 ]; then
+  echo "usage: dubig <directory> <file-extension>"
+  exit 1
+fi
+
+set -f 
+
+fileSpec='*.'${2}
+#echo ${fileSpec}
+#find ${1} -iname '${fileSpec}'
+
+echo ${fileSpec}
+
+#find . -iname '*.bash'
+#find ${1} -iname '*.${2}'  |xargs stat -c '%s' |awk '{total=total+$1}END{mbtotal = total / 1048576 ; print mbtotal}'

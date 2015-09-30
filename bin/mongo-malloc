@@ -1,0 +1,6 @@
+#!/bin/bash
+
+mongodPid=`pgrep -U $USER mongod`
+
+grep -i malloc /proc/${mongodPid}/maps
+

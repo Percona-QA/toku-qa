@@ -1,0 +1,1 @@
+ntpdate -q -p 8 volt3a volt3b volt3c volt3d volt3e volt3f volt3g volt3h volt3i volt3j volt3k volt3l volt4a volt4b volt4c volt5a volt5b volt5c volt5d volt5e volt5f volt6a volt6b volt6c volt7a volt7b volt7c volt7d volt7e 

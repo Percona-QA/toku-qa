@@ -1,0 +1,101 @@
+#!/bin/bash
+
+MYSQL_SOCKET=$MYSQL_SOCKET
+MYSQL_USER=root
+MYSQL_PASSWORD=""
+
+outFile="/tmp/tmcwafinfo.txt"
+
+wait_seconds=${1}
+num_intervals=${2}
+this_interval=1
+overall_seconds=0
+last_inserts=0
+
+while [ ${this_interval} -le ${num_intervals} ] ; do
+    $DB_DIR/bin/mysql --user=${MYSQL_USER} --socket=${MYSQL_SOCKET} --password=${MYSQL_PASSWORD} -e 'show engine tokudb status;' > ${outFile}
+
+    this_pivot_read_query=`grep "brt: pivots fetched for query (bytes)" ${outFile} | cut -f3`
+    this_pivot_read_prefetch=`grep "brt: pivots fetched for prefetch (bytes)" ${outFile} | cut -f3`
+    this_pivot_read_write=`grep "brt: pivots fetched for write (bytes)" ${outFile} | cut -f3`
+    
+    this_buffers_read_query=`grep "brt: buffers fetched as a target of a query (bytes)" ${outFile} | cut -f3`
+    this_buffers_read_prelock=`grep "brt: buffers fetched for prelocked range (bytes)" ${outFile} | cut -f3`
+    this_buffers_read_prefetch=`grep "brt: buffers fetched for prefetch (bytes)" ${outFile} | cut -f3`
+    this_buffers_read_write=`grep "brt: buffers fetched for write (bytes)" ${outFile} | cut -f3`
+    
+    this_basements_read_query=`grep "brt: basements fetched as a target of a query (bytes)" ${outFile} | cut -f3`
+    this_basements_read_prelock=`grep "brt: basements fetched for prelocked range (bytes)" ${outFile} | cut -f3`
+    this_basements_read_prefetch=`grep "brt: basements fetched for prefetch (bytes)" ${outFile} | cut -f3`
+    this_basements_read_write=`grep "brt: basements fetched for write (bytes)" ${outFile} | cut -f3`
+    
+    echo "this_pivot_read_query = ${this_pivot_read_query}"
+    echo "this_pivot_read_prefetch = ${this_pivot_read_prefetch}"
+    echo "this_pivot_read_write = ${this_pivot_read_write}"
+    
+    echo "this_buffers_read_query = ${this_buffers_read_query}"
+    echo "this_buffers_read_prelock = ${this_buffers_read_prelock}"
+    echo "this_buffers_read_prefetch = ${this_buffers_read_prefetch}"
+    echo "this_buffers_read_write = ${this_buffers_read_write}"
+    
+    echo "this_basements_read_query = ${this_basements_read_query}"
+    echo "this_basements_read_prelock = ${this_basements_read_prelock}"
+    echo "this_basements_read_prefetch = ${this_basements_read_prefetch}"
+    echo "this_basements_read_write = ${this_basements_read_write}"
+
+    echo ""
+
+    this_leaf_write_non_checkpoint=`grep "brt: leaf nodes flushed to disk (not for checkpoint) (bytes)" ${outFile} | cut -f3`
+    this_leaf_write_checkpoint=`grep "brt: leaf nodes flushed to disk (for checkpoint) (bytes)" ${outFile} | cut -f3`
+    this_nonleaf_write_non_checkpoint=`grep "brt: nonleaf nodes flushed to disk (not for checkpoint) (bytes)" ${outFile} | cut -f3`
+    this_nonleaf_write_checkpoint=`grep "brt: nonleaf nodes flushed to disk (for checkpoint) (bytes)" ${outFile} | cut -f3`
+    this_logger_write=`grep "logger: writes (bytes)" ${outFile} | cut -f3`
+
+    echo "this_leaf_write_non_checkpoint = ${this_leaf_write_non_checkpoint}"
+    echo "this_leaf_write_checkpoint = ${this_leaf_write_checkpoint}"
+    echo "this_nonleaf_write_non_checkpoint = ${this_nonleaf_write_non_checkpoint}"
+    echo "this_nonleaf_write_checkpoint = ${this_nonleaf_write_checkpoint}"
+    echo "this_logger_write = ${this_logger_write}"
+
+    echo ""
+
+    this_handlerton_inserts=`grep "handlerton: primary key bytes inserted" ${outFile} | cut -f3`
+
+    echo "this_handlerton_inserts = ${this_handlerton_inserts}"
+    
+    # calculate inserted MB/s
+    # (reads + writes) / PK bytes inserted
+    let interval_inserts=this_handlerton_inserts-last_inserts
+
+    if [ ${interval_inserts} -eq 0 ]; then
+        echo "inserted MB/s=0";
+    else
+        this_imbps=$((interval_inserts/wait_seconds/1024/1024))
+        echo "inserted MB/s=${this_imbps}"
+    fi 
+    
+
+    echo ""
+    
+    # calculate WAF
+    # (reads + writes) / PK bytes inserted
+    
+    if [ ${this_handlerton_inserts} -eq 0 ]; then
+        echo "WAF=0";
+    else
+        this_io=$((this_pivot_read_query+this_pivot_read_prefetch+this_pivot_read_write+this_buffers_read_query+this_buffers_read_prelock+this_buffers_read_prefetch+this_buffers_read_write+this_basements_read_query+this_basements_read_prelock+this_basements_read_prefetch+this_basements_read_write+this_leaf_write_non_checkpoint+this_leaf_write_checkpoint+this_nonleaf_write_non_checkpoint+this_nonleaf_write_checkpoint+this_logger_write))
+        this_waf=$((this_io/this_handlerton_inserts))
+        echo "WAF=${this_waf}"
+    fi 
+
+
+    echo ""
+    echo "---------------------------------------------------------------------------------------------------------------------"
+    echo ""
+    
+    sleep ${wait_seconds}
+    
+    let this_interval=this_interval+1
+    let overall_seconds=overall_seconds+wait_seconds
+    let last_inserts=this_handlerton_inserts
+done

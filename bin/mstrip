@@ -1,0 +1,5 @@
+#! /bin/bash
+
+rm -rf mysql-test
+rm -rf sql-bench
+rm data/*.err

@@ -1,0 +1,17 @@
+#! /bin/bash
+
+fileExtension=$1
+searchTerm=$2
+
+for dir in */; do 
+    echo ${dir}
+    echo "-------------------------------------------------------------------------------------"
+
+    allResults=`grep -i ${searchTerm} ${dir}*.${fileExtension}`
+    #echo "${allResults}"
+
+    lastResult=`echo "${allResults}" | tail -n1`
+    echo "${lastResult}"
+    
+    echo; echo
+done

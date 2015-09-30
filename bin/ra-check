@@ -1,0 +1,9 @@
+#! /bin/bash
+
+if [ -z "$DATA_VOLUME" ]; then
+    echo "Need to set DATA_VOLUME"
+    exit 1
+fi
+
+sudo blockdev --getra $DATA_VOLUME
+

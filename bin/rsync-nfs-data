@@ -1,0 +1,25 @@
+#! /bin/bash
+
+ip_addy=192.168.1.242
+
+if [ -z ${LOCAL_BACKUP_DIR} ]; then
+    echo "Need to define LOCAL_BACKUP_DIR, exiting"
+    exit 1
+fi
+
+for rsync_dir in sysbench-mysqldump-100000 sysbench-mysqldump-1000000 sysbench-mysqldump-5000000 sysbench-mysqldump-10000000 sysbench-mysqldump-50000000 ; do
+  rsync -vraz --progress --stats --delete tcallaghan@${ip_addy}:/mnt/2tb/backups/${rsync_dir} ${LOCAL_BACKUP_DIR}
+done
+
+for rsync_dir in tpcc-mysqldump-100w tpcc-mysqldump-500w tpcc-mysqldump-1000w ; do
+  rsync -vraz --progress --stats --delete tcallaghan@${ip_addy}:/mnt/2tb/backups/${rsync_dir} ${LOCAL_BACKUP_DIR}
+done
+
+#for rsync_dir in upsert-mysqldump-50000000; do
+#  rsync -vraz --progress --stats --delete tcallaghan@${ip_addy}:/mnt/2tb/backups/${rsync_dir} ${LOCAL_BACKUP_DIR}
+#done
+
+#for rsync_dir in linkbench-db-250000000; do
+#  rsync -vraz --progress --stats --delete tcallaghan@${ip_addy}:/mnt/2tb/backups/${rsync_dir} ${LOCAL_BACKUP_DIR}
+#done
+

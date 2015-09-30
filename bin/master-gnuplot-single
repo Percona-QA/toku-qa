@@ -1,0 +1,67 @@
+#!/bin/bash
+
+if [ $# -eq 0 ]; then
+  echo "usage: master-gnuplot <line-name> <graph-title>"
+  exit 1
+fi
+
+dirGnuplotScript=/home/tcallaghan/mystuff/personal/tokutek/gnuplot/gnuplot-simple-single.txt
+export gnuplot_image_size="1800,1200"
+
+export gnuplot_name1=$1
+graphTitle=$2
+
+dir1="."
+
+# pre-process files
+for i in ${dir1}/*.sysinfo; do
+  file-averager-cumulative.py ${i} 10 1 > ${i}.avgcpu
+done
+parse_sysbench.pl tps ./
+for i in ${dir1}/*.tps; do
+  file-averager-cumulative.py ${i} 2 1 > ${i}.avg
+done
+
+# plot transactional throughput - interval
+export gnuplot_title="Transactional Throughput (interval) - ${graphTitle}"
+export gnuplot_image="tps_raw"
+export gnuplot_xlabel="seconds"
+export gnuplot_ylabel="transactions per second"
+for i in ${dir1}/*.tps; do
+  export gnuplot_file1=${i}
+done
+export gnuplot_cols="1:2"
+gnuplot ${dirGnuplotScript}
+
+# plot transactional throughput - average
+export gnuplot_title="Transactional Throughput (cumulative average) - ${graphTitle}"
+export gnuplot_image="tps_avg"
+export gnuplot_xlabel="seconds"
+export gnuplot_ylabel="transactions per second"
+for i in ${dir1}/*.tps.avg; do
+  export gnuplot_file1=${i}
+done
+export gnuplot_cols="1:2"
+gnuplot ${dirGnuplotScript}
+
+# plot cpu utilization - interval
+export gnuplot_title="CPU Utilization (interval) - ${graphTitle}"
+export gnuplot_image="cpu_raw"
+export gnuplot_xlabel="minutes"
+export gnuplot_ylabel="CPU utilization"
+for i in ${dir1}/*.sysinfo; do
+  export gnuplot_file1=${i}
+done
+export gnuplot_cols="10"
+gnuplot ${dirGnuplotScript}
+
+# plot cpu utilization - cumulative average
+export gnuplot_title="CPU Utilization (cumulative average) - ${graphTitle}"
+export gnuplot_image="cpu_avg"
+export gnuplot_xlabel="minutes"
+export gnuplot_ylabel="CPU utilization"
+for i in ${dir1}/*.avgcpu; do
+  export gnuplot_file1=${i}
+done
+export gnuplot_cols="2"
+gnuplot ${dirGnuplotScript}

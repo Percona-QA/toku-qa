@@ -1,0 +1,15 @@
+#!/bin/bash
+
+MYSQL_USER=$1
+MYSQL_SOCKET=$2
+
+echo "-------------------"
+echo "table fragmentation"
+echo "-------------------"
+mysql-show-frag-tables ${MYSQL_USER} ${MYSQL_SOCKET}
+echo ""
+
+echo "--------------------"
+echo "global fragmentation"
+echo "--------------------"
+mysql-show-frag-global ${MYSQL_USER} ${MYSQL_SOCKET}

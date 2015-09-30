@@ -1,0 +1,149 @@
+#!/bin/bash
+
+if [ -z "$MONGO_DATA_DIR" ]; then
+    echo "Need to set MONGO_DATA_DIR"
+    exit 1
+fi
+if [ ! -d "$MONGO_DATA_DIR" ]; then
+    echo "Need to create directory MONGO_DATA_DIR"
+    exit 1
+fi
+
+if [ -z "$MONGO_DIR" ]; then
+    echo "Need to set MONGO_DIR"
+    exit 1
+fi
+if [ ! -d "$MONGO_DIR" ]; then
+    echo "Need to create directory MONGO_DIR"
+    exit 1
+fi
+
+
+if [ -z "$COMMIT_SYNC" ]; then
+    export COMMIT_SYNC=1
+fi
+
+if [ ${COMMIT_SYNC} == "1" ]; then
+    NOSYNC_COMMIT=""
+else
+    NOSYNC_COMMIT="--nosync_commit"
+fi
+
+if [ -z "$MONGO_LOCK_TIMEOUT" ]; then
+    LOCK_TIMEOUT_STRING=""
+else
+    LOCK_TIMEOUT_STRING="--lockTimeout ${MONGO_LOCK_TIMEOUT}"
+fi
+
+export MONGO_SLOW_MS=500
+
+if [ -z "$MONGO_SLOW_MS" ]; then
+    SLOWMS_STRING=""
+else
+    SLOWMS_STRING="--slowms ${MONGO_SLOW_MS}"
+fi
+
+if [ -z "$TOKUMON_CACHE_SIZE" ]; then
+    echo "Need to set TOKUMON_CACHE_SIZE"
+    exit 1
+fi
+
+if [ -z "$TOKUMX_BUFFERED_IO" ]; then
+    DIRECTIO_STRING="--directio"
+else
+    if [ ${TOKUMX_BUFFERED_IO} == "Y" ]; then
+        DIRECTIO_STRING=""
+    else
+        DIRECTIO_STRING="--directio"
+    fi
+fi
+
+
+
+REPL_STRING="--replSet tmcRepl"
+
+
+
+
+# *********************************************************************************************
+# start 1 primary and 2 secondary servers
+
+# 1G cache
+tokuCacheSize=1G
+
+replDir1=$MONGO_DATA_DIR/repl1
+replPort1=27017
+replLog1=/tmp/repl1.mongolog
+rm -f ${replLog1}
+replServer1=${HOSTNAME}
+auditLog1=/tmp/audit1.log
+rm -f ${auditLog1}
+
+replDir2=$MONGO_DATA_DIR/repl2
+replPort2=30002
+replLog2=/tmp/repl2.mongolog
+rm -f ${replLog2}
+replServer2=${HOSTNAME}
+auditLog2=/tmp/audit2.log
+rm -f ${auditLog2}
+
+replDir3=$MONGO_DATA_DIR/repl3
+replPort3=30003
+replLog3=/tmp/repl3.mongolog
+rm -f ${replLog3}
+replServer3=${HOSTNAME}
+auditLog3=/tmp/audit3.log
+rm -f ${auditLog3}
+
+#AUDIT_FILTER='--auditFilter {atype:{$nin:["createDatabase","authenticate"]}}'
+#AUDIT_FILTER='--auditFilter {atype:{$in:["dropCollection","authenticate"]}}'
+#AUDIT_FILTER='--auditFilter {atype:"createIndex"}}'
+
+#AUDIT_FILTER='--auditFilter {"users.user":{$nin:["admin","bob2"]}}'
+#AUDIT_FILTER='--auditFilter {"users.user":{$in:["admin","bob"]}}'
+#AUDIT_FILTER='--auditFilter {"users.user":"bob"}}'
+
+#AUDIT_FILTER='--auditFilter {"users.db":{$nin:["admin","timbo"]}}'
+#AUDIT_FILTER='--auditFilter {"users.db":{$in:["admin","test"]},"users.user":"bob"}'
+#AUDIT_FILTER='--auditFilter {"users.db":"timbo"}}'
+
+echo ${AUDIT_FILTER}
+
+mkdir ${replDir1}
+$MONGO_DIR/bin/mongod --dbpath ${replDir1} --port ${replPort1} ${NOSYNC_COMMIT} --directio --cacheSize ${tokuCacheSize} --fork --logpath ${replLog1} ${REPL_STRING} ${LOCK_TIMEOUT_STRING} ${SLOWMS_STRING} --auditDestination=file --auditFormat=JSON --auditPath=${auditLog1} ${AUDIT_FILTER}
+
+echo "`date` | waiting for primary server to start"
+mongo-is-up
+echo "`date` | server is available, waiting for replication to initialize"
+mongo-start-replication
+
+# start secondary servers
+echo "`date` | starting replication secondary #1"
+mkdir ${replDir2}
+$MONGO_DIR/bin/mongod --dbpath ${replDir2} --port ${replPort2} ${NOSYNC_COMMIT} --directio --cacheSize ${tokuCacheSize} --fork --logpath ${replLog2} ${REPL_STRING} ${LOCK_TIMEOUT_STRING} ${SLOWMS_STRING} --auditDestination=file --auditFormat=JSON --auditPath=${auditLog2} ${AUDIT_FILTER}
+
+echo "`date` | starting replication secondary #2"
+mkdir ${replDir3}
+$MONGO_DIR/bin/mongod --dbpath ${replDir3} --port ${replPort3} ${NOSYNC_COMMIT} --directio --cacheSize ${tokuCacheSize} --fork --logpath ${replLog3} ${REPL_STRING} ${LOCK_TIMEOUT_STRING} ${SLOWMS_STRING} --auditDestination=file --auditFormat=JSON --auditPath=${auditLog3} ${AUDIT_FILTER}
+
+# check that secondary #1 is available
+echo "`date` | checking that secondary #1 is available"
+mongo-is-up-port ${replPort2}
+
+# check that secondary #2 is available
+echo "`date` | checking that secondary #2 is available"
+mongo-is-up-port ${replPort3}
+
+# add first secondary to primary
+echo "`date` | adding first secondary to primary"
+$MONGO_DIR/bin/mongo admin --port ${replPort1} --eval "printjson(rs.add(\"${replServer2}:${replPort2}\"));"
+
+# check that secondaries are good to go
+mongo-check-secondaries 1
+
+# add second secondary to primary
+echo "`date` | adding second secondary to primary"
+$MONGO_DIR/bin/mongo admin --port ${replPort1} --eval "printjson(rs.add(\"${replServer3}:${replPort3}\"));"
+
+# check that secondaries are good to go
+mongo-check-secondaries 2

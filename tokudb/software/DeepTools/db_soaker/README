@@ -1,0 +1,100 @@
+DB SOAKER
+
+Given any MySQL database schema, I needed a way to intelligently generate random 
+data and fill said database in a variety of ways to simulate a customers use case, 
+for example we need to be able to control cardinality of certain columns, ranges 
+of integers used per columns, rate of operations per table, size of random strings,
+ foreign key relationships etc..
+
+Once filled we can then test query performance against very large databases
+filled in a variety of ways.
+
+This tool can be used for purely loading data, performing several UPDATEs, SELECTS
+or perhaps full CRUD on all tables to perform a stress test.  
+I needed this mainly for testing our database engine, but others may find this 
+useful for other things.  
+
+The project is very lightweight with only 1 main php file (gen_data.php), a php 
+config file and a bash script. The bash script will spawn and manage several 
+gen_data instances in parallel if desired and throttle the number of parallel 
+clients to suit our needs. 
+
+The config file is what defines what is to be done to generate the random 
+data / sql statements on and given tables.
+
+the config file that is needed is basically a php file that defines 3 multidimensional arrays
+
+meta_data -  which defines all of the table and column meta data information
+fixed_data - which defines tables and columns that requires some potential fixed data
+what_to_do - which defines for each table what you wish to randomly perform on said 
+             tables, be it inserts, selects, updates, deletes, or replace, along 
+             with a range of sleep time between operations.
+
+Initially this config file can be a hassle to create so to help with that I also 
+created a file called make_meta_data.php that will generate the config file based
+on an existing mysql database.  Once generated you can then tweak the values to suit your needs.
+
+It might also make sense to have a config for purely loading data into a database 
+with a fixed size, and then use a separate config that would perform more selects, updates 
+, deletes, etc with specified delays between events.. to simulate a customers steady state 
+database usage.
+
+Optionally, gen_data can also be used to generate tab delimited data files to be used for 
+loading a database via infile load
+
+
+gen_data.php  USAGE:
+
+USAGE: ./bin/gen_data.php [OPTIONS] [TABLE] [ITERATIONS] [ACTION (insert or tab_del_dump)
+
+ACTION: insert means we are connecting to a database and running sql commands directly, 
+        tab_del_dump means we are not connecting to a database, we are just writing out tab 
+        delimited data files for use later in an infile data load to a database.
+ 
+ITERATIONS:  number of operations to perform on given table.
+ 
+TABLE:   mysql table to perform actions on.
+ 
+OPTIONS:
+ -u USER
+            mysql username to be used. current user is used if not specified. Used for insert action only.
+ -p PASSWORD
+            mysql password to be used. Used for insert action only.
+ -h=HOST
+            mysql host. Used for insert action only.
+ --config=CONFIG
+            php config file to be used. default is config.php in configs dir
+ --database=DATABASE
+            mysql database to use. Used for insert action only.
+ --extended_insert_size=EXTENDED_INSERT_SIZE
+            transaction size used for inserts and replace, using insert action (default is 100). 
+            for tab_del_dump action this will denote the number of lines per file.
+ --min_transaction_size=MIN_TRANSACTION_SIZE
+            min transaction size used when randomly generating a transaction size.(default is 1, meaning no transactions occur.) 
+ --max_transaction_size=MAX_TRANSACTION_SIZE
+            max transaction size used when randomly generating a transaction size. (default is 1, meaning no transactions occur.) 
+ --rollback_chance=x
+           one out of x chance to rollback a transaction instead of commiting it. (default is 0, meaning never rollback) 
+ --select_lock_in_share_mode_chance=x
+           one out of x chance to add a LOCK IN SHARE MODE to a select statement. (default is 0, meaning never) 
+ --seed=SEED
+            integer used for autoinc offset.  Used for insert action only. Used when running several times in parallel to prevent collisions
+ --output_dir=OUTPUT_DIR
+            directory that tab delimited files are generated. Used for tab_del_dump action only. default is /tmp
+ --write_sql_to_disk
+            write all successful sql queries to files in ./sql_out . Used for insert only action.
+
+
+
+example scripts.
+
+to create and example schema and load it with random data run:
+./example_database_1_loadup.sh [mysql_user] [mysql_pass] [mysql_host]
+
+to run full crud (inserts, update, selects and deletes) on example database run:
+./example_database_1_soak.sh [mysql_user] [mysql_pass] [mysql_host]
+
+
+
+Examples:
+

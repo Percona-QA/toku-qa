@@ -1,0 +1,17 @@
+Stop MongoDB/TokuMX:
+mongo-stop
+mongo-is-down
+
+
+
+Start MongoDB, with replication
+
+export MONGO_LOG=mongodb-server-log.log
+numactl --interleave=all $MONGO_DIR/bin/mongod --dbpath $MONGO_DATA_DIR --journal --fork --logpath $MONGO_LOG --replSet rs0
+
+
+
+Start TokuMX, with replication
+
+export MONGO_LOG=tokumx-server-log.log
+$MONGO_DIR/bin/mongod --dbpath $MONGO_DATA_DIR --directio --cacheSize $TOKUMON_CACHE_SIZE --fork --logpath $MONGO_LOG --replSet rs0

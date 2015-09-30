@@ -1,0 +1,5 @@
+#! /bin/bash
+
+rm -rf ~/Dropbox/Public/tokutek/${1}
+mkdir ~/Dropbox/Public/tokutek/${1}
+cp -r ${1}/* ~/Dropbox/Public/tokutek/${1}

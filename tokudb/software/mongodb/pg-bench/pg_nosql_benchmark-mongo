@@ -1,0 +1,166 @@
+#/bin/bash
+
+#################################################################################
+# Copyright (c) 2013-2014, EnterpriseDB Corporation
+# 
+# Redistribution and use in source and binary forms, with or without modification,
+# are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+# list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+# this list of conditions and the following disclaimer in the documentation and/or
+# other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+#===============================================================================
+#title           : pg_nosql_benchmark.
+#description     : This script will help in benchmarking PostgreSQL (JSONB) and
+#                : MongoDB (BSON).
+#author          : Vibhor Kumar (vibhor.aim@gmail.com).
+#date            : July 17, 2014
+#version         : 2.0.1
+#usage           : bash pg_nosql_benchmark
+#notes           : Install Vim and Emacs to use this script.
+#bash_version    : GNU bash, version 4.1.2(1)-release (x86_64-redhat-linux-gnu)
+#===============================================================================
+
+################################################################################
+# set require variables.
+################################################################################
+DIRECTORY=$(dirname $0)
+BASENAME=$(basename $0)
+
+
+NUM_DOCUMENTS=10000000
+
+
+################################################################################
+# set mongo variables.
+################################################################################
+MONGO="$MONGO_DIR/bin/mongo"
+MONGOIMPORT="$MONGO_DIR/bin/mongoimport"
+MONGOHOST="localhost"
+MONGOPORT="27017"
+MONGOUSER="tmc"
+MONGOPASSWORD="tmc"
+MONGODBNAME="test"
+
+COLLECTION_NAME="json_tables"
+SAMPLEJSON="${BACKUP_DIR}/pg-bench/${NUM_DOCUMENTS}/sample.json"
+MONGO_INSERTS="${BACKUP_DIR}/pg-bench/${NUM_DOCUMENTS}/sample_mongo_inserts.json"
+
+################################################################################
+# source library files
+################################################################################
+source ${DIRECTORY}/lib/pg_func_lib.sh
+source ${DIRECTORY}/lib/mongo_func_lib.sh
+
+################################################################################
+# declare require arrays
+################################################################################
+declare -a json_rows=(${NUM_DOCUMENTS})
+
+# mongo specific arrays
+declare -a mongo_size_time
+declare -a mongo_copy_time
+declare -a mongo_inserts_time
+declare -a mongo_select_time
+
+################################################################################
+# main function
+################################################################################
+mongodb_version=$(mongo_version "${MONGOHOST}"     \
+                                "${MONGOPORT}"     \
+                                "${MONGODBNAME}"   \
+                                "${MONGOUSER}"     \
+                                "${MONGOPASSWORD}"
+                  )
+
+process_log "MongoDB Version $mongodb_version"
+
+
+for (( indx=0 ; indx < ${#json_rows[@]} ; indx++ ))
+do
+#   generate_json_rows "${json_rows[${indx}]}" \
+#                      "${SAMPLEJSON}"
+
+#   mongo_json_insert_maker "${COLLECTION_NAME}"    \
+#                           "${json_rows[${indx}]}" \
+#                           "${MONGO_INSERTS}"
+
+
+   mongo_copy_time[${indx}]=$(mongodb_import_benchmark "${MONGOHOST}"       \
+                                                       "${MONGOPORT}"       \
+                                                       "${MONGODBNAME}"     \
+                                                       "${MONGOUSER}"       \
+                                                       "${MONGOPASSWORD}"   \
+                                                       "${COLLECTION_NAME}" \
+                                                       "${SAMPLEJSON}"
+                              )
+
+
+   mongodb_create_index "${MONGOHOST}"     \
+                        "${MONGOPORT}"     \
+                        "${MONGODBNAME}"   \
+                        "${MONGOUSER}"     \
+                        "${MONGOPASSWORD}" \
+                        "${COLLECTION_NAME}"
+
+#   mongo_select_time[${indx}]=$(mongodb_select_benchmark "${MONGOHOST}"     \
+#                                                         "${MONGOPORT}"     \
+#                                                         "${MONGODBNAME}"   \
+#                                                         "${MONGOUSER}"     \
+#                                                         "${MONGOPASSWORD}" \
+#                                                         "${COLLECTION_NAME}"
+#                                )
+
+   mongo_size_time[${indx}]=$(mongo_collection_size "${MONGOHOST}"     \
+                                                    "${MONGOPORT}"     \
+                                                    "${MONGODBNAME}"   \
+                                                    "${MONGOUSER}"     \
+                                                    "${MONGOPASSWORD}" \
+                                                    "${COLLECTION_NAME}"
+                             )
+ 
+   drop_mongocollection "${MONGOHOST}"     \
+                        "${MONGOPORT}"     \
+                        "${MONGODBNAME}"   \
+                        "${MONGOUSER}"     \
+                        "${MONGOPASSWORD}" \
+                        "${COLLECTION_NAME}"
+
+#   mongo_inserts_time[${indx}]=$(mongodb_inserts_benchmark "${MONGOHOST}"       \
+#                                                           "${MONGOPORT}"       \
+#                                                           "${MONGODBNAME}"     \
+#                                                           "${MONGOUSER}"       \
+#                                                           "${MONGOPASSWORD}"   \
+#                                                           "${COLLECTION_NAME}" \
+#                                                            "${MONGO_INSERTS}"
+#                                )
+done
+
+IMPORT_SEC=`echo "scale=0; ${mongo_copy_time[0]}/(1000*1000*1000)" | bc `
+DOCS_PER_SEC=`echo "scale=0; ${json_rows[0]}/${IMPORT_SEC}" | bc `
+SIZE_MB=`echo "scale=0; ${mongo_size_time[0]}/(1024*1024)" | bc `
+
+print_result "number of rows          "  "${json_rows[0]}"
+print_result "MONGO IMPORT (seconds)  "  "${IMPORT_SEC}"
+print_result "MONGO IMPORT (docs/sec) "  "${DOCS_PER_SEC}"
+#print_result "MONGO INSERT (ns)"  "${mongo_inserts_time[@]}"
+#print_result "MONGO SELECT (ns)"  "${mongo_select_time[@]}"
+print_result "MONGO SIZE (MB)         "  "${SIZE_MB}"
+
+#rm -rf ${SAMPLEJSON}*
+#rm -rf ${MONGO_INSERTS}

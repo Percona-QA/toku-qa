@@ -1,0 +1,9 @@
+#!/bin/bash
+
+SOCKET_NAME=$MYSQL_SOCKET
+USER_NAME=root
+USER_PASSWORD=""
+
+echo "`date` | granting remote access to mysql root account"
+$DB_DIR/bin/mysql --user=${USER_NAME} --socket=${SOCKET_NAME} -e "GRANT ALL ON *.* TO 'root'@'%' WITH GRANT OPTION; flush privileges;"
+

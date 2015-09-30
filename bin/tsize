@@ -1,0 +1,4 @@
+#!/bin/sh
+
+du -cb $DB_DIR/data/*.tokudb | tail -n 1
+

@@ -1,0 +1,112 @@
+#!/bin/bash
+
+if [ -z "$MONGO_DATA_DIR" ]; then
+    echo "Need to set MONGO_DATA_DIR"
+    exit 1
+fi
+if [ ! -d "$MONGO_DATA_DIR" ]; then
+    echo "Need to create directory MONGO_DATA_DIR"
+    exit 1
+fi
+
+if [ -z "$MONGO_DIR" ]; then
+    echo "Need to set MONGO_DIR"
+    exit 1
+fi
+if [ ! -d "$MONGO_DIR" ]; then
+    echo "Need to create directory MONGO_DIR"
+    exit 1
+fi
+
+if [ -z "$MONGO_LOG" ]; then
+    echo "Need to set MONGO_LOG"
+    exit 1
+fi
+
+if [ -z "$MONGO_REPL" ]; then
+    REPL_STRING=""
+else
+    REPL_STRING="--replSet ${MONGO_REPL}"
+fi
+
+if [ -z "$MONGO_OPLOGSIZE" ]; then
+    OPLOG_STRING=""
+else
+    OPLOG_STRING="--oplogSize ${MONGO_OPLOGSIZE}"
+fi
+
+if [ -z "$DISABLE_MONGODB_JOURNAL" ]; then
+    JOURNAL_STRING="--journal"
+else
+    JOURNAL_STRING="--nojournal"
+fi
+
+if [ ${MONGO_TYPE} == "wt" ]; then
+    if [ -z "$TOKUMON_CACHE_SIZE" ]; then
+        echo "Need to set TOKUMON_CACHE_SIZE for WiredTiger cache"
+        exit 1
+    fi
+
+    STORAGE_ENGINE_STRING="--storageEngine wiredtiger"
+
+    # set cache size
+    TOKUMON_CACHE_SIZE=`echo $TOKUMON_CACHE_SIZE | sed 's/G//g'`
+    MONGOD_EXTRA="$MONGOD_EXTRA --wiredTigerCacheSizeGB $TOKUMON_CACHE_SIZE"
+    
+    # enable directIO
+    MONGOD_EXTRA="$MONGOD_EXTRA --wiredTigerEngineConfigString direct_io=[data]"
+    
+    #MONGOD_EXTRA="$MONGOD_EXTRA --wiredTigerEngineConfig \"<option>=<setting>,<option>=<setting>\""
+    #MONGOD_EXTRA="$MONGOD_EXTRA --wiredTigerCollectionConfig \"<option>=<setting>,<option>=<setting>\""
+    #MONGOD_EXTRA="$MONGOD_EXTRA --wiredTigerIndexConfig \"<option>=<setting>,<option>=<setting>\""
+fi
+
+if [ ${MONGO_TYPE} == "mxse" ]; then
+    if [ -z "$TOKUMON_CACHE_SIZE" ]; then
+        echo "Need to set TOKUMON_CACHE_SIZE"
+        exit 1
+    fi
+    if [ -z "$MONGO_BASEMENT" ]; then
+        echo "Need to set MONGO_BASEMENT"
+        exit 1
+    fi
+    if [ -z "$MONGO_COMPRESSION" ]; then
+        echo "Need to set MONGO_COMPRESSION"
+        exit 1
+    fi
+
+    STORAGE_ENGINE_STRING="--storageEngine tokuft"
+
+    TOKUMON_CACHE_SIZE=`echo $TOKUMON_CACHE_SIZE | sed 's/M/000000/g'`
+    TOKUMON_CACHE_SIZE=`echo $TOKUMON_CACHE_SIZE | sed 's/m/000000/g'`
+    TOKUMON_CACHE_SIZE=`echo $TOKUMON_CACHE_SIZE | sed 's/G/000000000/g'`
+    TOKUMON_CACHE_SIZE=`echo $TOKUMON_CACHE_SIZE | sed 's/g/000000000/g'`
+
+    MONGOD_EXTRA="$MONGOD_EXTRA --tokuftEngineCacheSize $TOKUMON_CACHE_SIZE"
+    MONGOD_EXTRA="$MONGOD_EXTRA --tokuftEngineDirectio true"
+    MONGOD_EXTRA="$MONGOD_EXTRA --tokuftCollectionReadPageSize $MONGO_BASEMENT"
+    MONGOD_EXTRA="$MONGOD_EXTRA --tokuftCollectionCompression $MONGO_COMPRESSION"
+    MONGOD_EXTRA="$MONGOD_EXTRA --tokuftIndexReadPageSize $MONGO_BASEMENT"
+    MONGOD_EXTRA="$MONGOD_EXTRA --tokuftIndexCompression $MONGO_COMPRESSION"
+
+    if [ -z "$LOCK_TIMEOUT" ]; then
+        DONT_DO_A_DARN_THING="YES"
+    else
+        MONGOD_EXTRA="$MONGOD_EXTRA --tokuftEngineLockTimeout $LOCK_TIMEOUT"
+    fi
+
+#    jemallocLibrary=$BACKUP_DIR/mongodb/libjemalloc.so
+#    jemallocLibrary=/usr/lib/x86_64-linux-gnu/libjemalloc.so
+#    if [ -e ${jemallocLibrary} ]; then
+#        echo "found ${jemallocLibrary}, adding to LD_PRELOAD"
+#        export LD_PRELOAD=${jemallocLibrary}:$LD_PRELOAD
+#    else
+#        echo "unable to locate ${jemallocLibrary}, exiting"
+#        exit 1
+#    fi
+fi
+
+numactl --interleave=all $MONGO_DIR/bin/mongod --dbpath $MONGO_DATA_DIR ${JOURNAL_STRING} --fork --logpath $MONGO_LOG ${REPL_STRING} ${OPLOG_STRING} ${MONGOD_EXTRA} ${STORAGE_ENGINE_STRING}
+
+#--config ~/bin/mongo-pure.cnf
+# --nojournal

@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# copy a particular TokuMX release build from tokubuild@lex1
+
+version=${1}
+packageVersion=${2}
+
+srcDir=/home.tokubuild/buildmaster/builds
+
+mkdir debug
+
+# grab the 24 files (12 files each of community and enterprise)
+scp -i ~/.ssh/id_rsa.priv.tokubuild tokubuild@lex1:${srcDir}/tokumx-${version}-linux* .
+scp -i ~/.ssh/id_rsa.priv.tokubuild tokubuild@lex1:${srcDir}/tokumx-e-${version}-linux* .
+
+# move debug to debug
+mv -v *-debug-* debug
+
+# copy to nfs share
+cp tokumx-e-${version}-linux-x86_64-main.tar.gz ${BACKUP_DIR}/mongodb
+cp tokumx-${version}-linux-x86_64-main.tar.gz ${BACKUP_DIR}/mongodb
+
+
+
+
+srcDir=/home.tokubuild/buildmaster/packages
+
+for packageType in el5.centos el6 fc20; do
+    mkdir ${packageType}
+    scp -i ~/.ssh/id_rsa.priv.tokubuild tokubuild@lex1:${srcDir}/${packageType}/tokumx-*${version}-${packageVersion}* ${packageType}
+done
+
+#for packageType in debian-wheezy ubuntu-precise ubuntu-raring ubuntu-saucy; do
+#    mkdir ${packageType}
+#    scp -i ~/.ssh/id_rsa.priv.tokubuild tokubuild@lex1:${srcDir}/${packageType}/tokumx*${version}-${packageVersion}* ${packageType}
+#done
+

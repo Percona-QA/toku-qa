@@ -1,0 +1,251 @@
+#!/bin/bash
+
+if [ -z "$MONGO_DATA_DIR" ]; then
+    echo "Need to set MONGO_DATA_DIR"
+    exit 1
+fi
+if [ ! -d "$MONGO_DATA_DIR" ]; then
+    echo "Need to create directory MONGO_DATA_DIR"
+    exit 1
+fi
+
+if [ -z "$MONGO_DIR" ]; then
+    echo "Need to set MONGO_DIR"
+    exit 1
+fi
+if [ ! -d "$MONGO_DIR" ]; then
+    echo "Need to create directory MONGO_DIR"
+    exit 1
+fi
+
+if [ -z "$DB_NAME" ]; then
+    echo "Need to set DB_NAME"
+    exit 1
+fi
+
+
+if [ -z "$COMMIT_SYNC" ]; then
+    export COMMIT_SYNC=1
+fi
+
+if [ ${COMMIT_SYNC} == "1" ]; then
+    NOSYNC_COMMIT=""
+else
+    NOSYNC_COMMIT="--nosync_commit"
+fi
+
+if [ -z "$MONGO_REPL" ]; then
+    REPL_STRING=""
+else
+    REPL_STRING="--replSet ${MONGO_REPL}"
+fi
+
+if [ -z "$MONGO_LOCK_TIMEOUT" ]; then
+    LOCK_TIMEOUT_STRING=""
+else
+    LOCK_TIMEOUT_STRING="--lockTimeout ${MONGO_LOCK_TIMEOUT}"
+fi
+
+export MONGO_SLOW_MS=500
+
+if [ -z "$MONGO_SLOW_MS" ]; then
+    SLOWMS_STRING=""
+else
+    SLOWMS_STRING="--slowms ${MONGO_SLOW_MS}"
+fi
+
+if [ -z "$TOKUMON_CACHE_SIZE" ]; then
+    echo "Need to set TOKUMON_CACHE_SIZE"
+    exit 1
+fi
+
+if [ -z "$TOKUMX_BUFFERED_IO" ]; then
+    DIRECTIO_STRING="--directio"
+else
+    if [ ${TOKUMX_BUFFERED_IO} == "Y" ]; then
+        DIRECTIO_STRING=""
+    else
+        DIRECTIO_STRING="--directio"
+    fi
+fi
+
+
+# *********************************************************************************************
+# start 3 config servers
+
+# 512MB cache
+mongoConfigCacheSize=512M
+
+configDir1=$MONGO_DATA_DIR/config1
+configPort1=30001
+configLog1=./config1.mongolog
+rm -f ${configLog1}
+
+configDir2=$MONGO_DATA_DIR/config2
+configPort2=30002
+configLog2=./config2.mongolog
+rm -f ${configLog2}
+
+configDir3=$MONGO_DATA_DIR/config3
+configPort3=30003
+configLog3=./config3.mongolog
+rm -f ${configLog3}
+
+configServer=${HOSTNAME}
+
+mkdir ${configDir1}
+$MONGO_DIR/bin/mongod --dbpath ${configDir1} --port ${configPort1} --configsvr --directio --cacheSize ${mongoConfigCacheSize} --fork --logpath ${configLog1}
+
+mkdir ${configDir2}
+$MONGO_DIR/bin/mongod --dbpath ${configDir2} --port ${configPort2} --configsvr --directio --cacheSize ${mongoConfigCacheSize} --fork --logpath ${configLog2}
+
+mkdir ${configDir3}
+$MONGO_DIR/bin/mongod --dbpath ${configDir3} --port ${configPort3} --configsvr --directio --cacheSize ${mongoConfigCacheSize} --fork --logpath ${configLog3}
+
+
+echo " ** STATUS ** : waiting for config servers to start"
+
+
+# wait 10 seconds for config servers to start
+sleep 10 
+
+
+
+# *********************************************************************************************
+# start mongos servers
+
+mongosPort1=30011
+mongosLog1=./mongos1.mongolog
+rm -f ${mongosLog1}
+mongosServer1=${HOSTNAME}
+
+$MONGO_DIR/bin/mongos --port ${mongosPort1} --configdb ${configServer}:${configPort1},${configServer}:${configPort2},${configServer}:${configPort3} --fork --logpath ${mongosLog1}
+
+
+echo " ** STATUS ** : waiting for mongos servers to start"
+
+
+# wait 10 seconds for mongos servers to start
+sleep 10 
+
+
+
+# *********************************************************************************************
+# start mongod servers locally
+
+runLocal="Y"
+
+if [ $runLocal == "Y" ]; then
+    mongodDir1=$MONGO_DATA_DIR/mongod1
+    mongodPort1=30021
+    mongodLog1=./mongod1.mongolog
+    rm -f ${mongodLog1}
+    mongodServer1=${HOSTNAME}
+    
+    mongodDir2=$MONGO_DATA_DIR/mongod2
+    mongodPort2=30022
+    mongodLog2=./mongod2.mongolog
+    rm -f ${mongodLog2}
+    mongodServer2=${HOSTNAME}
+    
+    mongodDir3=$MONGO_DATA_DIR/mongod3
+    mongodPort3=30023
+    mongodLog3=./mongod3.mongolog
+    rm -f ${mongodLog3}
+    mongodServer3=${HOSTNAME}
+    
+    mkdir ${mongodDir1}
+    $MONGO_DIR/bin/mongod --dbpath ${mongodDir1} --port ${mongodPort1} ${NOSYNC_COMMIT} ${DIRECTIO_STRING} --cacheSize $TOKUMON_CACHE_SIZE --fork --logpath ${mongodLog1} ${REPL_STRING} ${LOCK_TIMEOUT_STRING} ${SLOWMS_STRING}
+    
+    mkdir ${mongodDir2}
+    $MONGO_DIR/bin/mongod --dbpath ${mongodDir2} --port ${mongodPort2} ${NOSYNC_COMMIT} ${DIRECTIO_STRING} --cacheSize $TOKUMON_CACHE_SIZE --fork --logpath ${mongodLog2} ${REPL_STRING} ${LOCK_TIMEOUT_STRING} ${SLOWMS_STRING}
+
+    mkdir ${mongodDir3}
+    $MONGO_DIR/bin/mongod --dbpath ${mongodDir3} --port ${mongodPort3} ${NOSYNC_COMMIT} ${DIRECTIO_STRING} --cacheSize $TOKUMON_CACHE_SIZE --fork --logpath ${mongodLog3} ${REPL_STRING} ${LOCK_TIMEOUT_STRING} ${SLOWMS_STRING}
+
+    
+    echo " ** STATUS ** : waiting for mongod servers to start"
+    
+    
+    # wait 10 seconds for mongod servers to start
+    sleep 10 
+else
+    mongodServer1=lex5
+    mongodServer2=lex6
+    mongodServer3=tmcdsk
+    
+    echo "start servers on default port on ${mongodServer1}, ${mongodServer2}, and ${mongodServer3}"
+    echo "  then hit enter to continue"
+    read
+fi
+
+
+echo " ** STATUS ** : adding shard servers"
+if [ $runLocal == "Y" ]; then
+    $MONGO_DIR/bin/mongo ${DB_NAME} --port ${mongosPort1} --eval "printjson(sh.addShard(\"${mongodServer1}:${mongodPort1}\"));"
+    $MONGO_DIR/bin/mongo ${DB_NAME} --port ${mongosPort1} --eval "printjson(sh.addShard(\"${mongodServer2}:${mongodPort2}\"));"
+    $MONGO_DIR/bin/mongo ${DB_NAME} --port ${mongosPort1} --eval "printjson(sh.addShard(\"${mongodServer3}:${mongodPort3}\"));"
+else
+    $MONGO_DIR/bin/mongo ${DB_NAME} --port ${mongosPort1} --eval "printjson(sh.addShard(\"${mongodServer1}\"));"
+    $MONGO_DIR/bin/mongo ${DB_NAME} --port ${mongosPort1} --eval "printjson(sh.addShard(\"${mongodServer2}\"));"
+    #$MONGO_DIR/bin/mongo ${DB_NAME} --port ${mongosPort1} --eval "printjson(sh.addShard(\"${mongodServer3}\"));"
+fi
+
+sleep 5 
+$MONGO_DIR/bin/mongo ${DB_NAME} --port ${mongosPort1} --eval "sh.status();"
+
+
+echo " ** STATUS ** : enable sharding in the ${DB_NAME} database"
+$MONGO_DIR/bin/mongo ${DB_NAME} --port ${mongosPort1} --eval "printjson(sh.enableSharding(\"${DB_NAME}\"));"
+
+#collectionName=purchases_index
+#echo " ** STATUS ** : shard the ${DB_NAME}.${collectionName} collection"
+####$MONGO_DIR/bin/mongo ${DB_NAME} --port ${mongosPort1} --eval "printjson(sh.shardCollection(\"${DB_NAME}.${collectionName}\",{_id: 1}));"
+####$MONGO_DIR/bin/mongo ${DB_NAME} --port ${mongosPort1} --eval "printjson(sh.shardCollection(\"${DB_NAME}.${collectionName}\",{_id:\"hashed\"}));"
+####$MONGO_DIR/bin/mongo ${DB_NAME} --port ${mongosPort1} --eval "printjson(db.adminCommand({shardcollection: \"${DB_NAME}.${collectionName}\", key: {_id: \"hashed\"}, numInitialChunks: 6}));"
+####$MONGO_DIR/bin/mongo ${DB_NAME} --port ${mongosPort1} --eval "printjson(db.adminCommand({shardcollection: \"${DB_NAME}.${collectionName}\", key: {_id: \"hashed\"}, numInitialChunks: 2048}));"
+
+
+# disable balancer
+$MONGO_DIR/bin/mongo admin --port ${mongosPort1} --eval "sh.setBalancerState(false);"
+
+collectionName=sbtest
+echo " ** STATUS ** : shard the ${DB_NAME}.${collectionName} collection"
+$MONGO_DIR/bin/mongo ${DB_NAME} --port ${mongosPort1} --eval "printjson(sh.shardCollection(\"${DB_NAME}.${collectionName}\",{collectionId: 1, documentId: 1}));"
+echo " ** STATUS ** : pre-splitting the ${DB_NAME}.${collectionName} collection"
+for splitPoint in $(seq 1 $((${NUM_COLLECTIONS} - 1))) ; do
+    $MONGO_DIR/bin/mongo admin --port ${mongosPort1} --eval "printjson(db.runCommand({split:\"${DB_NAME}.${collectionName}\", middle:{collectionId:${splitPoint}, documentId:\"\$maxKey\"}}));"
+done
+
+# put the chunks where I want them
+$MONGO_DIR/bin/mongo admin --port ${mongosPort1} --eval "printjson(sh.moveChunk(\"sbtest.sbtest\", {collectionId:  1, documentId: 1}, \"shard0000\"));"
+sleep 5
+$MONGO_DIR/bin/mongo admin --port ${mongosPort1} --eval "printjson(sh.moveChunk(\"sbtest.sbtest\", {collectionId:  2, documentId: 1}, \"shard0001\"));"
+sleep 5
+$MONGO_DIR/bin/mongo admin --port ${mongosPort1} --eval "printjson(sh.moveChunk(\"sbtest.sbtest\", {collectionId:  3, documentId: 1}, \"shard0002\"));"
+sleep 5
+$MONGO_DIR/bin/mongo admin --port ${mongosPort1} --eval "printjson(sh.moveChunk(\"sbtest.sbtest\", {collectionId:  4, documentId: 1}, \"shard0000\"));"
+sleep 5
+$MONGO_DIR/bin/mongo admin --port ${mongosPort1} --eval "printjson(sh.moveChunk(\"sbtest.sbtest\", {collectionId:  5, documentId: 1}, \"shard0001\"));"
+sleep 5
+$MONGO_DIR/bin/mongo admin --port ${mongosPort1} --eval "printjson(sh.moveChunk(\"sbtest.sbtest\", {collectionId:  6, documentId: 1}, \"shard0002\"));"
+sleep 5
+$MONGO_DIR/bin/mongo admin --port ${mongosPort1} --eval "printjson(sh.moveChunk(\"sbtest.sbtest\", {collectionId:  7, documentId: 1}, \"shard0000\"));"
+sleep 5
+$MONGO_DIR/bin/mongo admin --port ${mongosPort1} --eval "printjson(sh.moveChunk(\"sbtest.sbtest\", {collectionId:  8, documentId: 1}, \"shard0001\"));"
+sleep 5
+$MONGO_DIR/bin/mongo admin --port ${mongosPort1} --eval "printjson(sh.moveChunk(\"sbtest.sbtest\", {collectionId:  9, documentId: 1}, \"shard0002\"));"
+sleep 5
+$MONGO_DIR/bin/mongo admin --port ${mongosPort1} --eval "printjson(sh.moveChunk(\"sbtest.sbtest\", {collectionId: 10, documentId: 1}, \"shard0000\"));"
+sleep 5
+$MONGO_DIR/bin/mongo admin --port ${mongosPort1} --eval "printjson(sh.moveChunk(\"sbtest.sbtest\", {collectionId: 11, documentId: 1}, \"shard0001\"));"
+sleep 5
+$MONGO_DIR/bin/mongo admin --port ${mongosPort1} --eval "printjson(sh.moveChunk(\"sbtest.sbtest\", {collectionId: 12, documentId: 1}, \"shard0002\"));"
+sleep 5
+
+# longer sleep than usual, allow balancing of splits
+#sleep 30
+
+
+$MONGO_DIR/bin/mongo ${DB_NAME} --port ${mongosPort1} --eval "sh.status();"
+

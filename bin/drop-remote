@@ -1,0 +1,4 @@
+#! /bin/bash
+
+#cp ${1} ~/Dropbox/Public/tokutek
+scp $* tcallaghan@192.168.1.242:~/Dropbox/Public/tokutek

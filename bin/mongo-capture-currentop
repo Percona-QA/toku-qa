@@ -1,0 +1,8 @@
+#!/bin/bash
+
+LOG_NAME=./currentop.log
+
+date >> $LOG_NAME
+
+$MONGO_DIR/bin/mongod --dbpath ${configDir1} --port ${configPort1} --configsvr --directio --cacheSize ${mongoConfigCacheSize} --fork --logpath ${configLog1}
+

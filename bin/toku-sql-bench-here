@@ -1,0 +1,13 @@
+#!/bin/bash
+
+if [ $# -eq 0 ]; then
+  echo "usage: toku-sql-bench-here <svn revision number of build> <mysql type>"
+  exit 1
+fi
+
+svnRevNum=${1}
+mysqlVersion=${2}
+commit=0
+
+time run.sql.bench.bash --mysql=${mysqlVersion} --branch=. --revision=${svnRevNum} --commit=${commit} --basedir=~/temp --builddir=~/temp/mysql.build
+

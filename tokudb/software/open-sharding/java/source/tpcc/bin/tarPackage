@@ -1,0 +1,14 @@
+#!/usr/bin/ruby
+
+
+#Packaging script for the tpcc
+
+if (system("tar cvfz tpccBenchmark.tar.gz tpcc/"))
+  puts "Created the tar package: tpccBenchmark.tar.gz"
+else
+  puts "Failed to create the tar package. 
+        Make sure you are in the directory above the tpcc directory.
+        .../open-sharding/java/source/
+        and then execute tpcc/bin/tarPackage"
+        exit
+end

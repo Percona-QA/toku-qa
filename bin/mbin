@@ -1,0 +1,3 @@
+#!/bin/sh
+
+$DB_DIR/bin/mysqlbinlog $@

@@ -1,0 +1,8 @@
+#! /bin/bash
+
+for i in * ; do
+    if [ -d "$i" ] ; then
+        sz=`du -ch $i | tail -n 1 | cut -f1`
+        echo "$i $sz"
+    fi
+done

@@ -1,0 +1,63 @@
+#!/bin/bash
+
+# make sure a MB/s parameter was passed
+if [ $# -eq 0 ]; then
+    echo "usage: mysql-run-backup <target-MB/s> <pause-seconds>"
+    exit 1
+fi
+
+# check that $HOT_BACKUP_DIR is defined
+if [ -z "$HOT_BACKUP_DIR" ]; then
+    echo "Need to set HOT_BACKUP_DIR"
+    exit 1
+fi
+# check that $HOT_BACKUP_DIR exists
+if [ ! -d "$HOT_BACKUP_DIR" ]; then
+    echo "Need to create directory HOT_BACKUP_DIR"
+    exit 1
+fi
+
+# clean out the $HOT_BACKUP_DIR directory
+echo "`date` | erasing contents of ${HOT_BACKUP_DIR}"
+rm -rf $HOT_BACKUP_DIR/*
+
+targetMbps=$1
+let targetBps=targetMbps*1024*1024
+pauseSeconds=$2
+
+MYSQL_SOCKET=$MYSQL_SOCKET
+MYSQL_USER=root
+MYSQL_PASSWORD=""
+MYSQL_DATABASE=test
+
+backupNum=1
+
+while [ 1 == 1 ] ; do
+    if ! [ -S "${MYSQL_SOCKET}" ]; then
+        echo "Unable to locate MySQL server at ${MYSQL_SOCKET}, stopping..."
+        exit 1
+    fi
+
+    paddedBackupNum=`printf "%06d" ${backupNum}`
+    backupDir=${HOT_BACKUP_DIR}/${paddedBackupNum}
+
+    T="$(date +%s)"
+    echo "`date` | starting backup to ${backupDir} at ${targetMbps} MB/s"
+    mkdir ${backupDir}
+    $DB_DIR/bin/mysql --user=${MYSQL_USER} --socket=${MYSQL_SOCKET} --password=${MYSQL_PASSWORD} ${MYSQL_DATABASE} -e "set global tokudb_backup_throttle=${targetBps}"
+    # $DB_DIR/bin/mysql --user=${MYSQL_USER} --socket=${MYSQL_SOCKET} --password=${MYSQL_PASSWORD} ${MYSQL_DATABASE} -e "show variables like 'tokudb_backup_throttle'"
+    $DB_DIR/bin/mysql --user=${MYSQL_USER} --socket=${MYSQL_SOCKET} --password=${MYSQL_PASSWORD} ${MYSQL_DATABASE} -e "backup to '${backupDir}'"
+    T="$(($(date +%s)-T))"
+    printf "`date` | backup duration = %02d:%02d:%02d:%02d\n" "$((T/86400))" "$((T/3600%24))" "$((T/60%60))" "$((T%60))"
+    
+    BACKUP_SIZE_BYTES=`du -c --block-size=1 ${backupDir} | tail -n 1 | cut -f1`
+    BACKUP_SIZE_MB=`echo "scale=2; ${BACKUP_SIZE_BYTES}/(1024*1024)" | bc `
+    BACKUP_MBPS=`echo "scale=2; ${BACKUP_SIZE_MB}/${T}" | bc `
+    
+    printf "`date` | backed up %02.2f MB in %02.2f second(s) at %02.2f MB/s\n" "$BACKUP_SIZE_MB" "$T" "$BACKUP_MBPS"
+    
+    let backupNum=backupNum+1
+    
+    echo "sleeping for ${pauseSeconds} second(s)"
+    sleep ${pauseSeconds}
+done

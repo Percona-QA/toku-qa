@@ -1,0 +1,7 @@
+Unindexed upsert benchmark
+
+- standard sysbench schema, plus counter field (starts at 0)
+  + HOWEVER, no secondary index
+- workload is either:
+  - $inc(counter)
+  - $set(c)

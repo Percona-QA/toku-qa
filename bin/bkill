@@ -1,0 +1,22 @@
+#! /bin/bash
+
+pkill -f capture-data-folder-contents.bash
+pkill -f capture-engine-status.bash
+pkill -f capture-extended-status.bash
+pkill -f capture-filesystem-info.bash
+pkill -f capture-folder-size.bash
+pkill -f capture-global-status.bash
+pkill -f capture-iostat.bash
+pkill -f capture-iostat-datasize.bash
+pkill -f capture-memory.bash
+pkill -f capture-show-processlist.bash
+pkill -f capture-sysinfo.bash
+pkill -f capture-tokustat.bash
+pkill -f capture-tokumxstat.bash
+pkill -f dstat
+pkill -f iostat
+pkill -f mysql-run-arbitrary-sql
+pkill -f mysql-show-what
+pkill -f pmprof.bash
+pkill -f tokustat.py
+pkill -f tokumxstat.py

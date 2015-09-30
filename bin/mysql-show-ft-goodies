@@ -1,0 +1,16 @@
+#!/bin/bash
+
+if [ $# -eq 0 ]; then
+  echo "usage: mysql-show-ft-info <database-name>"
+  exit 1
+fi
+
+
+MYSQL_SOCKET=$MYSQL_SOCKET
+USER_NAME=root
+USER_PASSWORD=""
+MYSQL_DATABASE=$1
+
+$DB_DIR/bin/mysql --user=${USER_NAME} --socket=${MYSQL_SOCKET} -e "select * from information_schema.tokudb_fractal_tree_info where dictionary_name like './${MYSQL_DATABASE}/%';" > ft-info.txt
+$DB_DIR/bin/mysql --user=${USER_NAME} --socket=${MYSQL_SOCKET} -e "select * from information_schema.tokudb_fractal_tree_block_map where dictionary_name like './${MYSQL_DATABASE}/%';" > ft-block-map.txt
+/usr/sbin/xfs_bmap $DB_DIR/data/_${MYSQL_DATABASE}_* > xfs-bmap.txt

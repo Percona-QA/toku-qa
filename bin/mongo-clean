@@ -1,0 +1,37 @@
+#!/bin/bash
+
+if [ -n "$(pgrep -U $USER mongod)" ]; then
+    echo "MongoDB is running, cannot clean directories"
+    exit 1
+fi
+
+if [ -z "$MONGO_DIR" ]; then
+    echo "Need to set MONGO_DIR"
+    exit 1
+fi
+if [ ! -d "$MONGO_DIR" ]; then
+    echo "Need to create directory MONGO_DIR"
+    exit 1
+fi
+
+if [ -z "$MONGO_DATA_DIR" ]; then
+    echo "Need to set MONGO_DATA_DIR"
+    exit 1
+fi
+if [ ! -d "$MONGO_DATA_DIR" ]; then
+    echo "Need to create directory MONGO_DATA_DIR"
+    exit 1
+fi
+
+if [ -z "$HOT_BACKUP_DIR" ]; then
+    echo "Need to set HOT_BACKUP_DIR"
+    exit 1
+fi
+if [ ! -d "$HOT_BACKUP_DIR" ]; then
+    echo "Need to create directory HOT_BACKUP_DIR"
+    exit 1
+fi
+
+rm -rf $MONGO_DIR/*
+rm -rf $MONGO_DATA_DIR/*
+rm -rf $HOT_BACKUP_DIR/*

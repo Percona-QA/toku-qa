@@ -1,0 +1,6 @@
+#! /bin/bash
+
+ip_addy=lex10
+
+sudo umount /nfs/tmcsrv
+sudo mount -o soft,timeo=100,retrans=10,retry=5,rsize=32768,wsize=32768,intr,noatime ${ip_addy}:/home/tcallaghan/nfs /nfs/tmcsrv -o 'vers=3'

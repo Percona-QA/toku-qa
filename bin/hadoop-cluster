@@ -1,0 +1,8 @@
+#!/bin/bash
+
+export HADOOP_HOME=/home/tcallaghan/hadoop-cluster/hadoop-0.20.2-cdh3u0
+export SQOOP_HOME=/home/tcallaghan/hadoop-cluster/sqoop-1.2.0-cdh3u0
+export HBASE_HOME=/home/tcallaghan/hadoop-cluster/hbase-0.90.1-cdh3u0
+export ZOOKEEPER_HOME=/home/tcallaghan/hadoop-cluster/zookeeper-3.3.3-cdh3u0
+
+export PATH=$PRE_HADOOP_PATH:$HADOOP_HOME/bin:$SQOOP_HOME/bin:$HBASE_HOME/bin:$ZOOKEEPER_HOME/bin

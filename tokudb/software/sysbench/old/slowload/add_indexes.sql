@@ -1,0 +1,16 @@
+ALTER TABLE `sbtest1` ADD KEY `k` (`k`);
+ALTER TABLE `sbtest2` ADD KEY `k` (`k`);
+ALTER TABLE `sbtest3` ADD KEY `k` (`k`);
+ALTER TABLE `sbtest4` ADD KEY `k` (`k`);
+ALTER TABLE `sbtest5` ADD KEY `k` (`k`);
+ALTER TABLE `sbtest6` ADD KEY `k` (`k`);
+ALTER TABLE `sbtest7` ADD KEY `k` (`k`);
+ALTER TABLE `sbtest8` ADD KEY `k` (`k`);
+ALTER TABLE `sbtest9` ADD KEY `k` (`k`);
+ALTER TABLE `sbtest10` ADD KEY `k` (`k`);
+ALTER TABLE `sbtest11` ADD KEY `k` (`k`);
+ALTER TABLE `sbtest12` ADD KEY `k` (`k`);
+ALTER TABLE `sbtest13` ADD KEY `k` (`k`);
+ALTER TABLE `sbtest14` ADD KEY `k` (`k`);
+ALTER TABLE `sbtest15` ADD KEY `k` (`k`);
+ALTER TABLE `sbtest16` ADD KEY `k` (`k`);

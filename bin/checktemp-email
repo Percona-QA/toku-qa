@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# create log of last 24 hours
+tail -n 360 temp.log > temp-last-24.log
+
+gnuplot ~/mystuff/personal/tokutek/gnuplot/gnuplot-temp.txt
+
+# remove the 24 hour log
+rm -f temp-last-24.log

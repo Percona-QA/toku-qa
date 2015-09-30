@@ -1,0 +1,26 @@
+#!/bin/bash
+
+if [ $# -eq 0 ]; then
+  echo "usage: gf <tarball-name>"
+  exit 1
+fi
+
+cp ~/mystuff/personal/tokutek/mysql/toku52x/* .
+./fresh-db
+
+num_found=0
+
+for i in *.tar.gz; do
+  MYSQL_VERSION=${i%.tar.gz}
+  ((num_found++))
+  if [ $num_found -gt 1 ]; then
+      echo "found more than 1 tarball, exiting!"
+      exit 1
+  fi
+done
+
+cd $MYSQL_VERSION
+
+mstrip
+
+tar czvf $BACKUP_DIR/${1} .

@@ -1,0 +1,98 @@
+#!/bin/bash
+
+if [ -z "$MONGO_DATA_DIR" ]; then
+    echo "Need to set MONGO_DATA_DIR"
+    exit 1
+fi
+if [ ! -d "$MONGO_DATA_DIR" ]; then
+    echo "Need to create directory MONGO_DATA_DIR"
+    exit 1
+fi
+
+if [ -z "$MONGO_DIR" ]; then
+    echo "Need to set MONGO_DIR"
+    exit 1
+fi
+if [ ! -d "$MONGO_DIR" ]; then
+    echo "Need to create directory MONGO_DIR"
+    exit 1
+fi
+
+if [ -z "$MONGO_LOG" ]; then
+    echo "Need to set MONGO_LOG"
+    exit 1
+fi
+
+if [ -z "$COMMIT_SYNC" ]; then
+    export COMMIT_SYNC=1
+fi
+
+if [ ${COMMIT_SYNC} == "1" ]; then
+    NOSYNC_COMMIT=""
+else
+    NOSYNC_COMMIT="--nosync_commit"
+fi
+
+if [ -z "$MONGO_REPL" ]; then
+    REPL_STRING=""
+else
+    REPL_STRING="--replSet ${MONGO_REPL}"
+fi
+
+if [ -z "$MONGO_LOG_DIR" ]; then
+    MONGO_LOG_DIR_STRING=""
+else
+    MONGO_LOG_DIR_STRING="--logDir ${MONGO_LOG_DIR}"
+fi
+
+if [ -z "$MONGO_LOCK_TIMEOUT" ]; then
+    LOCK_TIMEOUT_STRING=""
+else
+    LOCK_TIMEOUT_STRING="--lockTimeout ${MONGO_LOCK_TIMEOUT}"
+fi
+
+if [ -z "$TOKUMX_BUFFERED_IO" ]; then
+    DIRECTIO_STRING="--directio"
+else
+    if [ ${TOKUMX_BUFFERED_IO} == "Y" ]; then
+        DIRECTIO_STRING=""
+    else
+        DIRECTIO_STRING="--directio"
+    fi
+fi
+
+AUDIT_LOG=/tmp/audit.log
+rm -f ${AUDIT_LOG}
+
+#AUDIT_FILTER='--auditFilter {atype:{$nin:["createDatabase","authenticate"]}}'
+#AUDIT_FILTER='--auditFilter {atype:{$in:["dropCollection","authenticate"]}}'
+#AUDIT_FILTER='--auditFilter {atype:"createIndex"}}'
+
+#AUDIT_FILTER='--auditFilter {"users.user":{$nin:["admin","bob2"]}}'
+#AUDIT_FILTER='--auditFilter {"users.user":{$in:["admin","bob"]}}'
+#AUDIT_FILTER='--auditFilter {"users.user":"bob"}}'
+
+#AUDIT_FILTER='--auditFilter {"users.db":{$nin:["admin","timbo"]}}'
+#AUDIT_FILTER='--auditFilter {"users.db":{$in:["admin","test"]},"users.user":"bob"}'
+#AUDIT_FILTER='--auditFilter {"users.db":"timbo"}}'
+
+# just bob in test
+#AUDIT_FILTER='--auditFilter {"users.db":{$in:["test"]},"users.user":"bob"}'
+
+echo ${AUDIT_FILTER}
+
+$MONGO_DIR/bin/mongod --dbpath $MONGO_DATA_DIR ${NOSYNC_COMMIT} ${DIRECTIO_STRING} --cacheSize $TOKUMON_CACHE_SIZE --fork --logpath $MONGO_LOG ${REPL_STRING} ${LOCK_TIMEOUT_STRING} ${MONGOD_EXTRA} ${MONGO_LOG_DIR_STRING} --auth --auditDestination=file --auditFormat=JSON --auditPath=${AUDIT_LOG} ${AUDIT_FILTER}
+#$MONGO_DIR/bin/mongod --dbpath $MONGO_DATA_DIR ${NOSYNC_COMMIT} ${DIRECTIO_STRING} --cacheSize $TOKUMON_CACHE_SIZE --fork --logpath $MONGO_LOG ${REPL_STRING} ${LOCK_TIMEOUT_STRING} ${MONGOD_EXTRA} ${MONGO_LOG_DIR_STRING} --auth --auditDestination=file --auditFormat=JSON --auditPath=${AUDIT_LOG} --auditFilter=${AUDIT_FILTER}
+
+echo "waiting for tokumx to start"
+mongo-is-up
+
+echo "adding admin/admin"
+$MONGO_DIR/bin/mongo admin --eval 'printjson(db.addUser( { user: "admin", pwd: "admin", roles: [ "userAdminAnyDatabase", "clusterAdmin", "readWriteAnyDatabase" ] } ))'
+
+echo "adding bob/bob@test"
+$MONGO_DIR/bin/mongo --username=admin --password=admin admin --eval 'db=db.getSiblingDB("test"); printjson(db.addUser( { user: "bob", pwd: "bob", roles: [ "readWrite" ] } ))'
+
+
+# start auditing server
+# $MONGO_DIR/bin/mongod --dbpath=$MONGO_DATA_DIR --auditDestination=file --auditFormat=JSON --auditPath=/tmp/audit.log --logpath=/tmp/tokumx.log

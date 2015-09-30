@@ -1,0 +1,9 @@
+#! /bin/bash
+
+if [ $# -eq 0 ]; then
+  echo "usage: rqg-check <username>"
+  exit 1
+fi
+
+#ps -ef | grep `whoami` | egrep "mysql|perl|valgrind" | grep -v "grep" | awk '{print $2}' | xargs sudo kill -9;
+ps -ef | grep $1 | egrep "mysql|perl|valgrind" | grep -v "grep" | awk '{print $2}'

@@ -1,0 +1,14 @@
+#!/bin/bash
+
+if ls ${DB_DIR}/data/core* &> /dev/null; then
+  DATE=`date +"%Y%m%d-%H%M%S"`
+  tarFileName="core-${MACHINE_NAME}-${DATE}.tar.gz"
+
+  pushd ${DB_DIR}
+
+  tar czvf ${tarFileName} ${DB_DIR}/data/core*
+  scp ${tarFileName} ${SCP_TARGET}:~
+  rm ${tarFileName}
+
+  popd
+fi

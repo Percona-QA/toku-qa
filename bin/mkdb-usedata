@@ -1,0 +1,24 @@
+#!/bin/bash
+
+rm -rf $BIG_DIR/mysql-data
+mkdir $BIG_DIR/mysql-data
+mv $DB_DIR/data/* $BIG_DIR/mysql-data
+
+cd $DB_DIR
+rm -rf *
+
+if [ -e ${BACKUP_DIR}/${1}.tar.gz ]; then
+  echo "expanding ${BACKUP_DIR}/${1}.tar.gz"
+  tar xzf ${BACKUP_DIR}/${1}.tar.gz
+elif [ -e ${BACKUP_DIR}/${1}.tar ]; then
+  echo "expanding ${BACKUP_DIR}/${1}.tar"
+  tar xf ${BACKUP_DIR}/${1}.tar
+else
+  echo "ERROR: unable to locate ${BACKUP_DIR}/${1} in .tar or .tar.gz format"
+  exit 1
+fi
+
+cd data
+rm -rf *
+mv -v $BIG_DIR/mysql-data/* .
+rmdir $BIG_DIR/mysql-data

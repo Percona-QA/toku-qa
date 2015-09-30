@@ -1,0 +1,12 @@
+export VOLTDB=/home/izzy/voltbin
+
+i=0
+
+while [ $i -eq 0 ]; do
+
+    ant client-vote1
+    ant client-delete1
+    ant client-vote2
+    ant client-delete2
+
+done 

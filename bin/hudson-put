@@ -1,0 +1,3 @@
+# Put given server back into Hudson active pool - replace $1
+
+curl "http://newbobbi:8080/computer/$1/toggleOffline"

@@ -1,0 +1,69 @@
+<?xml version="1.0" ?>
+<project name="generic ant script" default="default">
+    <property name="build.dir" location="obj/"/>
+    <property name="src.dir" location="src/"/>
+    
+    <path id="project.classpath">
+        <pathelement location="${build.dir}"/>
+        <pathelement path="${java.class.path}"/>
+    </path>
+    
+    <macrodef name="invoke-java">
+        <attribute name="classname"/>
+        <element name="javac" optional="true" implicit="true"/>
+        <sequential>
+            <java classname="@{classname}" fork="yes" failonerror="true">
+                <jvmarg value="-server"/>
+                <jvmarg value="-Xmx512m"/>
+                <jvmarg value="-XX:+HeapDumpOnOutOfMemoryError"/>
+                <jvmarg value="-XX:HeapDumpPath=/tmp"/>
+                <jvmarg value="-XX:-ReduceInitialCardMarks"/>
+                <classpath refid="project.classpath"/>
+                <assertions>
+                    <disable/>
+                </assertions>
+                <javac/>
+            </java>
+        </sequential>
+    </macrodef>
+    
+    <target name="default" depends="srccompile" description="Compile code."/>
+    
+    <target name="clean" description="Remove compilation artifacts">
+        <delete failonerror="false" includeemptydirs="true">
+            <fileset dir="${build.dir}" includes="**/*"/>
+        </delete>
+    </target>
+    
+    <target name="srccompile">
+        <mkdir dir="${build.dir}"/>
+        <javac srcdir="${src.dir}" destdir="${build.dir}" debug="true" target="1.6" includeantruntime="false">
+            <classpath refid="project.classpath"/>
+        </javac>
+    </target>
+    
+    <target name="run" description="Run benchmark 1.">
+        <invoke-java classname="jtest">
+            <arg value="0"/>                   <!-- number of query threads -->
+            <arg value="1"/>                   <!-- number of writer threads -->
+            <arg value="1"/>                   <!-- total number of tables -->
+            <arg value="51000000"/>            <!-- number of rows to insert -->
+            <arg value="-1"/>                  <!-- number of seconds between feedback/progress messages  -->
+            <arg value="100000"/>              <!-- number of inserts between feedback/progress messages  -->
+            <arg value="0"/>                   <!-- number of minutes to run for, 0 = run forever -->
+            <arg value="bench1.tsv"/>          <!-- name of log file -->
+            <arg value="2"/>                   <!-- index version -->
+            <arg value="N"/>                   <!-- clustering indexes -->
+            <arg value="60"/>                  <!-- seconds between queries -->
+            <arg value="1000"/>                <!-- documents per query -->
+            <arg value="Y"/>                   <!-- create secondary indexes -->
+            <arg value="lzma"/>                <!-- compression type -->
+            <arg value="256"/>                 <!-- string field length -->
+            <arg value="5000"/>                <!-- number of random strings -->
+            <arg value="6"/>                   <!-- length of each random string (including trailing space) -->
+            <arg value="50"/>                  <!-- documents per insert (bulk loading) -->
+            <arg value="131072"/>              <!-- documents per insert (bulk loading) -->
+        </invoke-java>
+    </target>
+
+</project>

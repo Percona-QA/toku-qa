@@ -1,0 +1,19 @@
+#!/bin/bash
+
+MYSQL_SOCKET=$MYSQL_SOCKET
+MYSQL_USER=$MYSQL_USER
+MYSQL_PASSWORD=""
+MYSQL_DATABASE=$MYSQL_DATABASE
+
+wait_seconds=${1}
+sql_statement=${2}
+LOG_NAME=${3}
+
+sleep ${wait_seconds}
+
+T="$(date +%s)"
+echo "`date` | executing sql statement" >> ${LOG_NAME}
+echo "`date` | ${sql_statement}" >> ${LOG_NAME}
+$DB_DIR/bin/mysql --user=${MYSQL_USER} --socket=${MYSQL_SOCKET} --password=${MYSQL_PASSWORD} ${MYSQL_DATABASE} -e "${sql_statement}" >> ${LOG_NAME}
+T="$(($(date +%s)-T))"
+printf "`date` | sql statement duration = %02d:%02d:%02d:%02d\n" "$((T/86400))" "$((T/3600%24))" "$((T/60%60))" "$((T%60))" >> ${LOG_NAME}

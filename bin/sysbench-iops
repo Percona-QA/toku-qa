@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# check filesystem IOPs performance (directIO)
+
+outFile=/tmp/sbfileio.txt
+totalSize=20G
+numThreads=16
+
+rm -f ${outFile}
+
+echo "Creating ${totalSize} worth of Sysbench files"
+sysbench --num-threads=${numThreads} --test=fileio --file-total-size=${totalSize} prepare > ${outFile}
+rm -f ${outFile}
+
+for benchType in rndrd rndwr rndrw seqrd seqwr seqrewr ; do
+    echo "performing test : ${benchType}"
+    sysbench --num-threads=${numThreads} --test=fileio --file-total-size=${totalSize} --file-test-mode=${benchType} --file-extra-flags=direct run > ${outFile}
+    opsPerSec=`grep "Requests/sec executed" ${outFile} | awk '{print $1}'`
+    echo "${benchType} ops/sec = ${opsPerSec}"
+    #cat ${outFile}
+    rm -f ${outFile}
+done
+
+sysbench --num-threads=${numThreads} --test=fileio --file-total-size=${totalSize} cleanup > ${outFile}
+rm -f ${outFile}

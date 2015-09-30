@@ -1,0 +1,6 @@
+Unindexed update benchmark
+
+- standard sysbench schema, plus counter field (starts at 0)
+- workload is either:
+  - $inc(counter)
+  - $set(c)

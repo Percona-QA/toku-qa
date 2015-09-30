@@ -1,0 +1,7 @@
+#!/bin/sh
+
+if [ -f bin/mysql ]; then
+    bin/mysql --user=root --socket=$MYSQL_SOCKET
+else
+    $DB_DIR/bin/mysql --user=root --socket=$MYSQL_SOCKET
+fi

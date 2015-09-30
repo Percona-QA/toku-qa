@@ -1,0 +1,55 @@
+#!/bin/bash
+
+MYSQL_SOCKET=$MYSQL_SOCKET
+MYSQL_USER=root
+MYSQL_PASSWORD=""
+
+last_update=-1
+last_select=-1
+last_insert=-1
+last_delete=-1
+last_commit=-1
+
+wait_seconds=${1}
+num_intervals=${2}
+this_interval=1
+
+while [ ${this_interval} -le ${num_intervals} ] ; do
+    $DB_DIR/bin/mysqladmin --user=${MYSQL_USER} --socket=${MYSQL_SOCKET} --password=${MYSQL_PASSWORD} ext | grep -e 'Com_\(update \|select \|insert \|delete \|commit \)' > /tmp/tmcinfo.txt
+    
+    raw_line=`grep update /tmp/tmcinfo.txt`
+    this_update=`echo ${raw_line} | cut -d " " -f4`
+    raw_line=`grep select /tmp/tmcinfo.txt`
+    this_select=`echo ${raw_line} | cut -d " " -f4`
+    raw_line=`grep insert /tmp/tmcinfo.txt`
+    this_insert=`echo ${raw_line} | cut -d " " -f4`
+    raw_line=`grep delete /tmp/tmcinfo.txt`
+    this_delete=`echo ${raw_line} | cut -d " " -f4`
+    raw_line=`grep commit /tmp/tmcinfo.txt`
+    this_commit=`echo ${raw_line} | cut -d " " -f4`
+
+    this_interval_update=$((this_update-last_update))
+    this_interval_select=$((this_select-last_select))
+    this_interval_insert=$((this_insert-last_insert))
+    this_interval_delete=$((this_delete-last_delete))
+    this_interval_commit=$((this_commit-last_commit))
+    
+    this_ups=$((this_interval_update/wait_seconds))
+    this_sps=$((this_interval_select/wait_seconds))
+    this_ips=$((this_interval_insert/wait_seconds))
+    this_dps=$((this_interval_delete/wait_seconds))
+    this_tot=$((this_ups+this_sps+this_ips+this_dps))
+    this_cps=$((this_interval_commit/wait_seconds))
+    
+    echo "approx select/update/insert/delete/total/commit per second = ${this_sps} | ${this_ups} | ${this_ips} | ${this_dps} | ${this_tot} | ${this_cps}"
+    
+    last_update=${this_update}
+    last_select=${this_select}
+    last_insert=${this_insert}
+    last_delete=${this_delete}
+    last_commit=${this_commit}
+    
+    sleep ${wait_seconds}
+    
+    let this_interval=this_interval+1
+done

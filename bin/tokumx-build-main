@@ -1,0 +1,13 @@
+#!/bin/bash
+
+svn export https://svn.tokutek.com/tokudb/mongo/scripts/make.tokumon.bash
+
+if [ $# -eq 0 ]; then
+  svnRev=$(svn info https://svn.tokutek.com/tokudb | awk '/^Revision:/{print $2}')
+else
+  svnRev=${1}
+fi
+
+echo "building tokumon at revision ${svnRev}"
+
+./make.tokumon.bash --revision=${svnRev}

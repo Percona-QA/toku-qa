@@ -1,0 +1,11 @@
+#! /bin/bash
+
+ip_addy=192.168.1.242
+
+rsync -vrazR --progress --stats --delete tcallaghan@${ip_addy}:mystuff/personal/tokutek ~
+rsync -vrazR --progress --stats --delete tcallaghan@${ip_addy}:mystuff/personal/tmc ~
+rsync -vrazR --progress --stats --delete tcallaghan@${ip_addy}:java_goodies ~
+rsync -vrazR --progress --stats --delete tcallaghan@${ip_addy}:holder/tokutek ~
+
+# rsync -vrazRC --progress --stats --delete tcallaghan@tmcsrv:mystuff ~
+#   put back the -C option (as above) to do all the CVS excludes

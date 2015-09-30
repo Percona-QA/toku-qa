@@ -1,0 +1,41 @@
+#!/bin/bash
+
+if [ -z "$MONGO_DATA_DIR" ]; then
+    echo "Need to set MONGO_DATA_DIR"
+    exit 1
+fi
+if [ ! -d "$MONGO_DATA_DIR" ]; then
+    echo "Need to create directory MONGO_DATA_DIR"
+    exit 1
+fi
+
+if [ -z "$MONGO_DIR" ]; then
+    echo "Need to set MONGO_DIR"
+    exit 1
+fi
+if [ ! -d "$MONGO_DIR" ]; then
+    echo "Need to create directory MONGO_DIR"
+    exit 1
+fi
+
+cd $MONGO_DIR
+rm -rf *
+
+SOURCE_DIR=${BACKUP_DIR}/mongodb
+
+if [ -e ${SOURCE_DIR}/${1} ]; then
+  echo "expanding ${SOURCE_DIR}/${1}"
+  tar xzvf ${SOURCE_DIR}/${1} --strip 1
+elif [ -e ${SOURCE_DIR}/${1}.tar.gz ]; then
+  echo "expanding ${SOURCE_DIR}/${1}.tar.gz"
+  tar xzvf ${SOURCE_DIR}/${1}.tar.gz --strip 1
+elif [ -e ${SOURCE_DIR}/${1}.tgz ]; then
+  echo "expanding ${SOURCE_DIR}/${1}.tgz"
+  tar xzvf ${SOURCE_DIR}/${1}.tgz --strip 1
+elif [ -e ${SOURCE_DIR}/${1}.tar ]; then
+  echo "expanding ${SOURCE_DIR}/${1}.tar"
+  tar xvf ${SOURCE_DIR}/${1}.tar --strip 1
+else
+  echo "ERROR: unable to locate ${SOURCE_DIR}/${1} in .tar, .tar.gz, or .tgz format"
+fi
+

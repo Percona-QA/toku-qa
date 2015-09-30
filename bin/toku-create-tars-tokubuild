@@ -1,0 +1,117 @@
+#!/bin/bash
+
+# create ready-to-go-database tarballs from a particular build on tokubuild@lex1
+# configured to do all 4 build types
+
+doOptimizedCommunity=Y
+doDebugCommunity=Y
+doOptimizedEnterprise=Y
+doDebugEnterprise=Y
+
+
+if [ $# -eq 0 ]; then
+  echo "usage: toku-create-tars-tokubuild <svn-revision-number>"
+  exit 1
+fi
+
+if [ -z "$DB_DIR" ]; then
+    echo "Need to set DB_DIR"
+    exit 1
+fi
+if [ ! -d "$DB_DIR" ]; then
+    echo "Need to create directory DB_DIR"
+    exit 1
+fi
+if [ "$(ls -A $DB_DIR)" ]; then
+    echo "$DB_DIR contains files, cannot run script"
+    exit 1
+fi
+
+svnRevNum=${1}
+
+platform=linux-x86_64
+mysqlVersions="mysql-5.5.30 mariadb-5.5.30"
+
+###############################################################################
+# optimized - community
+
+if [ ${doOptimizedCommunity} == "Y" ]; then
+    for mysqlVersion in ${mysqlVersions} ; do
+        pushd $DB_DIR
+        if [ $? != 0 ] ; then echo "DB_DIR does not exist, exiting"; exit 1; fi
+        rm -rf *
+        
+        tarDirectory=build-tokudb-${svnRevNum}
+        tarFileSource=${mysqlVersion}-tokudb-${svnRevNum}-${platform}.tar.gz
+        tarFileDestination=blank-main.${svnRevNum}-${mysqlVersion}.tar.gz
+        
+        echo "creating ${tarFileDestination} from ${tarFileSource}"
+        scp -i ~/.ssh/id_rsa.priv.tokubuild tokubuild@lex1:~/${tarDirectory}/${tarFileSource} .
+        rm -f ${BACKUP_DIR}/${tarFileDestination}
+        gf ${tarFileDestination}
+        popd
+    done
+fi
+
+###############################################################################
+# debug - community
+    
+if [ ${doDebugCommunity} == "Y" ]; then
+    for mysqlVersion in ${mysqlVersions} ; do
+        pushd $DB_DIR
+        if [ $? != 0 ] ; then echo "DB_DIR does not exist, exiting"; exit 1; fi
+        rm -rf *
+        
+        tarDirectory=build-tokudb-${svnRevNum}-debug
+        tarFileSource=${mysqlVersion}-tokudb-${svnRevNum}-debug-${platform}.tar.gz
+        tarFileDestination=blank-main.${svnRevNum}-${mysqlVersion}-debug.tar.gz
+        
+        echo "creating ${tarFileDestination} from ${tarFileSource}"
+        scp -i ~/.ssh/id_rsa.priv.tokubuild tokubuild@lex1:~/${tarDirectory}/${tarFileSource} .
+        rm -f ${BACKUP_DIR}/${tarFileDestination}
+        gf ${tarFileDestination}
+        popd
+    done
+fi
+
+###############################################################################
+# optimized - enterprise
+
+if [ ${doOptimizedEnterprise} == "Y" ]; then
+    for mysqlVersion in ${mysqlVersions} ; do
+        pushd $DB_DIR
+        if [ $? != 0 ] ; then echo "DB_DIR does not exist, exiting"; exit 1; fi
+        rm -rf *
+        
+        tarDirectory=build-tokudb-${svnRevNum}-e
+        tarFileSource=${mysqlVersion}-tokudb-${svnRevNum}-e-${platform}.tar.gz
+        tarFileDestination=blank-main.${svnRevNum}.e-${mysqlVersion}.tar.gz
+        
+        echo "creating ${tarFileDestination} from ${tarFileSource}"
+        scp -i ~/.ssh/id_rsa.priv.tokubuild tokubuild@lex1:~/${tarDirectory}/${tarFileSource} .
+        rm -f ${BACKUP_DIR}/${tarFileDestination}
+        gf ${tarFileDestination}
+        popd
+    done
+fi
+
+###############################################################################
+# debug - enterprise
+    
+if [ ${doDebugEnterprise} == "Y" ]; then
+    for mysqlVersion in ${mysqlVersions} ; do
+        pushd $DB_DIR
+        if [ $? != 0 ] ; then echo "DB_DIR does not exist, exiting"; exit 1; fi
+        rm -rf *
+        
+        tarDirectory=build-tokudb-${svnRevNum}-debug-e
+        tarFileSource=${mysqlVersion}-tokudb-${svnRevNum}-debug-e-${platform}.tar.gz
+        tarFileDestination=blank-main.${svnRevNum}.e-${mysqlVersion}-debug.tar.gz
+        
+        echo "creating ${tarFileDestination} from ${tarFileSource}"
+        scp -i ~/.ssh/id_rsa.priv.tokubuild tokubuild@lex1:~/${tarDirectory}/${tarFileSource} .
+        rm -f ${BACKUP_DIR}/${tarFileDestination}
+        gf ${tarFileDestination}
+        popd
+    done
+fi

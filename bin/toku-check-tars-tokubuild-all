@@ -1,0 +1,61 @@
+#!/bin/bash
+
+# check how many tarballs are available
+
+if [ $# -eq 0 ]; then
+  echo "usage: toku-create-tars-tokubuild-all <svn-revision-number>"
+  exit 1
+fi
+
+svnRevNum=${1}
+
+platform=linux-x86_64
+mysqlVersions="mysql-5.5.30 mariadb-5.5.30"
+
+numFilesFound=0
+
+    for mysqlVersion in ${mysqlVersions} ; do
+        tarDirectory=build-tokudb-${svnRevNum}
+        tarFileSource=${mysqlVersion}-tokudb-${svnRevNum}-${platform}.tar.gz
+        
+        if ssh -i ~/.ssh/id_rsa.priv.tokubuild tokubuild@lex1 "test -e /home/tokubuild/${tarDirectory}/${tarFileSource}" \> /dev/null 2\>\&1; then 
+            numFilesFound=$(($numFilesFound + 1))
+        else 
+            echo "unable to locate ~/${tarDirectory}/${tarFileSource}"
+        fi
+    done
+
+    for mysqlVersion in ${mysqlVersions} ; do
+        tarDirectory=build-tokudb-${svnRevNum}-debug
+        tarFileSource=${mysqlVersion}-tokudb-${svnRevNum}-debug-${platform}.tar.gz
+        
+        if ssh -i ~/.ssh/id_rsa.priv.tokubuild tokubuild@lex1 "test -e '/home/tokubuild/${tarDirectory}/${tarFileSource}'" \> /dev/null 2\>\&1; then 
+            numFilesFound=$(($numFilesFound + 1))
+        else 
+            echo "unable to locate ~/${tarDirectory}/${tarFileSource}"
+        fi
+    done
+
+    for mysqlVersion in ${mysqlVersions} ; do
+        tarDirectory=build-tokudb-${svnRevNum}-e
+        tarFileSource=${mysqlVersion}-tokudb-${svnRevNum}-e-${platform}.tar.gz
+        
+        if ssh -i ~/.ssh/id_rsa.priv.tokubuild tokubuild@lex1 "test -e '/home/tokubuild/${tarDirectory}/${tarFileSource}'" \> /dev/null 2\>\&1; then 
+            numFilesFound=$(($numFilesFound + 1))
+        else 
+            echo "unable to locate ~/${tarDirectory}/${tarFileSource}"
+        fi
+    done
+
+    for mysqlVersion in ${mysqlVersions} ; do
+        tarDirectory=build-tokudb-${svnRevNum}-debug-e
+        tarFileSource=${mysqlVersion}-tokudb-${svnRevNum}-debug-e-${platform}.tar.gz
+        
+        if ssh -i ~/.ssh/id_rsa.priv.tokubuild tokubuild@lex1 "test -e '/home/tokubuild/${tarDirectory}/${tarFileSource}'" \> /dev/null 2\>\&1; then 
+            numFilesFound=$(($numFilesFound + 1))
+        else 
+            echo "unable to locate ~/${tarDirectory}/${tarFileSource}"
+        fi
+    done
+
+echo "found ${numFilesFound} file(s)"

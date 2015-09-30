@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# check cpu performance - prime numbers
+
+outFile=/tmp/sbcpu.txt
+
+rm -f ${outFile}
+sysbench --test=cpu --num-threads=8 --max-time=60 --cpu-max-prime=50000 run > ${outFile}
+
+msAvg=`grep avg: ${outFile} | awk '{print $2}'`
+ms95=`grep "95 percentile" ${outFile} | awk '{print $4}'`
+echo "avg = ${msAvg} / 95th = ${ms95}"
+rm -f ${outFile}

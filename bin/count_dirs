@@ -1,0 +1,13 @@
+#!/bin/bash
+
+for dir in */
+do
+    dir=${dir%*/}
+    num_dirs=`find ${dir##*/} -type d | wc -l`
+    echo "${dir##*/} ${num_dirs}"
+    
+    # use the below instead of echo if you want it sortable
+    # printf "%08i   %s\n" "${num_dirs}" "${dir##*/}"
+    
+done
+

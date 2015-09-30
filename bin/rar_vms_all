@@ -1,0 +1,12 @@
+#!/bin/bash
+
+VM_FOLDER="/home/tcallaghan/vms"
+RAR_FOLDER="/home/tcallaghan/holder/holder/vm_backups"
+
+for dir in $VM_FOLDER/*/
+do
+    dir=${dir%*/}
+    echo "Creating RAR for ${dir##*/}"
+    rar a -agYYYYMMDD $RAR_FOLDER/${dir##*/}-.rar $VM_FOLDER/${dir##*/}/*
+done
+

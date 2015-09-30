@@ -1,0 +1,6 @@
+# run from root of usb device
+# this version doesn't grab any of the vmdk files (which are huge)
+
+rsync -vrazCL --exclude '*.vmdk' --progress --stats --delete ~/holder .
+rsync -vrazC --progress --stats --delete ~/mystuff .
+rsync -vrazC --progress --stats --delete ~/personal .

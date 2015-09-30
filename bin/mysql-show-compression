@@ -1,0 +1,54 @@
+#!/bin/bash
+
+MYSQL_SOCKET=$MYSQL_SOCKET
+MYSQL_USER=root
+MYSQL_PASSWORD=""
+
+outFile="/tmp/tmccompinfo.txt"
+
+wait_seconds=${1}
+num_intervals=${2}
+this_interval=1
+overall_seconds=0
+last_inserts=0
+
+while [ ${this_interval} -le ${num_intervals} ] ; do
+    $DB_DIR/bin/mysql --user=${MYSQL_USER} --socket=${MYSQL_SOCKET} --password=${MYSQL_PASSWORD} -e 'show engine tokudb status;' > ${outFile}
+
+    this_leaf_write_notcheck_compressed=`grep "brt: leaf nodes flushed to disk (not for checkpoint) (bytes)" ${outFile} | cut -f3`
+    this_leaf_write_notcheck_uncompressed=`grep "brt: leaf nodes flushed to disk (not for checkpoint) (uncompressed bytes)" ${outFile} | cut -f3`
+    this_nonleaf_write_notcheck_compressed=`grep "brt: nonleaf nodes flushed to disk (not for checkpoint) (bytes)" ${outFile} | cut -f3`
+    this_nonleaf_write_notcheck_uncompressed=`grep "brt: nonleaf nodes flushed to disk (not for checkpoint) (uncompressed bytes)" ${outFile} | cut -f3`
+
+    this_leaf_write_check_compressed=`grep "brt: leaf nodes flushed to disk (for checkpoint) (bytes)" ${outFile} | cut -f3`
+    this_leaf_write_check_uncompressed=`grep "brt: leaf nodes flushed to disk (for checkpoint) (uncompressed bytes)" ${outFile} | cut -f3`
+    this_nonleaf_write_check_compressed=`grep "brt: nonleaf nodes flushed to disk (for checkpoint) (bytes)" ${outFile} | cut -f3`
+    this_nonleaf_write_check_uncompressed=`grep "brt: nonleaf nodes flushed to disk (for checkpoint) (uncompressed bytes)" ${outFile} | cut -f3`
+
+    leaf_write_notcheck_factor=100.00
+    if [ ${this_leaf_write_notcheck_compressed} -gt 0 ]; then
+        leaf_write_notcheck_factor=`echo "scale=2; ${this_leaf_write_notcheck_compressed}/${this_leaf_write_notcheck_uncompressed}*100" | bc `
+    fi
+
+    nonleaf_write_notcheck_factor=100.00
+    if [ ${this_nonleaf_write_notcheck_compressed} -gt 0 ]; then
+        nonleaf_write_notcheck_factor=`echo "scale=2; ${this_nonleaf_write_notcheck_compressed}/${this_nonleaf_write_notcheck_uncompressed}*100" | bc `
+    fi
+
+    leaf_write_check_factor=100.00
+    if [ ${this_leaf_write_check_compressed} -gt 0 ]; then
+        leaf_write_check_factor=`echo "scale=2; ${this_leaf_write_check_compressed}/${this_leaf_write_check_uncompressed}*100" | bc`
+    fi
+
+    nonleaf_write_check_factor=100.00
+    if [ ${this_nonleaf_write_check_compressed} -gt 0 ]; then
+        nonleaf_write_check_factor=`echo "scale=2; ${this_nonleaf_write_check_compressed}/${this_nonleaf_write_check_uncompressed}*100" | bc `
+    fi
+
+    echo "leaf_write_notcheck=${leaf_write_notcheck_factor}, nonleaf_write_notcheck=${nonleaf_write_notcheck_factor}, leaf_write_check=${leaf_write_check_factor}, nonleaf_write_check=${nonleaf_write_check_factor}"
+
+    sleep ${wait_seconds}
+    
+    let this_interval=this_interval+1
+    let overall_seconds=overall_seconds+wait_seconds
+done

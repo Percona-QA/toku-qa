@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# get the current temperature from the temp sensor
+
+if [ $# -eq 0 ]; then
+  echo "usage: checktemp <seconds-between-checks> <log-file-name>"
+  exit 1
+fi
+
+secondsPause=${1}
+outputFile=${2}
+tempSensorIP=192.168.1.253
+
+# ***********************************************************
+# SNMP LOOKUPS
+#snmpwalk -c public -v1 192.168.1.253 iso.3.6.1.4.1.20916.1.7
+# ***********************************************************
+
+while [ 1 -eq 1 ]; do
+    currentDate=`date +"%Y%m%d%H%M%S"`
+    
+    currentTempServers=`snmpget -c public ${tempSensorIP} -v1 iso.3.6.1.4.1.20916.1.7.1.1.1.2.0 | awk '{print $4}'`
+    currentTempServers=$((${currentTempServers} / 100))
+
+    currentTempOffice=`snmpget -c public ${tempSensorIP} -v1 iso.3.6.1.4.1.20916.1.7.1.2.1.2.0 | awk '{print $4}'`
+    currentTempOffice=$((${currentTempOffice} / 100))
+
+    echo "${currentDate} ${currentTempServers} ${currentTempOffice}" | tee -a ${outputFile}
+    
+    sleep ${1}
+done

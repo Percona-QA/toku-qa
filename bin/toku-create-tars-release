@@ -1,0 +1,115 @@
+#!/bin/bash
+
+# create ready-to-go-database tarballs from a particular release tcallaghan@localhost:~/holder/tokutek/tokudb-releases/<version>
+# configured to do all 4 build types
+
+doOptimizedCommunity=N
+doDebugCommunity=N
+doOptimizedEnterprise=Y
+doDebugEnterprise=N
+
+
+if [ $# -eq 0 ]; then
+  echo "usage: toku-create-tars-release <version> <compact-version>"
+  exit 1
+fi
+
+if [ -z "$DB_DIR" ]; then
+    echo "Need to set DB_DIR"
+    exit 1
+fi
+if [ ! -d "$DB_DIR" ]; then
+    echo "Need to create directory DB_DIR"
+    exit 1
+fi
+if [ "$(ls -A $DB_DIR)" ]; then
+    echo "$DB_DIR contains files, cannot run script"
+    exit 1
+fi
+
+versionNum=${1}
+compactVersionNum=${2}
+
+platform="linux-x86_64"
+mysqlVersions="mysql-5.5.41 mariadb-5.5.41"
+tarDirectory="/home/tcallaghan/holder/tokutek/tokudb-releases/${versionNum}"
+
+###############################################################################
+# optimized - community
+
+if [ ${doOptimizedCommunity} == "Y" ]; then
+    for mysqlVersion in ${mysqlVersions} ; do
+        pushd $DB_DIR
+        if [ $? != 0 ] ; then echo "DB_DIR does not exist, exiting"; exit 1; fi
+        rm -rf *
+        
+        tarFileSource=${mysqlVersion}-tokudb-${versionNum}-${platform}.tar.gz
+        tarFileDestination=blank-toku${compactVersionNum}-${mysqlVersion}.tar.gz
+        
+        echo "creating ${tarFileDestination} from ${tarFileSource}"
+        cp ${tarDirectory}/${tarFileSource} .
+        rm -f ${BACKUP_DIR}/${tarFileDestination}
+        gf ${tarFileDestination}
+        popd
+    done
+fi
+
+###############################################################################
+# debug - community
+    
+if [ ${doDebugCommunity} == "Y" ]; then
+    for mysqlVersion in ${mysqlVersions} ; do
+        pushd $DB_DIR
+        if [ $? != 0 ] ; then echo "DB_DIR does not exist, exiting"; exit 1; fi
+        rm -rf *
+        
+        tarFileSource=${mysqlVersion}-tokudb-${versionNum}-debug-${platform}.tar.gz
+        tarFileDestination=blank-toku${compactVersionNum}-${mysqlVersion}-debug.tar.gz
+        
+        echo "creating ${tarFileDestination} from ${tarFileSource}"
+        cp ${tarDirectory}/debug/${tarFileSource} .
+        rm -f ${BACKUP_DIR}/${tarFileDestination}
+        gf ${tarFileDestination}
+        popd
+    done
+fi
+
+###############################################################################
+# optimized - enterprise
+
+if [ ${doOptimizedEnterprise} == "Y" ]; then
+    for mysqlVersion in ${mysqlVersions} ; do
+        pushd $DB_DIR
+        if [ $? != 0 ] ; then echo "DB_DIR does not exist, exiting"; exit 1; fi
+        rm -rf *
+        
+        tarFileSource=${mysqlVersion}-tokudb-${versionNum}-e-${platform}.tar.gz
+        tarFileDestination=blank-toku${compactVersionNum}.e-${mysqlVersion}.tar.gz
+        
+        echo "creating ${tarFileDestination} from ${tarFileSource}"
+        cp ${tarDirectory}/${tarFileSource} .
+        rm -f ${BACKUP_DIR}/${tarFileDestination}
+        gf ${tarFileDestination}
+        popd
+    done
+fi
+
+###############################################################################
+# debug - enterprise
+    
+if [ ${doDebugEnterprise} == "Y" ]; then
+    for mysqlVersion in ${mysqlVersions} ; do
+        pushd $DB_DIR
+        if [ $? != 0 ] ; then echo "DB_DIR does not exist, exiting"; exit 1; fi
+        rm -rf *
+        
+        tarFileSource=${mysqlVersion}-tokudb-${versionNum}-debug-e-${platform}.tar.gz
+        tarFileDestination=blank-toku${compactVersionNum}.e-${mysqlVersion}-debug.tar.gz
+        
+        echo "creating ${tarFileDestination} from ${tarFileSource}"
+        cp ${tarDirectory}/debug/${tarFileSource} .
+        rm -f ${BACKUP_DIR}/${tarFileDestination}
+        gf ${tarFileDestination}
+        popd
+    done
+fi

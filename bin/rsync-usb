@@ -1,0 +1,5 @@
+# cd /media/tcallaghan/USB3-320GB first
+
+rsync -vrazCL --progress --stats --delete ~/holder .
+rsync -vrazC --progress --stats --delete ~/mystuff .
+rsync -vrazC --progress --stats --delete ~/personal .

@@ -1,0 +1,6 @@
+#!/bin/bash
+
+MYSQL_USER=$1
+MYSQL_SOCKET=$2
+
+$DB_DIR/bin/mysql --user=${MYSQL_USER} --socket=${MYSQL_SOCKET} -e "select sum(bt_size_allocated) / (1024 * 1024) as size_files_mb, (sum(bt_size_allocated) - sum(bt_size_in_use)) / (1024 * 1024) as size_free_mb, (1 - (sum(bt_size_in_use) / sum(bt_size_allocated))) * 100 as frag_perc from information_schema.tokudb_fractal_tree_info;";

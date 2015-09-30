@@ -1,0 +1,9 @@
+#! /bin/bash
+
+bkill
+pkill -9 mongo
+sleep 1
+mongo-clean
+mkmon tokumx-e-2.0.0-SNAPSHOT-20140929a-linux-x86_64-main.tar.gz
+export MONGO_LOG=/tmp/my-tokumx-log.log
+mongo-start-tokumx-repl-set

@@ -1,0 +1,41 @@
+#!/bin/bash
+
+MYSQL_SOCKET=$MYSQL_SOCKET
+MYSQL_USER=root
+MYSQL_PASSWORD=""
+
+last_what=-1
+
+wait_seconds=${1}
+num_intervals=${2}
+search_string=${3}
+this_interval=1
+overall_what=0
+overall_seconds=0
+
+while [ ${this_interval} -le ${num_intervals} ] ; do
+    $DB_DIR/bin/mysqladmin --user=${MYSQL_USER} --socket=${MYSQL_SOCKET} --password=${MYSQL_PASSWORD} ext > /tmp/tmcinfo.txt
+
+    # grep -e 'Com_\(update \|select \|insert \|delete \|commit \)'    
+    raw_line=`grep ${search_string} /tmp/tmcinfo.txt`
+    this_what=`echo ${raw_line} | cut -d " " -f4`
+
+    this_interval_what=$((this_what-last_what))
+    if [ ${overall_seconds} -eq 0 ]; then
+        this_wps=0
+        overall_wps=0
+    else
+        let overall_what=overall_what+this_interval_what
+        this_wps=$((this_interval_what/wait_seconds))
+        overall_wps=$((overall_what/overall_seconds))
+    fi
+    
+    echo "${overall_seconds} ${this_wps} ${overall_wps}"
+    
+    last_what=${this_what}
+    
+    sleep ${wait_seconds}
+    
+    let this_interval=this_interval+1
+    let overall_seconds=overall_seconds+wait_seconds
+done

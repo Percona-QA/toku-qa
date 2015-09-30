@@ -1,0 +1,9 @@
+#!/bin/bash
+
+fileSize=4GB
+ioRequests=100000
+ioSize=16384
+
+sysbench --test=fileio --file-total-size=${fileSize} --file-num=1 prepare
+sysbench --test=fileio --file-total-size=${fileSize} --file-num=1 --file-block-size=${ioSize} --file-test-mode=rndwr --file-fsync-freq=1 --max-time=300 --max-requests=${ioRequests} run
+sysbench --test=fileio --file-total-size=${fileSize} --file-num=1 cleanup

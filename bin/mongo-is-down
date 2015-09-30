@@ -1,0 +1,27 @@
+#!/bin/bash
+
+if [ -z "$MONGO_DIR" ]; then
+    echo "Need to set MONGO_DIR"
+    exit 1
+fi
+if [ ! -d "$MONGO_DIR" ]; then
+    echo "Need to create directory MONGO_DIR"
+    exit 1
+fi
+
+# stay in a loop until we see a running mongo server
+while [ 1 ]; do
+    #$MONGO_DIR/bin/mongostat -n 1 > /dev/null 2>&1
+    #if [ "$?" -eq 1 ]; then
+    #    break
+    #fi    
+
+    pgrep -U $USER mongod > /dev/null 2>&1
+    if [ "$?" -eq 1 ]; then
+        break
+    fi    
+    
+    sleep 5
+done
+
+echo "mongo is not running"

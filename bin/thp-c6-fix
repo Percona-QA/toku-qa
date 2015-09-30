@@ -1,0 +1,13 @@
+#! /bin/bash
+
+cat /sys/kernel/mm/redhat_transparent_hugepage/enabled
+cat /sys/kernel/mm/redhat_transparent_hugepage/khugepaged/defrag
+cat /sys/kernel/mm/redhat_transparent_hugepage/defrag
+
+sudo sh -c "echo never > /sys/kernel/mm/redhat_transparent_hugepage/enabled"
+sudo sh -c "echo no    > /sys/kernel/mm/redhat_transparent_hugepage/khugepaged/defrag"
+sudo sh -c "echo never > /sys/kernel/mm/redhat_transparent_hugepage/defrag"
+
+cat /sys/kernel/mm/redhat_transparent_hugepage/enabled
+cat /sys/kernel/mm/redhat_transparent_hugepage/khugepaged/defrag
+cat /sys/kernel/mm/redhat_transparent_hugepage/defrag

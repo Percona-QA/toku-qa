@@ -1,0 +1,16 @@
+#!/bin/bash
+
+cd $DB_DIR
+
+rm -rf bin COPYING docs EXCEPTIONS-CLIENT include INSTALL-BINARY lib man README scripts share support-files
+
+if [ -e ${BACKUP_DIR}/${1}.tar.gz ]; then
+  echo "expanding ${BACKUP_DIR}/${1}.tar.gz"
+  tar xzvf ${BACKUP_DIR}/${1}.tar.gz
+elif [ -e ${BACKUP_DIR}/${1}.tar ]; then
+  echo "expanding ${BACKUP_DIR}/${1}.tar"
+  tar xvf ${BACKUP_DIR}/${1}.tar
+else
+  echo "ERROR: unable to locate ${BACKUP_DIR}/${1} in .tar or .tar.gz format"
+fi
+

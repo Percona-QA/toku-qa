@@ -1,0 +1,16 @@
+#! /bin/bash
+
+srcDir=/media/tcallaghan/fantom2tb1
+destDir=/media/tcallaghan/tokubackup
+
+if [ ! -d "$srcDir" ]; then
+    echo "Cannot find source directory : $srcDir"
+    exit 1
+fi
+if [ ! -d "$destDir" ]; then
+    echo "Cannot find destination directory : $destDir"
+    exit 1
+fi
+
+rsync -vraz --progress --stats --delete ${srcDir} ${destDir}
+#rsync -vraz --progress --exclude 'vms' --exclude '.cache' --exclude '.local' --exclude '.ccache' --exclude '.cpan' --exclude 'git' --exclude 'Dropbox' --exclude 'svn' --exclude 'bzr' --exclude 'benchdb' --exclude 'dbtest' --exclude 'hot-backup' --stats --delete /home/tcallaghan ${destDir}

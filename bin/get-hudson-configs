@@ -1,0 +1,10 @@
+#!/bin/bash
+
+SOURCE_FOLDER="/u2/test/jobs"
+
+for dir in $SOURCE_FOLDER/*/
+do
+    dir=${dir%*/}
+    echo "copying $SOURCE_FOLDER/${dir##*/}/config.xml to ./${dir##*/}.config.xml"
+    cp $SOURCE_FOLDER/${dir##*/}/config.xml ./${dir##*/}.config.xml
+done

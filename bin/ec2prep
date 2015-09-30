@@ -1,0 +1,21 @@
+#!/bin/bash
+ 
+# add ip / hostname separated by white space
+HOSTS="ec2-67-202-33-252.compute-1.amazonaws.com ec2-184-73-73-22.compute-1.amazonaws.com ec2-184-72-129-85.compute-1.amazonaws.com ec2-184-72-134-179.compute-1.amazonaws.com"
+ 
+for myHost in $HOSTS
+    do
+        echo $myHost
+        echo "------------------------------------------------------------------------------------------------"
+
+        ssh root@$myHost "rm -rf voltbin"
+        ssh root@$myHost "mkdir voltbin"
+        scp -r ~/voltbin/* root@$myHost:/root/voltbin
+
+#        ssh root@$myHost "rm -rf app"
+#        ssh root@$myHost "mkdir app"
+#        scp -r ~/mystuff/pocs/bank/* root@$myHost:/root/app
+
+        echo ""
+        echo ""
+    done

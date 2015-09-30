@@ -1,0 +1,4 @@
+- simpler version of iibench
+- less fields
+- no secondary indexes
+- used to reproduce #5435

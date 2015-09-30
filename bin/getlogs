@@ -1,0 +1,16 @@
+#!/bin/bash
+ 
+# add ip / hostname separated by white space
+HOSTS="volt1 volt2 volt3a volt3b volt3c volt3d volt3e volt3f volt3g volt3h volt3i volt3j volt3k volt3l volt4a volt4b volt4c"
+#HOSTS="volt1 volt2 volt3a volt3b volt3c volt3d volt3e volt3f volt3g volt3h volt3i volt3j volt3k volt3l volt4a volt4b volt4c volt5a volt5b volt5c volt5d volt5e volt5f"
+
+rm -rf /tmp/getlogs
+mkdir /tmp/getlogs
+
+for myHost in $HOSTS
+    do
+        mkdir /tmp/getlogs/$myHost
+        scp $myHost:/tmp/*.log /tmp/getlogs/$myHost
+    done
+
+rar a -m5 logs /tmp/getlogs/*

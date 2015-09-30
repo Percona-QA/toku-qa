@@ -1,0 +1,5 @@
+attempting to reproduce the fb "pileup"
+
+point = select c from sbtest<x> where id = (random-value);
+range = select c from sbtest<x> where k between (random-value) and (random-value + 20000) limit <1000>;
+

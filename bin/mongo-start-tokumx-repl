@@ -1,0 +1,43 @@
+#!/bin/bash
+
+if [ -z "$MONGO_DATA_DIR" ]; then
+    echo "Need to set MONGO_DATA_DIR"
+    exit 1
+fi
+if [ ! -d "$MONGO_DATA_DIR" ]; then
+    echo "Need to create directory MONGO_DATA_DIR"
+    exit 1
+fi
+
+if [ -z "$MONGO_DIR" ]; then
+    echo "Need to set MONGO_DIR"
+    exit 1
+fi
+if [ ! -d "$MONGO_DIR" ]; then
+    echo "Need to create directory MONGO_DIR"
+    exit 1
+fi
+
+if [ -z "$COMMIT_SYNC" ]; then
+    export COMMIT_SYNC=1
+fi
+
+if [ ${COMMIT_SYNC} == "1" ]; then
+    NOSYNC_COMMIT=""
+else
+    NOSYNC_COMMIT="--nosync_commit"
+fi
+
+if [ -z "$MONGO_PORT" ]; then
+    MONGO_SERVER_PORT=""
+else
+    MONGO_SERVER_PORT="--port ${MONGO_PORT}"
+fi
+
+if [ -z "$MONGO_LOCK_TIMEOUT" ]; then
+    LOCK_TIMEOUT_STRING=""
+else
+    LOCK_TIMEOUT_STRING="--lockTimeout ${MONGO_LOCK_TIMEOUT}"
+fi
+
+$MONGO_DIR/bin/mongod --dbpath $MONGO_DATA_DIR ${NOSYNC_COMMIT} --directio --cacheSize $TOKUMON_CACHE_SIZE --replSet tmcRepl ${MONGO_SERVER_PORT} ${LOCK_TIMEOUT_STRING}

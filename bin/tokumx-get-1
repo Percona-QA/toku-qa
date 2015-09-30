@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# copy a particular one-off build from tokubuild@lex1
+
+filePattern=${1}
+srcDir=/home.tokubuild/buildmaster/builds
+
+scp -i ~/.ssh/id_rsa.priv.tokubuild tokubuild@lex1:${srcDir}/tokumx-*${filePattern}*-linux-x86_64-main.tar.gz ${BACKUP_DIR}/mongodb

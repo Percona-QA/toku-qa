@@ -1,0 +1,5 @@
+sudo mkdir -p /mnt/nasgroups
+sudo mount -t cifs -o guest //voltnas/groups /mnt/nasgroups
+
+sudo mkdir -p /mnt/nasdevelopment
+sudo mount -t cifs -o username=tcallaghan //voltnas/development /mnt/nasdevelopment

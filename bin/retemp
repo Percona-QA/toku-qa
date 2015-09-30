@@ -1,0 +1,2 @@
+rm -rf /tmp/tmc
+mkdir /tmp/tmc

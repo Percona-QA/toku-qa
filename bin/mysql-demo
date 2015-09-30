@@ -1,0 +1,14 @@
+#!/bin/bash
+
+SOCKET_NAME=$MYSQL_SOCKET
+USER_NAME=root
+USER_PASSWORD=""
+
+echo "`date` | doing a bunch of stuff"
+$DB_DIR/bin/mysql --user=${USER_NAME} --socket=${SOCKET_NAME} test -e "create table t1 (id bigint not null auto_increment primary key, c1 int not null, key idx_c1 (c1)) engine=tokudb;"
+$DB_DIR/bin/mysql --user=${USER_NAME} --socket=${SOCKET_NAME} test -e "insert into t1 (c1) values (1),(2),(3),(4),(5),(6),(7),(8),(9),(10);"
+$DB_DIR/bin/mysql --user=${USER_NAME} --socket=${SOCKET_NAME} test -e "insert into t1 (id, c1) select id+100, c1 from t1;" 
+$DB_DIR/bin/mysql --user=${USER_NAME} --socket=${SOCKET_NAME} test -e "insert into t1 (id, c1) select id+1000, c1 from t1;" 
+$DB_DIR/bin/mysql --user=${USER_NAME} --socket=${SOCKET_NAME} test -e "insert into t1 (id, c1) select id+10000, c1 from t1;" 
+$DB_DIR/bin/mysql --user=${USER_NAME} --socket=${SOCKET_NAME} test -e "select count(*) from t1;"
+

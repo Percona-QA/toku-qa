@@ -1,0 +1,8 @@
+JDKFILE=jdk-6u18-linux-x64.bin
+JDKFOLDER=jdk1.6.0_18
+JDKPATH=/opt
+
+cp $HOME/temp/jdk*.bin /tmp
+cd $JDKPATH
+sudo /tmp/$JDKFILE
+sudo ln -s $JDKFOLDER jdk

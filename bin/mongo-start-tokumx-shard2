@@ -1,0 +1,76 @@
+#!/bin/bash
+
+if [ -z "$MONGO_DATA_DIR" ]; then
+    echo "Need to set MONGO_DATA_DIR"
+    exit 1
+fi
+if [ ! -d "$MONGO_DATA_DIR" ]; then
+    echo "Need to create directory MONGO_DATA_DIR"
+    exit 1
+fi
+
+if [ -z "$MONGO_DIR" ]; then
+    echo "Need to set MONGO_DIR"
+    exit 1
+fi
+if [ ! -d "$MONGO_DIR" ]; then
+    echo "Need to create directory MONGO_DIR"
+    exit 1
+fi
+
+if [ -z "$COMMIT_SYNC" ]; then
+    export COMMIT_SYNC=1
+fi
+
+if [ ${COMMIT_SYNC} == "1" ]; then
+    NOSYNC_COMMIT=""
+else
+    NOSYNC_COMMIT="--nosync_commit"
+fi
+
+if [ -z "$MONGO_REPL" ]; then
+    REPL_STRING=""
+else
+    REPL_STRING="--replSet ${MONGO_REPL}"
+fi
+
+if [ -z "$MONGO_LOCK_TIMEOUT" ]; then
+    LOCK_TIMEOUT_STRING=""
+else
+    LOCK_TIMEOUT_STRING="--lockTimeout ${MONGO_LOCK_TIMEOUT}"
+fi
+
+export MONGO_SLOW_MS=500
+
+if [ -z "$MONGO_SLOW_MS" ]; then
+    SLOWMS_STRING=""
+else
+    SLOWMS_STRING="--slowms ${MONGO_SLOW_MS}"
+fi
+
+
+# 12G cache per mongod
+export TOKUMON_CACHE_SIZE=12884901888
+
+
+
+# *********************************************************************************************
+# start mongod servers - second server
+
+mongodDir2=$MONGO_DATA_DIR/mongod2
+mongodPort2=30022
+mongodLog2=./mongod2.mongolog
+rm -f ${mongodLog2}
+mongodServer2=${HOSTNAME}
+
+mkdir ${mongodDir2}
+$MONGO_DIR/bin/mongod --dbpath ${mongodDir2} --port ${mongodPort2} ${NOSYNC_COMMIT} --directio --cacheSize $TOKUMON_CACHE_SIZE --fork --logpath ${mongodLog2} ${REPL_STRING} ${LOCK_TIMEOUT_STRING} ${SLOWMS_STRING}
+
+
+echo " ** STATUS ** : waiting for mongod servers to start"
+
+
+# wait 10 seconds for mongod servers to start
+sleep 10 
+
+

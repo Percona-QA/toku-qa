@@ -1,0 +1,16 @@
+#! /bin/bash
+
+#if [ -z "$DATA_VOLUME" ]; then
+#    echo "Need to set DATA_VOLUME"
+#    exit 1
+#fi
+
+#serverList="lex1 lex2 lex3 lex4 lex5 lex6 lex7 lex8 lex9 lex10 mork mindy"
+serverList="lex3 lex4 lex5 lex6"
+
+for thisServer in ${serverList} ; do
+  echo ""
+  echo "checking ${thisServer}"
+  #ssh -q -t ${thisServer} 'sudo bash -c "cd /home; for i in *; do echo $i; if [ -d \"$i\" ]; then sz=`du -ch $i | tail -n 1 | cut -f1`; echo \"$i $sz\"; fi; done"'
+  ssh -q -t ${thisServer} 'ls /home'
+done

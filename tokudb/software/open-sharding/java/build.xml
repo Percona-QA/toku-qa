@@ -1,0 +1,44 @@
+<project name="OpenSharding Java Utils" default="build">
+	
+	<property name="version" value="1.0.0" />
+	
+	<target name="clean">
+	    <delete dir="dist">
+	        <include name="**" />
+	    </delete>			
+    </target>
+	
+	<!-- Compile jar file -->
+	<target name="compile">
+		<antcall target="clean"/>
+		<mkdir dir="dist"/>
+		<mkdir dir="dist/jars"/>
+		<mkdir dir="_classes"/>
+		<javac destdir="_classes" debug="${debug}" includejavaruntime="true" includeantruntime="false">
+			<src path="source/myospbinlog/src/"/>
+		</javac>
+		<jar destfile="dist/jars/osputils.jar" basedir="_classes"/>
+		<delete dir="_classes"/>
+	</target>
+	
+	<!-- Build the relelase tar. -->
+	<target name="build-release">
+		<copydir dest="dist/bin" src="source/myospbinlog/bin"/>
+		<copydir dest="dist/conf" src="source/myospbinlog/conf"/>
+		<tar destfile="dist/osputils_${version}.tar">
+			<tarfileset dir="dist"
+				prefix="osputils"
+				preserveLeadingSlashes="false">
+				<include name="bin/**"/>
+				<include name="conf/**"/>
+				<include name="jars/**"/>
+			</tarfileset>
+		</tar>
+	</target>
+	
+	<!-- Default build target -->
+	<target name="build">
+		<antcall target="compile"/>
+		<antcall target="build-release"/> 
+	</target>
+</project>

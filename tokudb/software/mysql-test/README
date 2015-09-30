@@ -1,0 +1,30 @@
+-- current --
+
+1. untar the TokuDB tarball
+2. cd to base of expanded tarball
+3. run.mysql.tests.bash --mysql=mariadb-5.2.10 --branch=mysql.branches/6.0.1 --revision=44974 --commit=0 --tests=* --checkouttests=1 --parallel=8 --basedir=~/temp --builddir=~/temp/mysql.build --mysql_basedir=$PWD
+
+--mysql         : mysql-5.1.61, mysql-5.5.21, mariadb-5.2.10
+--branch        : ., mysql.branches/6.0.1
+--tests         : ??????????
+--checkouttests : 0=no, 1=yes
+--engine=tokudb : pass this if you only want to run an engine test
+
+
+
+
+-- OLD --
+
+1. untar the TokuDB tarball
+2. cd to mysql-test
+3. copy in run.mysql.tests.manual.bash
+4. edit run.mysql.tests.manual.bash
+  4a. edit tokudbVersion : set to branch version (like "5.2.7") or main
+  4b. edit mysqlVersion  : "mysql-5.1.52", "mysql-5.1.61", "mariadb-5.2.3"
+  4c. edit svnRev        : 39761
+5. ./run.mysql.tests.manual.bash
+
+- runs all tests in directories in suite/tokudb*
+- automatically starts/stops servers
+- results land in tmc-mysql-test.log
+

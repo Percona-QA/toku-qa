@@ -1,0 +1,41 @@
+#!/bin/bash
+
+if [ -z "$MONGO_DATA_DIR" ]; then
+    echo "Need to set MONGO_DATA_DIR"
+    exit 1
+fi
+if [ ! -d "$MONGO_DATA_DIR" ]; then
+    echo "Need to create directory MONGO_DATA_DIR"
+    exit 1
+fi
+
+if [ -z "$MONGO_DIR" ]; then
+    echo "Need to set MONGO_DIR"
+    exit 1
+fi
+if [ ! -d "$MONGO_DIR" ]; then
+    echo "Need to create directory MONGO_DIR"
+    exit 1
+fi
+
+if [ -z "$MONGO_LOG" ]; then
+    echo "Need to set MONGO_LOG"
+    exit 1
+fi
+
+if [ -z "$MONGO_REPL" ]; then
+    REPL_STRING=""
+else
+    REPL_STRING="--replSet ${MONGO_REPL}"
+fi
+
+if [ -z "$MONGO_OPLOGSIZE" ]; then
+    OPLOG_STRING=""
+else
+    OPLOG_STRING="--oplogSize ${MONGO_OPLOGSIZE}"
+fi
+
+numactl --interleave=all $MONGO_DIR/bin/mongod --dbpath $MONGO_DATA_DIR --journal --fork --logpath $MONGO_LOG ${REPL_STRING} ${OPLOG_STRING} --fastsync
+
+#--config ~/bin/mongo-pure.cnf
+# --nojournal

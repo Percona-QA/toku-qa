@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# make sure a parameter was passed
+if [ $# -eq 0 ]; then
+    echo "usage: s3-delete-buckets <date-string like yyyy-mm>"
+    exit 1
+fi
+
+bucketList="key mysql-build-date mysql-build mysql-data pub rfp rqg-objects s3hub tcallaghan tokudb tokumx-ssl tokumx tokutek-shared tokutek-test tokutek-vm tokutek"
+
+for bucketName in ${bucketList} ; do
+    echo "Checking bucket ${bucketName}"
+    s3cmd ls s3://tokutek-log/${bucketName}/* | grep "/$1" | awk '{print $4}' | xargs s3cmd del
+done

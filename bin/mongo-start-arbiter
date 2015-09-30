@@ -1,0 +1,21 @@
+#!/bin/bash
+
+arbDataDir=~/temp/my-temp-arbiter
+echo "using ${arbDataDir} for arbiter dbpath"
+rm -rf ${arbDataDir}
+mkdir ${arbDataDir}
+
+if [ -z "$MONGO_DIR" ]; then
+    echo "Need to set MONGO_DIR"
+    exit 1
+fi
+if [ ! -d "$MONGO_DIR" ]; then
+    echo "Need to create directory MONGO_DIR"
+    exit 1
+fi
+if [ -z "$MONGO_REPL" ]; then
+    echo "Need to set MONGO_REPL"
+    exit 1
+fi
+
+$MONGO_DIR/bin/mongod --port 30000 --dbpath ${arbDataDir} --replSet ${MONGO_REPL}

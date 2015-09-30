@@ -1,0 +1,9 @@
+#!/bin/bash
+
+echo "`date` | setting up user"
+
+$DB_DIR/bin/mysql --user=${MYSQL_ROOT_USER} --socket=${MYSQL_SOCKET} -e "CREATE USER '${MYSQL_USER}'@'localhost' IDENTIFIED BY '${MYSQL_PASSWORD}';"
+$DB_DIR/bin/mysql --user=${MYSQL_ROOT_USER} --socket=${MYSQL_SOCKET} -e "GRANT ALL PRIVILEGES ON *.* TO '${MYSQL_USER}'@'localhost' WITH GRANT OPTION;"
+$DB_DIR/bin/mysql --user=${MYSQL_ROOT_USER} --socket=${MYSQL_SOCKET} -e "CREATE USER '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';"
+$DB_DIR/bin/mysql --user=${MYSQL_ROOT_USER} --socket=${MYSQL_SOCKET} -e "GRANT ALL PRIVILEGES ON *.* TO '${MYSQL_USER}'@'%' WITH GRANT OPTION;"
+$DB_DIR/bin/mysql --user=${MYSQL_ROOT_USER} --socket=${MYSQL_SOCKET} -e "FLUSH PRIVILEGES;"

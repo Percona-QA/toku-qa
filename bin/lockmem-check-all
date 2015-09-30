@@ -1,0 +1,9 @@
+#! /bin/bash
+
+serverList="lex1 lex2 lex3 lex4 lex5 lex6 lex7 lex8 lex9 lex10 mork mindy"
+
+for thisServer in ${serverList} ; do
+  echo ""
+  echo "checking ${thisServer}"
+  ssh -q -t ${thisServer} 'pgrep lockmem'
+done

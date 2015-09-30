@@ -1,0 +1,73 @@
+#!/bin/bash
+
+# this is the release test script
+
+if [ -z "$DB_DIR" ]; then
+    echo "Need to set DB_DIR"
+    exit 1
+fi
+if [ ! -d "$DB_DIR" ]; then
+    echo "Need to create directory DB_DIR"
+    exit 1
+fi
+if [ "$(ls -A $DB_DIR)" ]; then
+    echo "$DB_DIR contains files, cannot run script"
+    exit 1
+fi
+
+#tarFileWithoutTarGz=${tarFile/.tar.gz/}
+
+tarToken=7.1.0
+
+debugBuilds=Y
+communityBuilds=Y
+enterpriseBuilds=N
+
+mysqlTests="*"
+#mysqlTests="innodb"
+
+tarDirectory=~/holder/tokutek/tokudb-releases/${tarToken}
+tarFiles=""
+
+currentMysql="mysql-5.5.30"
+currentMariadb="mariadb-5.5.30"
+
+#tarFiles="mysql-5.5.30-tokudb-${tarToken}-e-linux-x86_64.tar.gz mysql-5.5.30-tokudb-${tarToken}-debug-e-linux-x86_64.tar.gz mariadb-5.5.30-tokudb-${tarToken}-e-linux-x86_64.tar.gz mariadb-5.5.30-tokudb-${tarToken}-debug-e-linux-x86_64.tar.gz"
+
+if [ ${communityBuilds} == "Y" ]; then
+    tarFiles="${tarFiles} ${currentMariadb}-tokudb-${tarToken}-linux-x86_64.tar.gz"
+    tarFiles="${tarFiles} ${currentMysql}-tokudb-${tarToken}-linux-x86_64.tar.gz"
+    
+    if [ ${debugBuilds} == "Y" ]; then
+        tarFiles="${tarFiles} /debug/${currentMariadb}-tokudb-${tarToken}-debug-linux-x86_64.tar.gz"
+        tarFiles="${tarFiles} /debug/${currentMysql}-tokudb-${tarToken}-debug-linux-x86_64.tar.gz"
+    fi
+fi
+
+if [ ${enterpriseBuilds} == "Y" ]; then
+    tarFiles="${tarFiles} ${currentMariadb}-tokudb-${tarToken}-e-linux-x86_64.tar.gz"
+    tarFiles="${tarFiles} ${currentMysql}-tokudb-${tarToken}-e-linux-x86_64.tar.gz"
+    
+    if [ ${debugBuilds} == "Y" ]; then
+        tarFiles="${tarFiles} /debug/${currentMariadb}-tokudb-${tarToken}-debug-e-linux-x86_64.tar.gz"
+        tarFiles="${tarFiles} /debug/${currentMysql}-tokudb-${tarToken}-debug-e-linux-x86_64.tar.gz"
+    fi
+fi
+
+for tarFile in ${tarFiles} ; do
+    tarFile=${tarDirectory}/${tarFile}
+
+    mysql=$(basename $tarFile .tar.gz)
+
+    if [ ! -f ${tarFile} ]; then
+        echo "Cannot test ${tarFile}, file does not exist!"
+        exit 1
+    fi
+
+    pushd $DB_DIR
+    tar xzvf ${tarFile}
+    cd ${mysql}
+    get.run.mysql.tests.bash
+    time ./run.mysql.tests.bash --mysqlbuild=${mysql} --commit=1 --tests=${mysqlTests} --parallel=8 --basedir=~/temp --builddir=~/temp/mysql.build --mysql_basedir=$PWD
+    popd
+done

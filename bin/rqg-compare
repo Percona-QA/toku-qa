@@ -1,0 +1,76 @@
+#! /bin/bash
+
+if [ -z "$DB_DIR" ]; then
+    echo "Need to set DB_DIR"
+    exit 1
+fi
+if [ ! -d "$DB_DIR" ]; then
+    echo "Need to create directory DB_DIR"
+    exit 1
+fi
+if [ "$(ls -A $DB_DIR)" ]; then
+    echo "$DB_DIR contains files, cannot run script"
+    exit 1
+fi
+
+export gendata=example.zz
+export grammar=example.yy
+
+
+export SOURCE1="/home/tcallaghan/holder/tokutek/mysql-releases"
+export TAR1=mysql-5.5.29-linux2.6-x86_64
+
+#export SOURCE2="/home/tcallaghan/holder/tokutek/mariadb-releases"
+#export TAR2=mariadb-5.5.30-linux-x86_64
+
+export SOURCE2="/home/tcallaghan/holder/tokutek/tokudb-releases/7.0.1"
+export TAR2=mysql-5.5.30-tokudb-7.0.1-linux-x86_64-patched
+
+
+#export MYSQLD1=
+#export MYSQLD2=--mysqld2=--plugin-load=tokudb=ha_tokudb.so
+
+
+if [ ! -f ${SOURCE1}/${TAR1}.tar.gz ] ; then
+    echo "Unable to locate file ${SOURCE1}/${TAR1}.tar.gz"
+    exit 1
+fi
+
+if [ ! -f ${SOURCE2}/${TAR2}.tar.gz ] ; then
+    echo "Unable to locate file ${SOURCE2}/${TAR2}.tar.gz"
+    exit 1
+fi
+
+pushd ${DB_DIR}
+
+echo "untarring ${SOURCE1}/${TAR1}..."
+tar xzf ${SOURCE1}/${TAR1}.tar.gz
+echo "untarring ${SOURCE2}/${TAR2}..."
+tar xzf ${SOURCE2}/${TAR2}.tar.gz
+
+popd
+
+export BASEDIR1=${DB_DIR}/${TAR1}
+export BASEDIR2=${DB_DIR}/${TAR2}
+export VARDIR1=${DB_DIR}/vardir1
+export VARDIR2=${DB_DIR}/vardir2
+
+rm -rf ${VARDIR1}
+mkdir ${VARDIR1}
+
+rm -rf ${VARDIR2}
+mkdir ${VARDIR2}
+
+RQG_DIR=/home/tcallaghan/mystuff/personal/tokutek/software/randgen/randgen-2.2.0
+
+export numQueries=100000
+export numThreads=1
+export secDuration=60
+#export debugSwitch=--debug
+export sqlLog1=--mysqld1=--general_log
+export sqlLog2=--mysqld2=--general_log
+
+
+pushd ${RQG_DIR}
+./runall.pl --grammar=conf/${grammar} --duration=${secDuration} --queries=${numQueries} --threads=${numThreads} --basedir1=${BASEDIR1} --basedir2=${BASEDIR2} --vardir1=${VARDIR1} --vardir2=${VARDIR2} ${debugSwitch} ${sqlLog1} ${sqlLog2}
+popd

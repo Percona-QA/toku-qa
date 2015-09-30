@@ -1,0 +1,27 @@
+#!/bin/bash
+
+if [ -n "$(pgrep -U $USER mysqld)" ]; then
+    echo "MySQL is running, cannot clean directories"
+    exit 1
+fi
+
+if [ -z "$DB_DIR" ]; then
+    echo "Need to set DB_DIR"
+    exit 1
+fi
+if [ ! -d "$DB_DIR" ]; then
+    echo "Need to create directory DB_DIR"
+    exit 1
+fi
+
+if [ -z "$HOT_BACKUP_DIR" ]; then
+    echo "Need to set HOT_BACKUP_DIR"
+    exit 1
+fi
+if [ ! -d "$HOT_BACKUP_DIR" ]; then
+    echo "Need to create directory HOT_BACKUP_DIR"
+    exit 1
+fi
+
+rm -rf $DB_DIR/*
+rm -rf $HOT_BACKUP_DIR/*

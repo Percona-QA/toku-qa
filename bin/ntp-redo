@@ -1,0 +1,3 @@
+sudo service ntp stop
+sudo ntpd -q
+sudo service ntp start

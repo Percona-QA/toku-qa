@@ -1,0 +1,7 @@
+#!/bin/bash
+
+waitSeconds=${1}
+commandToRun=${2}
+
+sleep ${waitSeconds}
+${commandToRun} > /dev/null

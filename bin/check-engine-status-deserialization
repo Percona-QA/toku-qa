@@ -1,0 +1,14 @@
+#! /bin/bash
+
+for dir in */*; do
+    if [ -d $dir ]; then
+        #echo ""
+        #echo $dir
+        #for memoryFile in ${dir}/*.engine_status; do
+        #echo "  ..  ${memoryFile}"
+        leafDeserialization=`grep "brt: leaf deserialization to memory (seconds)" ${dir}/*.engine_status | tail -n1 | cut -d '|' -f 3`
+        nonLeafDeserialization=`grep "brt: nonleaf deserialization to memory (seconds)" ${dir}/*.engine_status | tail -n1 | cut -d '|' -f 3`
+        #done
+        echo "${dir} ${nonLeafDeserialization} ${leafDeserialization}"
+    fi   
+done

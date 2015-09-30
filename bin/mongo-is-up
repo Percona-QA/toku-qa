@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# number of seconds to wait for server to start before giving up
+WAIT_TIME_SECONDS=3600
+LOOP_SLEEP_SECONDS=5
+MONGO_STARTED=N
+
+if [ $# -eq 1 ]; then
+    WAIT_TIME_SECONDS=${1}
+fi
+
+if [ -z "$MONGO_DIR" ]; then
+    echo "Need to set MONGO_DIR"
+    exit 1
+fi
+if [ ! -d "$MONGO_DIR" ]; then
+    echo "Need to create directory MONGO_DIR"
+    exit 1
+fi
+
+# stay in a loop until we see a running mongo server
+while [ ${WAIT_TIME_SECONDS} -gt 0 ]; do
+    $MONGO_DIR/bin/mongostat -n 1 > /dev/null 2>&1
+    
+    if [ "$?" -eq 0 ]; then
+        MONGO_STARTED=Y
+        break
+    fi    
+   
+    WAIT_TIME_SECONDS=$(($WAIT_TIME_SECONDS - $LOOP_SLEEP_SECONDS))
+
+    sleep ${LOOP_SLEEP_SECONDS} 
+done
+
+if [ $MONGO_STARTED = "Y" ]; then
+    echo "mongo is running"
+else
+    echo "ERROR: unable to find a running mongo server"
+fi

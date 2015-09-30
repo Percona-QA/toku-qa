@@ -1,0 +1,40 @@
+#!/bin/bash
+
+if [ $# -eq 0 ]; then
+    echo "usage: mongo-config-server <tarball> <port>"
+    exit 1
+fi
+
+# must be started in an empty directory
+if [ "$(ls -A ./)" ]; then
+   echo "Current directory is not empty, exiting..."
+   exit 1
+fi
+
+tarball=$1
+configServerPort=$2
+
+mongoConfigCacheSize=512M
+configDataDir=./data-dir
+SOURCE_DIR=${BACKUP_DIR}/mongodb
+
+if [ -e ${SOURCE_DIR}/${1} ]; then
+    echo "expanding ${SOURCE_DIR}/${1}"
+    tar xzvf ${SOURCE_DIR}/${1} --strip 1
+elif [ -e ${SOURCE_DIR}/${1}.tar.gz ]; then
+    echo "expanding ${SOURCE_DIR}/${1}.tar.gz"
+    tar xzvf ${SOURCE_DIR}/${1}.tar.gz --strip 1
+elif [ -e ${SOURCE_DIR}/${1}.tgz ]; then
+    echo "expanding ${SOURCE_DIR}/${1}.tgz"
+    tar xzvf ${SOURCE_DIR}/${1}.tgz --strip 1
+elif [ -e ${SOURCE_DIR}/${1}.tar ]; then
+    echo "expanding ${SOURCE_DIR}/${1}.tar"
+    tar xvf ${SOURCE_DIR}/${1}.tar --strip 1
+else
+    echo "ERROR: unable to locate ${SOURCE_DIR}/${1} in .tar, .tar.gz, or .tgz format"
+    exit 1
+fi
+
+mkdir ${configDataDir}
+
+./bin/mongod --dbpath ${configDataDir} --port ${configServerPort} --configsvr --directio --cacheSize ${mongoConfigCacheSize}

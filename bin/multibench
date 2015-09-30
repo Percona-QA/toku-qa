@@ -1,0 +1,222 @@
+#!/bin/bash
+
+dirIibench=~/mystuff/personal/tokutek/software/iibench
+dirSysbench=~/mystuff/personal/tokutek/software/sysbench
+dirTpcc=~/mystuff/personal/tokutek/software/tpcc-percona
+dirFbPileup=~/mystuff/personal/tokutek/software/sysbench/fb-pileup
+
+
+# **********************************************************************************************
+# generic variables
+# **********************************************************************************************
+export MYSQL_NAME=mysql
+export MYSQL_VERSION=5.5.39
+export MYSQL_STORAGE_ENGINE=tokudb
+export SCP_FILES=Y
+export DIRECTIO=Y
+
+
+# use semi-colon list of "blank-tarball;id"
+benchmarkList=""
+benchmarkList="${benchmarkList} blank-toku753-mysql-5.5.40;753"
+benchmarkList="${benchmarkList} blank-toku755rc1.e-mysql-5.5.41;755erc1"
+
+# make sure we have valid tarballs for this benchmark run
+echo "checking that all needed tarballs exist."
+for thisBenchmark in ${benchmarkList}; do
+    export TARBALL=$(echo "${thisBenchmark}" | cut -d';' -f1)
+    export MINI_BENCH_ID=$(echo "${thisBenchmark}" | cut -d';' -f2)
+
+    if [ -e ${BACKUP_DIR}/${TARBALL}.tar.gz ]; then
+        echo "  located ${TARBALL}"
+    else
+        echo "  unable to locate ${TARBALL}, exiting."
+        exit 1
+    fi
+done
+
+
+for thisBenchmark in ${benchmarkList}; do
+    export TARBALL=$(echo "${thisBenchmark}" | cut -d';' -f1)
+    export MINI_BENCH_ID=$(echo "${thisBenchmark}" | cut -d';' -f2)
+    
+    echo "benchmarking tarball = ${TARBALL}"
+
+    # ************************************************
+    # BE VERY CAREFUL TO SET STUFF AFTER THE FOLLOWING
+    # ************************************************
+    source ~/machine.config
+    
+    export INNODB_CACHE=8G
+    export TOKUDB_DIRECTIO_CACHE=8G
+
+    # **********************************************************************************************
+    # iibench
+    # **********************************************************************************************
+    export INNODB_CACHE=8G
+    export TOKUDB_DIRECTIO_CACHE=8G
+    export ADDITIONAL_WRITERS=0
+    export MAX_ROWS=1000000000
+    export ROWS_PER_REPORT=100000
+    export RUN_MINUTES=60
+    export UNIQUE_CHECKS=1
+    export BENCH_ID=${MINI_BENCH_ID}.quicklz
+    export INSERT_ONLY=1
+    export BENCHMARK_NUMBER=001
+    export SHUTDOWN_MYSQL=N
+    export IIBENCH_CREATE_TABLE=Y
+    
+    pushd ${dirIibench}
+    ./run.benchmark.sh
+    popd
+    unset SHUTDOWN_MYSQL
+    unset IIBENCH_CREATE_TABLE
+    
+    # 4 concurrent inserters
+    export INNODB_CACHE=8G
+    export TOKUDB_DIRECTIO_CACHE=8G
+    export ADDITIONAL_WRITERS=3
+    export RUN_MINUTES=15
+    export BENCH_ID=${MINI_BENCH_ID}.quicklz.4writers
+    export BENCHMARK_NUMBER=002
+    export SKIP_DB_CREATE=Y
+    export SHUTDOWN_MYSQL=N
+    export IIBENCH_CREATE_TABLE=N
+    
+    pushd ${dirIibench}
+    ./run.benchmark.sh
+    popd
+    unset SKIP_DB_CREATE
+    unset SHUTDOWN_MYSQL
+    unset IIBENCH_CREATE_TABLE
+    
+    
+    # **********************************************************************************************
+    # iibench plus queries
+    # **********************************************************************************************
+    export INNODB_CACHE=8G
+    export TOKUDB_DIRECTIO_CACHE=8G
+    export ADDITIONAL_WRITERS=0
+    export MAX_ROWS=1000000000
+    export ROWS_PER_REPORT=100000
+    export RUN_MINUTES=15
+    export UNIQUE_CHECKS=1
+    export BENCH_ID=${MINI_BENCH_ID}.quicklz
+    export INSERT_ONLY=0
+    export BENCHMARK_NUMBER=003
+    export SKIP_DB_CREATE=Y
+    export IIBENCH_CREATE_TABLE=N
+    
+    pushd ${dirIibench}
+    ./run.benchmark.sh
+    popd
+    unset SKIP_DB_CREATE
+    unset IIBENCH_CREATE_TABLE
+    
+    
+    # **********************************************************************************************
+    # sysbench
+    # **********************************************************************************************
+    export INNODB_CACHE=8G
+    export TOKUDB_DIRECTIO_CACHE=8G
+    export TOKUDB_COMPRESSION=lzma
+    export NUM_TABLES=16
+    export RUN_TIME_SECONDS=300
+    export RAND_TYPE=uniform
+    export BENCH_ID=${MINI_BENCH_ID}.${TOKUDB_COMPRESSION}.10mm.${RAND_TYPE}
+    export NUM_ROWS=10000000
+    export TOKUDB_READ_BLOCK_SIZE=64K
+    export BENCHMARK_NUMBER=004
+    export threadCountList="0001 0004 0016 0064 0128 0256 0512 1024"
+    
+    # > RAM - uniform - lzma
+    pushd ${dirSysbench}
+    ./doit.bash
+    popd
+    unset threadCountList
+    
+    export SKIP_DB_CREATE=Y
+    export RAND_TYPE=special
+    export BENCH_ID=${MINI_BENCH_ID}.${TOKUDB_COMPRESSION}.10mm.${RAND_TYPE}
+    export BENCHMARK_NUMBER=005
+    export threadCountList="0001 0004 0016 0064 0128 0256 0512 1024"
+    
+    # > RAM - special - lzma
+    pushd ${dirSysbench}
+    ./doit.bash
+    popd
+    unset threadCountList
+    unset SKIP_DB_CREATE
+
+    
+    export INNODB_CACHE=8G
+    export TOKUDB_DIRECTIO_CACHE=8G
+    export TOKUDB_COMPRESSION=quicklz
+    export NUM_ROWS=1000000
+    export RAND_TYPE=uniform
+    export BENCH_ID=${MINI_BENCH_ID}.${TOKUDB_COMPRESSION}.1mm.${RAND_TYPE}
+    export BENCHMARK_NUMBER=006
+    export threadCountList="0001 0004 0016 0064 0128 0256 0512 1024"
+    
+    # < RAM
+    pushd ${dirSysbench}
+    ./doit.bash
+    popd
+    unset threadCountList
+    
+    
+    # **********************************************************************************************
+    # FB-Pileup
+    # **********************************************************************************************
+    export INNODB_CACHE=16G
+    export TOKUDB_DIRECTIO_CACHE=16G
+    export TOKUDB_COMPRESSION=quicklz
+    export BENCH_ID=${MINI_BENCH_ID}.${TOKUDB_COMPRESSION}.4mm
+    export NUM_ROWS=250000
+    export NUM_TABLES=16
+    export RUN_TIME_SECONDS=180
+    export RAND_TYPE=uniform
+    export TOKUDB_READ_BLOCK_SIZE=64K
+    export BENCHMARK_NUMBER=007
+    export threadCountList="0001 0004 0016 0064 0128 0256 0512 1024"
+    
+    # < RAM
+    pushd ${dirFbPileup}
+    ./doit.bash
+    popd
+    unset threadCountList
+    
+    
+    # **********************************************************************************************
+    # tpcc
+    # **********************************************************************************************
+    export INNODB_CACHE=16G
+    export TOKUDB_DIRECTIO_CACHE=16G
+    export NUM_WAREHOUSES=500
+    export RUN_TIME_SECONDS=300
+    export NEW_ORDERS_PER_TEN_SECONDS=200000
+    export TOKUDB_COMPRESSION=quicklz
+    export TOKUDB_READ_BLOCK_SIZE=64K
+    export BENCH_ID=${MINI_BENCH_ID}.${TOKUDB_COMPRESSION}.${NUM_WAREHOUSES}w
+    export BENCHMARK_NUMBER=008
+    export threadCountList="0001 0004 0016 0064 0128 0256 0512 1024"
+    
+    # > RAM
+    pushd ${dirTpcc}
+    ./doit.bash
+    popd
+    unset threadCountList
+    
+    export INNODB_CACHE=16G
+    export TOKUDB_DIRECTIO_CACHE=16G
+    export NUM_WAREHOUSES=100
+    export BENCH_ID=${MINI_BENCH_ID}.${TOKUDB_COMPRESSION}.${NUM_WAREHOUSES}w
+    export BENCHMARK_NUMBER=009
+    export threadCountList="0001 0004 0016 0064 0128 0256 0512 1024"
+    
+    # < RAM
+    pushd ${dirTpcc}
+    ./doit.bash
+    popd
+    unset threadCountList
+done

@@ -1,0 +1,3 @@
+#!/bin/bash
+
+tokustat.py --host=${MYSQL_SOCKET} --user=root

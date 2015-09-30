@@ -1,0 +1,20 @@
+#!/bin/bash
+
+MYSQL_SOCKET=$MYSQL_SOCKET
+MYSQL_USER=root
+MYSQL_PASSWORD=""
+
+last_what=-1
+
+wait_seconds=${1}
+num_intervals=${2}
+search_string=${3}
+this_interval=1
+overall_what=0
+overall_seconds=0
+
+while [ ${this_interval} -le ${num_intervals} ] ; do
+    $DB_DIR/bin/mysqladmin --user=${MYSQL_USER} --socket=${MYSQL_SOCKET} --password=${MYSQL_PASSWORD} ext | grep ${search_string}
+    sleep ${wait_seconds}
+    let this_interval=this_interval+1
+done

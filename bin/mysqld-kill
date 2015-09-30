@@ -1,0 +1,66 @@
+#!/bin/bash
+
+if [ $# -eq 0 ]; then
+  echo "usage: mysqld-kill <seconds> <log-file>"
+  exit 1
+fi
+
+# only kill my own processes
+UID_KILL=${UID}
+
+# Put the time in seconds which the process is allowed to run below
+KILL_TIME=${1}
+
+LOG_FILE=${2}
+
+# how long to wait between checks
+WAIT_SECONDS=15
+
+# process to kill
+PROCESS_NAME="mysqld"
+
+while true; do
+    echo "checking for ${PROCESS_NAME} processes that have been running for more than ${KILL_TIME} seconds..."
+
+#    KILL_LIST=`{
+#        ps -C ${PROCESS_NAME} -o uid,pid,lstart | tail -n+2 |
+#            while read PROC_UID PROC_PID PROC_LSTART ; do
+#                SECONDS=$[$(date +%s) - $(date -d"$PROC_LSTART" +%s)]
+#                if [ $PROC_UID -eq $UID_KILL -a $SECONDS -gt $KILL_TIME ]; then
+#                    echo -n "$PROC_PID "
+#                fi
+#             done 
+#        }`
+#
+#    if [[ -n $KILL_LIST ]]; then
+#        echo "  killing processes: ${KILL_LIST}"
+#        kill -9 $KILL_LIST
+#    fi
+
+    ps -C ${PROCESS_NAME} -o uid,pid,lstart | tail -n+2 |
+        while read PROC_UID PROC_PID PROC_LSTART ; do
+            SECONDS=$[$(date +%s) - $(date -d"$PROC_LSTART" +%s)]
+            if [ $PROC_UID -eq $UID_KILL -a $SECONDS -gt $KILL_TIME ]; then
+                echo "`date` | killing ${PROCESS_NAME}, pid=${PROC_PID}, runtime=${SECONDS}" | tee -a ${LOG_FILE}
+                
+                # capture output of show processlist
+                cmdString=`ps aux | grep ${PROC_PID}`
+                for i in ${cmdString} ; do
+                  case $i in
+                    -s=*|--socket=*)
+                      SOCKET="${i#*=}"
+                    ;;
+                    *)
+                      # unknown option
+                    ;;
+                  esac
+                done
+                mysql -uroot --socket=${SOCKET} -e "show processlist;" | tee -a ${LOG_FILE}
+
+                # kill the process
+                kill -9 ${PROC_PID}
+            fi
+        done 
+
+    sleep ${WAIT_SECONDS}
+done

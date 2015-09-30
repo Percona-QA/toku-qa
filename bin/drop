@@ -1,0 +1,4 @@
+#! /bin/bash
+
+#cp ${1} ~/Dropbox/Public/tokutek
+cp $* ~/Dropbox/Public/tokutek

@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# using environment variable EC2IP
+
+scp -i ~/mystuff/personal/tokutek/amazon/tcallaghan.pem ${1} ec2-user@${EC2IP}:~
+
+

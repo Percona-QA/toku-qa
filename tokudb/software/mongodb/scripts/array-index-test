@@ -1,0 +1,54 @@
+# simple test
+
+use tmc-test
+db.createCollection("tmc")
+db.tmc.insert({uri:"uri01", age:32})
+db.tmc.find()
+
+db.tmc.ensureIndex({uri:1}, {v:1})
+db.tmc.getIndexes()
+
+db.tmc.insert({uri:["uri02","uri03"], age:32})
+
+db.tmc.find({uri:"uri02"})
+db.tmc.find({uri:"uri02"}).explain()
+
+db.runCommand({drop: "tmc"})
+
+
+
+# test index array for correctness
+
+use tmc-test
+db.createCollection("tmc")
+db.tmc.insert({uri:"uri01", age:32})
+db.tmc.find()
+
+db.tmc.ensureIndex({uri:1}, {v:2})
+db.tmc.getIndexes()
+
+db.tmc.insert({uri:["uri02","uri03"], age:32})
+
+db.tmc.find({uri:"uri02"})
+db.tmc.find({uri:"uri02"}).explain()
+
+db.runCommand({drop: "tmc"})
+
+
+# what happens when I try to index two array fields, does the document go in?
+
+use tmc-test
+db.createCollection("tmc")
+db.tmc.insert({size:"small", color:"blue", upc:"upc-01"})
+db.tmc.find()
+db.tmc.ensureIndex({size:1,color:1}, {v:1})
+db.tmc.getIndexes()
+
+db.tmc.insert({size:["small","medium"], color:"blue", upc:"upc-02"})
+db.tmc.insert({size:"medium", color:["blue","red"], upc:"upc-03"})
+db.tmc.find()
+
+db.tmc.insert({size:["small","medium"], color:["blue","red"], upc:"upc-03"})
+db.tmc.find()
+
+db.runCommand({drop: "tmc"})

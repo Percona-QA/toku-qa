@@ -1,0 +1,6 @@
+#! /bin/bash
+
+ip_addy=tokulex.tokutek.com
+
+rsync -vrazR --progress --stats --delete -e 'ssh -p 22242' tcallaghan@${ip_addy}:mystuff ~
+#rsync -vraz  --progress --stats --copy-links --delete -e 'ssh -p 22242' tcallaghan@${ip_addy}:holder/tokutek ~/holder-NOT-BACKED-UP

@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# check ram performance
+
+outFile=/tmp/sbmemory.txt
+
+rm -f ${outFile}
+
+sysbench --test=memory --memory-block-size=1K --memory-scope=global --memory-total-size=30G --memory-oper=read --num-threads=16 --max-time=60 run > ${outFile}
+opsPerSec=`grep "ops/sec" ${outFile} | awk '{print $4}' | awk '{print substr($1,2); }'`
+echo "reads/sec = ${opsPerSec}"
+rm -f ${outFile}
+
+sysbench --test=memory --memory-block-size=1K --memory-scope=global --memory-total-size=30G --memory-oper=write --num-threads=16 --max-time=60 run > ${outFile}
+opsPerSec=`grep "Operations performed:" ${outFile} | awk '{print $4}' | awk '{print substr($1,2); }'`
+echo "writes/sec = ${opsPerSec}"
+rm -f ${outFile}

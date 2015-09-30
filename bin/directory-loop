@@ -1,0 +1,18 @@
+#! /bin/bash
+
+for db_version in * ; do
+  if [ -d "$db_version" ]; then
+    #echo "$db_version"
+      for server_name in $db_version/* ; do
+        if [ -d "$server_name" ]; then
+          #echo "  -- $server_name"
+            for benchmark_name in $server_name/*fbpileup* ; do
+              if [ -d "$benchmark_name" ]; then
+                good_runs=`grep "OLTP test statistics" $benchmark_name/*.txt | wc -l`
+                echo "$good_runs : $benchmark_name"
+              fi
+            done
+        fi
+      done
+  fi
+done

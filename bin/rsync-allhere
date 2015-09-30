@@ -1,0 +1,18 @@
+#! /bin/bash
+
+ip_addy=192.168.1.242
+
+mkdir ~/benchdb
+mkdir ~/holder
+mkdir ~/java_goodies
+mkdir ~/mystuff
+mkdir ~/personal
+mkdir ~/temp
+mkdir ~/vms
+
+rsync -vrazR --progress --stats --delete tcallaghan@${ip_addy}:benchdb ~
+rsync -vrazR --progress --stats --delete tcallaghan@${ip_addy}:holder ~
+rsync -vrazR --progress --stats --delete tcallaghan@${ip_addy}:java_goodies ~
+rsync -vrazR --progress --stats --delete tcallaghan@${ip_addy}:mystuff ~
+rsync -vrazR --progress --stats --delete tcallaghan@${ip_addy}:personal ~
+rsync -vrazR --progress --stats --delete tcallaghan@${ip_addy}:temp ~

@@ -1,0 +1,60 @@
+#!/bin/bash
+
+# make sure a MB/s parameter was passed
+if [ $# -eq 0 ]; then
+    echo "usage: website-mx-push <version-number> <packge-version-number>"
+    echo "  *** NOTE: Must be run from the top level MX release folder for the particular version"
+    exit 1
+fi
+
+
+# stage all the files to upload
+uploadDir=./website-upload
+rm -f ${uploadDir}/*
+rmdir ${uploadDir}
+mkdir ${uploadDir}
+
+# tarballs (4 files)
+cp -v tokumx-${1}-linux-x86_64-main.tar.gz* ${uploadDir}
+cp -v tokumx-e-${1}-linux-x86_64-main.tar.gz* ${uploadDir}
+
+# rpms (6 files per distro, 12 files total)
+for distroName in el6 fc20 ; do
+    cp -v  ${distroName}/tokumx-${1}-${2}.${distroName}.x86_64.rpm* ${uploadDir}
+    cp -v  ${distroName}/tokumx-common-${1}-${2}.${distroName}.x86_64.rpm* ${uploadDir}
+    cp -v  ${distroName}/tokumx-server-${1}-${2}.${distroName}.x86_64.rpm* ${uploadDir}
+#    cp -v  ${distroName}/tokumx-enterprise-${1}-${2}.${distroName}.x86_64.rpm* ${uploadDir}
+#    cp -v  ${distroName}/tokumx-enterprise-common-${1}-${2}.${distroName}.x86_64.rpm* ${uploadDir}
+#    cp -v  ${distroName}/tokumx-enterprise-server-${1}-${2}.${distroName}.x86_64.rpm* ${uploadDir}
+done
+
+# debian (16 files per distro, 64 files total)
+#for distroName in debian-wheezy ubuntu-precise ubuntu-raring ubuntu-saucy ; do
+#    shortName=$(echo "${distroName}" | cut -d'-' -f2)
+#
+#    cp -v  ${distroName}/tokumx_${1}-1_amd64.deb ${uploadDir}/tokumx_${1}-${2}-${shortName}_amd64.deb
+#    cp -v  ${distroName}/tokumx-clients_${1}-1_amd64.deb ${uploadDir}/tokumx-clients_${1}-${2}-${shortName}_amd64.deb
+#    cp -v  ${distroName}/tokumx-common_${1}-1_amd64.deb ${uploadDir}/tokumx-common_${1}-${2}-${shortName}_amd64.deb
+#    cp -v  ${distroName}/tokumx-server_${1}-1_amd64.deb ${uploadDir}/tokumx-server_${1}-${2}-${shortName}_amd64.deb
+#    cp -v  ${distroName}/tokumx-enterprise_${1}-1_amd64.deb ${uploadDir}/tokumx-enterprise_${1}-${2}-${shortName}_amd64.deb
+#    cp -v  ${distroName}/tokumx-enterprise-clients_${1}-1_amd64.deb ${uploadDir}/tokumx-enterprise-clients_${1}-${2}-${shortName}_amd64.deb
+#    cp -v  ${distroName}/tokumx-enterprise-common_${1}-1_amd64.deb ${uploadDir}/tokumx-enterprise-common_${1}-${2}-${shortName}_amd64.deb
+#    cp -v  ${distroName}/tokumx-enterprise-server_${1}-1_amd64.deb ${uploadDir}/tokumx-enterprise-server_${1}-${2}-${shortName}_amd64.deb
+#done
+
+pushd ${uploadDir}
+
+# create new .md5 files for debian distros
+#for f in *.deb; do md5sum $f > $f.md5; done
+
+cadaver http://webdav.tokutek.com <<EOF
+open http://webdav.tokutek.com
+mput *
+quit
+EOF
+
+popd
+
+
+rm -f ${uploadDir}/*
+rmdir ${uploadDir}

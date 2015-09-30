@@ -1,0 +1,208 @@
+#!/bin/bash
+
+if [ -z "$MONGO_DATA_DIR" ]; then
+    echo "Need to set MONGO_DATA_DIR"
+    exit 1
+fi
+if [ ! -d "$MONGO_DATA_DIR" ]; then
+    echo "Need to create directory MONGO_DATA_DIR"
+    exit 1
+fi
+
+if [ -z "$MONGO_DIR" ]; then
+    echo "Need to set MONGO_DIR"
+    exit 1
+fi
+if [ ! -d "$MONGO_DIR" ]; then
+    echo "Need to create directory MONGO_DIR"
+    exit 1
+fi
+
+if [ -z "$DB_NAME" ]; then
+    echo "Need to set DB_NAME"
+    exit 1
+fi
+
+
+if [ -z "$COMMIT_SYNC" ]; then
+    export COMMIT_SYNC=1
+fi
+
+if [ ${COMMIT_SYNC} == "1" ]; then
+    NOSYNC_COMMIT=""
+else
+    NOSYNC_COMMIT="--nosync_commit"
+fi
+
+if [ -z "$MONGO_REPL" ]; then
+    REPL_STRING=""
+else
+    REPL_STRING="--replSet ${MONGO_REPL}"
+fi
+
+if [ -z "$MONGO_LOCK_TIMEOUT" ]; then
+    LOCK_TIMEOUT_STRING=""
+else
+    LOCK_TIMEOUT_STRING="--lockTimeout ${MONGO_LOCK_TIMEOUT}"
+fi
+
+export MONGO_SLOW_MS=500
+
+if [ -z "$MONGO_SLOW_MS" ]; then
+    SLOWMS_STRING=""
+else
+    SLOWMS_STRING="--slowms ${MONGO_SLOW_MS}"
+fi
+
+if [ -z "$TOKUMON_CACHE_SIZE" ]; then
+    echo "Need to set TOKUMON_CACHE_SIZE"
+    exit 1
+fi
+
+if [ -z "$TOKUMX_BUFFERED_IO" ]; then
+    DIRECTIO_STRING="--directio"
+else
+    if [ ${TOKUMX_BUFFERED_IO} == "Y" ]; then
+        DIRECTIO_STRING=""
+    else
+        DIRECTIO_STRING="--directio"
+    fi
+fi
+
+
+
+#AUDIT_FILTER='--auditFilter {atype:{$nin:["createDatabase","authenticate"]}}'
+#AUDIT_FILTER='--auditFilter {atype:{$in:["dropCollection","authenticate"]}}'
+#AUDIT_FILTER='--auditFilter {atype:"createIndex"}}'
+
+#AUDIT_FILTER='--auditFilter {"users.user":{$nin:["admin","bob2"]}}'
+#AUDIT_FILTER='--auditFilter {"users.user":{$in:["admin","bob"]}}'
+#AUDIT_FILTER='--auditFilter {"users.user":"bob"}}'
+
+#AUDIT_FILTER='--auditFilter {"users.db":{$nin:["admin","timbo"]}}'
+#AUDIT_FILTER='--auditFilter {"users.db":{$in:["admin","test"]},"users.user":"bob"}'
+#AUDIT_FILTER='--auditFilter {"users.db":"timbo"}}'
+
+echo ${AUDIT_FILTER}
+
+
+
+# *********************************************************************************************
+# start 1 config server
+
+# 512MB cache
+mongoConfigCacheSize=512M
+
+configDir1=$MONGO_DATA_DIR/config1
+configPort1=30001
+configLog1=/tmp/config1.mongolog
+rm -f ${configLog1}
+
+configServer=${HOSTNAME}
+
+mkdir ${configDir1}
+$MONGO_DIR/bin/mongod --dbpath ${configDir1} --port ${configPort1} --configsvr --directio --cacheSize ${mongoConfigCacheSize} --fork --logpath ${configLog1}
+
+echo "`date` | waiting 5 seconds for config server to start"
+sleep 5 
+
+
+
+# *********************************************************************************************
+# start 1 mongos server
+
+mongosPort1=27017
+mongosLog1=/tmp/mongos1.mongolog
+rm -f ${mongosLog1}
+mongosServer1=${HOSTNAME}
+mongosAuditLog1=/tmp/mongosAudit1.log
+rm -f ${mongosAuditLog1}
+
+$MONGO_DIR/bin/mongos --port ${mongosPort1} --configdb ${configServer}:${configPort1} --fork --logpath ${mongosLog1} --auditDestination=file --auditFormat=JSON --auditPath=${mongosAuditLog1} ${AUDIT_FILTER}
+
+# wait for mongos server to start
+echo "`date` | waiting for mongos server to start"
+mongo-is-up-port ${mongosPort1}
+
+
+
+# *********************************************************************************************
+# start mongod servers locally
+
+mongodDir1=$MONGO_DATA_DIR/mongod1
+mongodPort1=30021
+mongodLog1=/tmp/mongod1.mongolog
+rm -f ${mongodLog1}
+mongodServer1=${HOSTNAME}
+auditLog1=/tmp/audit1.log
+rm -f ${auditLog1}
+    
+mongodDir2=$MONGO_DATA_DIR/mongod2
+mongodPort2=30022
+mongodLog2=/tmp/mongod2.mongolog
+rm -f ${mongodLog2}
+mongodServer2=${HOSTNAME}
+auditLog2=/tmp/audit2.log
+rm -f ${auditLog2}
+    
+mongodDir3=$MONGO_DATA_DIR/mongod3
+mongodPort3=30023
+mongodLog3=/tmp/mongod3.mongolog
+rm -f ${mongodLog3}
+mongodServer3=${HOSTNAME}
+auditLog3=/tmp/audit3.log
+rm -f ${auditLog3}
+    
+mkdir ${mongodDir1}
+$MONGO_DIR/bin/mongod --dbpath ${mongodDir1} --port ${mongodPort1} ${NOSYNC_COMMIT} ${DIRECTIO_STRING} --cacheSize $TOKUMON_CACHE_SIZE --fork --logpath ${mongodLog1} ${REPL_STRING} ${LOCK_TIMEOUT_STRING} ${SLOWMS_STRING} --auditDestination=file --auditFormat=JSON --auditPath=${auditLog1} ${AUDIT_FILTER}
+    
+mkdir ${mongodDir2}
+$MONGO_DIR/bin/mongod --dbpath ${mongodDir2} --port ${mongodPort2} ${NOSYNC_COMMIT} ${DIRECTIO_STRING} --cacheSize $TOKUMON_CACHE_SIZE --fork --logpath ${mongodLog2} ${REPL_STRING} ${LOCK_TIMEOUT_STRING} ${SLOWMS_STRING} --auditDestination=file --auditFormat=JSON --auditPath=${auditLog2} ${AUDIT_FILTER}
+
+mkdir ${mongodDir3}
+$MONGO_DIR/bin/mongod --dbpath ${mongodDir3} --port ${mongodPort3} ${NOSYNC_COMMIT} ${DIRECTIO_STRING} --cacheSize $TOKUMON_CACHE_SIZE --fork --logpath ${mongodLog3} ${REPL_STRING} ${LOCK_TIMEOUT_STRING} ${SLOWMS_STRING} --auditDestination=file --auditFormat=JSON --auditPath=${auditLog3} ${AUDIT_FILTER}
+
+# wait for shard server 1 to start
+echo "`date` | waiting for shard server 1 to start"
+mongo-is-up-port ${mongodPort1}
+
+# wait for shard server 2 to start
+echo "`date` | waiting for shard server 2 to start"
+mongo-is-up-port ${mongodPort2}
+
+# wait for shard server 3 to start
+echo "`date` | waiting for shard server 3 to start"
+mongo-is-up-port ${mongodPort3}
+
+
+
+echo "`date` | adding shard1"
+#$MONGO_DIR/bin/mongo ${DB_NAME} --port ${mongosPort1} --eval "printjson(sh.addShard(\"${mongodServer1}:${mongodPort1}\"));"
+$MONGO_DIR/bin/mongo admin --port ${mongosPort1} --eval "printjson(db.adminCommand({addShard: \"${mongodServer1}:${mongodPort1}\", name: \"shard1\"}));"
+echo "`date` | adding shard2"
+#$MONGO_DIR/bin/mongo ${DB_NAME} --port ${mongosPort1} --eval "printjson(sh.addShard(\"${mongodServer2}:${mongodPort2}\"));"
+$MONGO_DIR/bin/mongo admin --port ${mongosPort1} --eval "printjson(db.adminCommand({addShard: \"${mongodServer2}:${mongodPort2}\", name: \"shard2\"}));"
+echo "`date` | adding shard3"
+#$MONGO_DIR/bin/mongo ${DB_NAME} --port ${mongosPort1} --eval "printjson(sh.addShard(\"${mongodServer3}:${mongodPort3}\"));"
+$MONGO_DIR/bin/mongo admin --port ${mongosPort1} --eval "printjson(db.adminCommand({addShard: \"${mongodServer3}:${mongodPort3}\", name: \"shard3\"}));"
+
+sleep 5 
+$MONGO_DIR/bin/mongo ${DB_NAME} --port ${mongosPort1} --eval "sh.status();"
+
+echo "`date` | enabling sharding in the ${DB_NAME} database"
+$MONGO_DIR/bin/mongo ${DB_NAME} --port ${mongosPort1} --eval "printjson(sh.enableSharding(\"${DB_NAME}\"));"
+
+collectionName=purchases_index
+echo "`date` | shard the ${DB_NAME}.${collectionName} collection"
+# went with a small value for numInitialChunks so draining is fast
+$MONGO_DIR/bin/mongo ${DB_NAME} --port ${mongosPort1} --eval "printjson(sh.shardCollection(\"${DB_NAME}.${collectionName}\",{_id:\"hashed\"}, numInitialChunks: 6));"
+
+
+echo "`date` | removing shard2"
+#$MONGO_DIR/bin/mongo ${DB_NAME} --port ${mongosPort1} admin --eval "printjson(sh.removeShard(\"${mongodServer2}:${mongodPort2}\"));"
+$MONGO_DIR/bin/mongo admin --port ${mongosPort1} --eval "printjson(db.adminCommand({removeShard: \"shard2\"}));"
+
+echo "`date` | waiting 30 seconds for shard2 to drain and be removed"
+sleep 30
+$MONGO_DIR/bin/mongo ${DB_NAME} --port ${mongosPort1} --eval "sh.status();"
+

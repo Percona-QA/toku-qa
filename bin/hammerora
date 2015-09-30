@@ -1,0 +1,12 @@
+LD_LIBRARY_PATH=/home/tcallaghan/instantclient_11_1
+export LD_LIBRARY_PATH
+
+ORACLE_HOME=/home/tcallaghan/instantclient_11_1
+export ORACLE_HOME
+
+TNS_ADMIN=/home/tcallaghan/instantclient_11_1
+export TNS_ADMIN
+
+cd ~/hammerora-2.3
+./hammerora.tcl
+

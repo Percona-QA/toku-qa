@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# make sure a parameter was passed
+if [ $# -eq 0 ]; then
+    echo "usage: website-db-push <version-number>"
+    echo "  *** NOTE: Must be run from the top level DB release folder for the particular version"
+    exit 1
+fi
+
+# stage all the files to upload
+uploadDir=./website-upload
+rm -f ${uploadDir}/*
+rmdir ${uploadDir}
+mkdir ${uploadDir}
+
+# documentation (3 files)
+#cp -v *${1}*.pdf ${uploadDir}
+
+# tarballs (5 files)
+cp -v mariadb-*-tokudb-${1}-*linux-x86_64.tar.gz* ${uploadDir}
+cp -v   mysql-*-tokudb-${1}-*linux-x86_64.tar.gz* ${uploadDir}
+
+pushd ${uploadDir}
+
+cadaver http://webdav.tokutek.com <<EOF
+open http://webdav.tokutek.com
+mput *
+quit
+EOF
+
+popd

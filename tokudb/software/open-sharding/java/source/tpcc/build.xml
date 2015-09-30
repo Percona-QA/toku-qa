@@ -1,0 +1,54 @@
+<project name="OpenSharding Java TPCC" default="build">
+	
+	<property name="version" value="1.0.0" />
+	
+	<path id="log4j2.classpath">
+      <fileset dir="../../3rdparty/log4j-2.0">
+          <include name="*.jar"/>
+      </fileset>
+  </path>
+
+	<target name="clean">
+	    <delete dir="dist">
+	        <include name="**" />
+	    </delete>			
+    </target>
+	
+	<!-- Compile jar file -->
+	<target name="compile">
+		<antcall target="clean"/>
+		<mkdir dir="dist"/>
+		<mkdir dir="dist/jars"/>
+		<mkdir dir="_classes"/>
+		<javac destdir="_classes" debug="on" includejavaruntime="true" includeantruntime="false">
+			<src path="src/"/>
+			<classpath refid="log4j2.classpath"/>
+		</javac>
+		<jar destfile="tpcc-jars/tpcc.jar" basedir="_classes"/>
+		<copy todir="tpcc-jars/">
+	    <fileset dir="../../3rdparty/log4j-2.0/"/>
+	  </copy>
+		<delete dir="_classes"/>
+	</target>
+	
+	<!-- Build the relelase tar. -->
+	<target name="build-release">
+		<copydir dest="dist/bin" src="bin"/>
+		<copydir dest="dist/conf" src="conf"/>
+		<tar destfile="dist/tpcc_${version}.tar">
+			<tarfileset dir="dist"
+				prefix="tpcc"
+				preserveLeadingSlashes="false">
+				<include name="bin/**"/>
+				<include name="conf/**"/>
+				<include name="tpcc-jars/**"/>
+			</tarfileset>
+		</tar>
+	</target>
+	
+	<!-- Default build target -->
+	<target name="build">
+		<antcall target="compile"/>
+		<antcall target="build-release"/> 
+	</target>
+</project>

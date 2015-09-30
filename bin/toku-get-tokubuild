@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# copy a particular release build from tokubuild@<some-server>
+
+serverName=mork
+buildDir="~/builds"
+
+if [ $# -eq 0 ]; then
+  echo "usage: toku-get-tokubuild <version>"
+  exit 1
+fi
+
+version=${1}
+
+mkdir debug
+scp tokubuild@${serverName}:${buildDir}/build-tokudb-${version}/*.gz* .
+scp tokubuild@${serverName}:${buildDir}/build-tokudb-${version}-e/*.gz* .
+scp tokubuild@${serverName}:${buildDir}/build-tokudb-${version}-debug/*.gz* debug
+scp tokubuild@${serverName}:${buildDir}/build-tokudb-${version}-debug-e/*.gz* debug
+

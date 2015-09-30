@@ -1,0 +1,11 @@
+#! /bin/bash
+
+# get all the public repos from GitHub
+
+#repoList="backup-community backup-enterprise ft-engine ft-index mariadb mysql jemalloc presentations tokudocs"
+repoList="tokudocs"
+
+for repo in ${repoList} ; do
+  git clone git@github.com:Tokutek/${repo}.git
+done
+

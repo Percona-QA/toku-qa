@@ -1,0 +1,8 @@
+#!/bin/sh
+
+if [ -f bin/mysql ]; then
+    bin/mysql --user=root --socket=$MYSQL_SOCKET -e "create user 'tmc'@'%' identified by 'tmc'; grant all privileges on *.* to 'tmc'@'%'; flush privileges;"
+    # bin/mysql --user=root --socket=$MYSQL_SOCKET -e "create user 'tmc'@'localhost' identified by 'tmc'; grant all privileges on *.* to 'tmc'@'localhost'; flush privileges;"
+else
+    $DB_DIR/bin/mysql --user=root --socket=$MYSQL_SOCKET -e "create user 'tmc'@'localhost' identified by 'tmc'; grant all privileges on *.* to 'tmc'@'localhost'; flush privileges;" 
+fi

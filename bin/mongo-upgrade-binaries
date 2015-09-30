@@ -1,0 +1,10 @@
+#!/bin/bash
+
+if [ $# -eq 0 ]; then
+    echo "usage: mongo-upgrade-binaries <sibling-directory>"
+    exit 1
+fi
+
+siblingDirectory=$1
+
+rm -rf bin/* lib64/*; cp -r ../${siblingDirectory}/bin/* bin; cp -r ../${siblingDirectory}/lib64/* lib64

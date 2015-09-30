@@ -1,0 +1,6 @@
+#!/bin/bash
+
+while [ 1 = 1 ] ; do
+  $DB_DIR/bin/mysql --socket=${MYSQL_SOCKET} --user=root -e "show engine tokudb status;" | grep "checkpoint: footprint"
+  sleep ${1}
+done

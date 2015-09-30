@@ -1,0 +1,62 @@
+#!/bin/bash
+
+export MONGO_COMPRESSION=zlib
+export MONGO_BASEMENT=65536
+
+# < RAM test
+export NUM_COLLECTIONS=16
+export NUM_DOCUMENTS_PER_COLLECTION=1000000
+# > RAM test
+#export NUM_COLLECTIONS=16
+#export NUM_DOCUMENTS_PER_COLLECTION=10000000
+
+export SYSBENCH_POINT_SELECTS=1
+export SYSBENCH_RANGE_SIZE=20000
+export SYSBENCH_RANGE_LIMIT=1000
+
+export NUM_DOCUMENTS_PER_INSERT=1000
+export NUM_LOADER_THREADS=8
+export threadCountList="0256"
+export RUN_TIME_SECONDS=300
+export DB_NAME=sbtest
+export BENCHMARK_NUMBER=106
+
+# FSYNC_SAFE, NONE, NORMAL, REPLICAS_SAFE, SAFE
+export WRITE_CONCERN=SAFE
+
+# 12G Cache
+export TOKUMON_CACHE_SIZE=12G
+
+export MONGO_REPLICATION=N
+
+export SYSBENCH_TYPE=PILEUP
+export PAUSE_BETWEEN_RUNS=10
+
+export CAPTURE_PMPROF=N
+
+
+#export NUM_INSERTS_PER_FEEDBACK=-1
+#export NUM_SECONDS_PER_FEEDBACK=10
+
+
+
+# TOKUMX
+export TARBALL=tokumx-1.3.3-linux-x86_64
+export MONGO_TYPE=tokumx
+export BENCH_ID=tokumx-133-${MONGO_COMPRESSION}-${WRITE_CONCERN}
+./doit.bash
+
+mongo-clean
+
+# MONGODB 2.2
+#export TARBALL=mongodb-linux-x86_64-2.2.3
+#export MONGO_TYPE=mongo
+#export BENCH_ID=mongo-2.2.3-${WRITE_CONCERN}
+
+# MONGODB 2.4
+#export TARBALL=mongodb-linux-x86_64-2.4.6
+#export MONGO_TYPE=mongo
+#export BENCH_ID=mongo-2.4.6-${WRITE_CONCERN}
+#./doit.bash
+#mongo-clean
+

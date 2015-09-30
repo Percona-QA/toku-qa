@@ -1,0 +1,14 @@
+#!/bin/bash
+
+if [ -z "$TOKU_BACKUP_DEST_DIR" ]; then
+    echo "Need to set TOKU_BACKUP_DEST_DIR"
+    exit 1
+fi
+if [ ! -d "$TOKU_BACKUP_DEST_DIR" ]; then
+    echo "Need to create directory TOKU_BACKUP_DEST_DIR"
+    exit 1
+fi
+
+rm -rf $TOKU_BACKUP_DEST_DIR/*
+
+echo 'b' > $DB_DIR/data/backup-command-pipe

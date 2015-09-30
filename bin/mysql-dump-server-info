@@ -1,0 +1,11 @@
+#!/bin/bash
+
+version=${1}
+
+MYSQL_SOCKET=$MYSQL_SOCKET
+USER_NAME=root
+USER_PASSWORD=""
+
+$DB_DIR/bin/mysql --user=root --socket=/tmp/tmc.sock -e "show engine tokudb status;"     > ${version}.tokudb-engine-status.txt
+$DB_DIR/bin/mysql --user=root --socket=/tmp/tmc.sock -e "show variables like 'tokudb%';" > ${version}.tokudb-show-variables.txt
+$DB_DIR/bin/mysql --user=root --socket=/tmp/tmc.sock -e "show status;"                   > ${version}.show-status.txt

@@ -1,0 +1,6 @@
+#! /bin/bash
+
+ip_addy=192.168.1.242
+dest_dir=/home/tcallaghan/nfs
+
+rsync -vraz --progress --stats --delete tcallaghan@${ip_addy}:/mnt/2tb/backups/* ${dest_dir}

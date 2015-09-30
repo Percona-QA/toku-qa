@@ -1,0 +1,21 @@
+#! /bin/bash
+
+#cd work/mysqldev
+git clone https://github.com/wiredtiger/wiredtiger.git
+cd wiredtiger
+mkdir WT_INSTALL
+export WT_HOME=`pwd`/WT_INSTALL
+sh build_posix/reconf
+cd build_posix
+../configure --with-builtins=snappy,zlib
+make -j 12 && make install
+cd ../../
+tar zxf mysql-5.7.4-m14.tar.gz && cd mysql-5.7.4-m14/storage
+git clone git@github.com:wiredtiger/wiredtiger-mysql.git wiredtiger
+cd ..
+patch -p0 < storage/wiredtiger/mysql5_7_4.patch
+mkdir mysql-install
+export MYSQL_DIR=`pwd`/mysql-install
+mkdir build && cd build
+WT_INCLUDE=$WT_HOME/include WT_LIBRARIES=$WT_HOME/lib cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=`pwd`/../mysql-install/
+make && make install

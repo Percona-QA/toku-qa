@@ -1,0 +1,101 @@
+<?xml version="1.0" ?>
+<project name="generic ant script" default="default">
+    <property environment="env"/>
+    
+    <property name="build.dir" location="obj/"/>
+    <property name="src.dir" location="src/"/>
+    
+    <path id="project.classpath">
+        <pathelement location="${build.dir}"/>
+        <pathelement path="${java.class.path}"/>
+    </path>
+    
+    <macrodef name="invoke-java">
+        <attribute name="classname"/>
+        <element name="javac" optional="true" implicit="true"/>
+        <sequential>
+            <java classname="@{classname}" fork="yes" failonerror="true">
+                <jvmarg value="-server"/>
+                <jvmarg value="-Xmx512m"/>
+                <jvmarg value="-XX:+HeapDumpOnOutOfMemoryError"/>
+                <jvmarg value="-XX:HeapDumpPath=/tmp"/>
+                <jvmarg value="-XX:-ReduceInitialCardMarks"/>
+                <classpath refid="project.classpath"/>
+                <assertions>
+                    <disable/>
+                </assertions>
+                <javac/>
+            </java>
+        </sequential>
+    </macrodef>
+    
+    <target name="default" depends="srccompile" description="Compile code."/>
+    
+    <target name="clean" description="Remove compilation artifacts">
+        <delete failonerror="false" includeemptydirs="true">
+            <fileset dir="${build.dir}" includes="**/*"/>
+        </delete>
+    </target>
+    
+    <target name="srccompile">
+        <mkdir dir="${build.dir}"/>
+        <javac srcdir="${src.dir}" destdir="${build.dir}" debug="true" target="1.7" includeantruntime="false">
+            <classpath refid="project.classpath"/>
+        </javac>
+    </target>
+    
+    <target name="execute" description="Run benchmark.">
+        <fail unless="env.MYSQL_DATABASE" message="MYSQL_DATABASE not set."/>
+        <fail unless="env.NUM_LOADER_THREADS" message="NUM_LOADER_THREADS not set."/>
+        <fail unless="env.MAX_ROWS" message="NUM_DOCUMENTS_PER_COLLECTION not set."/>
+        <fail unless="env.NUM_ROWS_PER_INSERT" message="NUM_ROWS_PER_INSERT not set."/>
+        <fail unless="env.NUM_INSERTS_PER_FEEDBACK" message="NUM_INSERTS_PER_FEEDBACK not set."/>
+        <fail unless="env.NUM_SECONDS_PER_FEEDBACK" message="NUM_SECONDS_PER_FEEDBACK not set."/>
+        <fail unless="env.BENCHMARK_TSV" message="BENCHMARK_TSV not set."/>
+        <fail unless="env.RUN_SECONDS" message="RUN_SECONDS not set."/>
+        <fail unless="env.QUERIES_PER_INTERVAL" message="QUERIES_PER_INTERVAL not set."/>
+        <fail unless="env.QUERY_INTERVAL_SECONDS" message="QUERY_INTERVAL_SECONDS not set."/>
+        <fail unless="env.QUERY_LIMIT" message="QUERY_LIMIT not set."/>
+        <fail unless="env.QUERY_NUM_ROWS_BEGIN" message="QUERY_NUM_ROWS_BEGIN not set."/>
+        <fail unless="env.MAX_INSERTS_PER_SECOND" message="MAX_INSERTS_PER_SECOND not set."/>
+        <fail unless="env.NUM_CHAR_FIELDS" message="NUM_CHAR_FIELDS not set."/>
+        <fail unless="env.LENGTH_CHAR_FIELDS" message="LENGTH_CHAR_FIELDS not set."/>
+        <fail unless="env.NUM_SECONDARY_INDEXES" message="NUM_SECONDARY_INDEXES not set."/>
+        <fail unless="env.PERCENT_COMPRESSIBLE" message="PERCENT_COMPRESSIBLE not set."/>
+        <fail unless="env.MYSQL_PORT" message="MYSQL_PORT not set."/>
+        <fail unless="env.MYSQL_STORAGE_ENGINE" message="MYSQL_STORAGE_ENGINE not set."/>
+        <fail unless="env.INNODB_KEY_BLOCK_SIZE" message="INNODB_KEY_BLOCK_SIZE not set."/>
+        <fail unless="env.MYSQL_SERVER" message="MYSQL_SERVER not set."/>
+        <fail unless="env.MYSQL_USER" message="MYSQL_USER not set."/>
+        <fail unless="env.MYSQL_PASSWORD" message="MYSQL_PASSWORD not set."/>
+        <fail unless="env.CREATE_TABLE" message="CREATE_TABLE not set."/>
+        
+        <invoke-java classname="jiibench">
+            <arg value="${env.MYSQL_DATABASE}"/>                 <!-- database name -->
+            <arg value="${env.NUM_LOADER_THREADS}"/>             <!-- number of writer threads -->
+            <arg value="${env.MAX_ROWS}"/>                       <!-- rows to insert per table -->
+            <arg value="${env.NUM_ROWS_PER_INSERT}"/>            <!-- rows per insert (bulk loading)  -->
+            <arg value="${env.NUM_INSERTS_PER_FEEDBACK}"/>       <!-- number of inserts between feedback/progress messages  -->
+            <arg value="${env.NUM_SECONDS_PER_FEEDBACK}"/>       <!-- number of seconds between feedback/progress messages  -->
+            <arg value="${env.BENCHMARK_TSV}"/>                  <!-- name of log file -->
+            <arg value="${env.RUN_SECONDS}"/>                    <!-- number of seconds to run for -->
+            <arg value="${env.QUERIES_PER_INTERVAL}"/>           <!-- number of queries to run per given interval -->
+            <arg value="${env.QUERY_INTERVAL_SECONDS}"/>         <!-- query interval (seconds) -->
+            <arg value="${env.QUERY_LIMIT}"/>                    <!-- number of documents to return per query -->
+            <arg value="${env.QUERY_NUM_ROWS_BEGIN}"/>           <!-- wait for this many rows to be inserted before starting queries -->
+            <arg value="${env.MAX_INSERTS_PER_SECOND}"/>         <!-- maximum number of inserts per second -->
+            <arg value="${env.NUM_CHAR_FIELDS}"/>                <!-- number of additional character fields -->
+            <arg value="${env.LENGTH_CHAR_FIELDS}"/>             <!-- length of each additional character field -->
+            <arg value="${env.NUM_SECONDARY_INDEXES}"/>          <!-- number of secondary indexes (0 .. 3) -->
+            <arg value="${env.PERCENT_COMPRESSIBLE}"/>           <!-- percentage of highly compressible data in additional character fields (0 .. 100) -->
+            <arg value="${env.MYSQL_PORT}"/>                     <!-- mysql server port -->
+            <arg value="${env.MYSQL_STORAGE_ENGINE}"/>           <!-- mysql storage engine -->
+            <arg value="${env.INNODB_KEY_BLOCK_SIZE}"/>          <!-- innodb key block size, pass 0 for no compression or tokudb -->
+            <arg value="${env.MYSQL_SERVER}"/>                   <!-- mysql server name -->
+            <arg value="${env.MYSQL_USER}"/>                     <!-- mysql username -->
+            <arg value="${env.MYSQL_PASSWORD}"/>                 <!-- mysql password -->
+            <arg value="${env.CREATE_TABLE}"/>                   <!-- create the table (Y/N) -->
+        </invoke-java>
+    </target>
+
+</project>

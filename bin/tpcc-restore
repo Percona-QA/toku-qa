@@ -1,0 +1,12 @@
+#!/bin/bash
+
+PATH_FROM=$BACKUP_DIR/tpcc/$1
+PATH_TO=$DB_DIR
+
+before="$(date +%s)"
+rm -rf $PATH_TO
+mkdir $PATH_TO
+cp -r -v $PATH_FROM/* $PATH_TO
+after="$(date +%s)"
+elapsed_seconds="$(expr $after - $before)"
+echo Elapsed seconds: $elapsed_seconds

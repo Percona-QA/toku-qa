@@ -1,0 +1,6 @@
+#! /bin/bash
+
+cat /sys/kernel/mm/redhat_transparent_hugepage/enabled
+cat /sys/kernel/mm/redhat_transparent_hugepage/khugepaged/defrag
+cat /sys/kernel/mm/redhat_transparent_hugepage/defrag
+

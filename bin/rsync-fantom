@@ -1,0 +1,19 @@
+#! /bin/bash
+
+destDir=/media/tcallaghan/fantom2tb1
+
+# check that $HOT_BACKUP_DIR exists
+if [ ! -d "$destDir" ]; then
+    echo "Cannot find destination directory : $destDir"
+    exit 1
+fi
+
+# tar home directory to /mnt/2tb/tcallaghan/home-directory-backups
+DATE=`date +"%Y%m%d"`
+tarFileName="/mnt/2tb/tcallaghan/home-directory-backups/${DATE}.tar.gz"
+tar czvf ${tarFileName} --exclude={/home/tcallaghan/vms,/home/tcallaghan/data,/home/tcallaghan/Dropbox,/home/tcallaghan/holder,/home/tcallaghan/_1dox,/home/tcallaghan/_1tokutek,/home/tcallaghan/2tb,/home/tcallaghan/benchmark.results,/home/tcallaghan/bin,/home/tcallaghan/Downloads,/home/tcallaghan/.cache,/home/tcallaghan/temp,/home/tcallaghan/.steam} /home/tcallaghan
+
+rsync -vraz --progress --stats --delete /mnt/2tb/backups ${destDir}
+rsync -vraz --progress --stats --delete /mnt/2tb/tcallaghan ${destDir}
+
+#rsync -vrazL --progress --exclude 'temp' --exclude 'vms' --exclude '.cache' --exclude '.local' --exclude '.ccache' --exclude '.cpan' --exclude 'git' --exclude 'Dropbox' --exclude 'svn' --exclude 'bzr' --exclude 'data' --exclude '.adobe' --exclude '.config' --exclude '.dropbox' --exclude '.mozilla' --exclude '.Skype' --exclude '_1dox' --stats --delete /home/tcallaghan ${destDir}

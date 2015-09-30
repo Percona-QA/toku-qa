@@ -1,0 +1,7 @@
+#!/bin/sh
+
+if [ -f bin/mysqladmin ]; then
+    bin/mysqladmin --user=root --socket=$MYSQL_SOCKET shutdown
+else
+    $DB_DIR/bin/mysqladmin --user=root --socket=$MYSQL_SOCKET shutdown
+fi

@@ -1,0 +1,19 @@
+#! /bin/bash
+
+#cd work/mysqldev
+
+#export MYSQL_DIR=/home/tcallaghan/wt/mysql-5.7.4-m14/mysql-install
+#export WT_HOME=/home/tcallaghan/wt/wiredtiger/build_posix
+
+# start in the mysql-install folder
+MYSQL_DIR=$PWD
+
+#cd $MYSQL_DIR
+cp ~/mystuff/personal/tokutek/mysql/wt/my.cnf .
+export LD_LIBRARY_PATH=$PWD/wt/lib:$LD_LIBRARY_PATH
+LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so $MYSQL_DIR/scripts/mysql_install_db --defaults-file=./my.cnf --skip-random-passwords #--log-error=$DB_DIR/mysql.log --datadir=$DB_DIR
+#LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so $MYSQL_DIR/bin/mysqld --defaults-file=./my.cnf --log-error=$DB_DIR/mysql.log #--datadir=$DB_DIR
+
+
+# package it up
+#

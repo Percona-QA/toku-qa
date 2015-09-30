@@ -1,0 +1,29 @@
+#!/bin/bash
+
+#-rw-rw-r-- 1 tcallaghan tcallaghan  878404 Jan 23 12:54 mindy.c6-008-20130119144026-tpcc-hp2ac.52126.zlib.64k.tar.gz
+#-rw-rw-r-- 1 tcallaghan tcallaghan  900511 Jan 23 12:54 mindy.c6-008-20130119195121-tpcc-hp2acfc.52244.zlib-lzma.64k.tar.gz
+#-rw-rw-r-- 1 tcallaghan tcallaghan 1159672 Jan 23 10:07 mindy.c6-008-20130123100702-tpcc-hp2acfcqlz.52320.qlz-lzma.64k.tar.gz
+
+prefixName=$1
+run1=672
+run2=673
+run3=673.nopunch
+
+# dir1
+for i in *-672.*.1000w ; do
+  dir1=$i
+done
+
+# dir2
+for i in *-673.*.1000w ; do
+  dir2=$i
+done
+
+# dir3
+for i in *nopunch*.65536; do
+  dir3=$i
+done
+
+master-gnuplot ${dir1} ${run1} ${dir2} ${run2} ${prefixName}-${run1}-vs-${run2}
+#master-gnuplot ${dir1} ${run1} ${dir3} ${run3} ${prefixName}-${run1}-vs-${run3}
+master-gnuplot ${dir2} ${run2} ${dir3} ${run3} ${prefixName}-${run2}-vs-${run3}

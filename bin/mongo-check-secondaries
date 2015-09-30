@@ -1,0 +1,29 @@
+#!/bin/bash
+
+numSecondaries=$1
+
+if [ -z "$MONGO_DIR" ]; then
+    echo "Need to set MONGO_DIR"
+    exit 1
+fi
+if [ ! -d "$MONGO_DIR" ]; then
+    echo "Need to create directory MONGO_DIR"
+    exit 1
+fi
+
+
+echo "`date` | Checking that ${numSecondaries} are up and running"
+
+while [ 1 ]; do
+    numFound=`$MONGO_DIR/bin/mongo --eval "printjson(rs.status())" | grep SECONDARY | wc -l`
+    
+    echo "`date` | Found ${numFound} secondaries..."
+    
+    if [ $numFound -eq $numSecondaries ]; then
+        break
+    fi    
+    
+    sleep 5
+done
+
+echo "`date` | Found ${numFound} secondaries!"

@@ -1,0 +1,9 @@
+#!/bin/bash
+
+SOCKET_NAME=$MYSQL_SOCKET
+USER_NAME=root
+USER_PASSWORD=""
+
+echo "`date` | granting remote access to mysql slave_user"
+$DB_DIR/bin/mysql --user=${USER_NAME} --socket=${SOCKET_NAME} -e "grant replication slave on *.* to 'slave_user'@'%' identified by 'slave_password'; flush privileges;"
+

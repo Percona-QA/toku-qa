@@ -1,0 +1,1 @@
+rsync -vraz --progress --stats --delete ~/benchdb ~/Desktop ~/ec2 ~/holder ~/java_goodies ~/mystuff ~/personal ~/svn ~/temp /mnt/2tb/tmc

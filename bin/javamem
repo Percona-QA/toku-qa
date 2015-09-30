@@ -1,0 +1,12 @@
+#!/bin/bash
+ 
+# add ip / hostname separated by white space
+#HOSTS="volt1 volt2 volt3a volt3b volt3c volt3d volt3e volt3f volt4a volt4b volt4c"
+HOSTS="volt1 volt2 volt3a"
+ 
+for myHost in $HOSTS
+    do
+        PROCESS="ps aux| grep java"
+        SSH=`ssh $USERNAME@$myHost "$PROCESS"`
+        echo $SSH
+    done

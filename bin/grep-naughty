@@ -1,0 +1,3 @@
+#! /bin/bash
+
+egrep -r -i "pw|mork|mindy" .

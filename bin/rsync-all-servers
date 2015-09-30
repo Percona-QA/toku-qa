@@ -1,0 +1,15 @@
+#! /bin/bash
+
+#if [ -z "$DATA_VOLUME" ]; then
+#    echo "Need to set DATA_VOLUME"
+#    exit 1
+#fi
+
+serverList="lex1 lex2 lex3 lex4 lex5 lex6 lex7 lex8 lex9 lex10 lex11 lex12 mork mindy pointyjr"
+#serverList="lex1"
+
+for thisServer in ${serverList} ; do
+  echo ""
+  echo "rsyncing ${thisServer}"
+  ssh -q -t ${thisServer} '~/bin/rsync-do-nodb'
+done

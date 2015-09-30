@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration status="OFF" packages="com.dbshards.config">
+
+    <appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} %-5level [%t] %logger{36} - %msg%n %throwable{full}"/>
+        </Console>
+    </appenders>
+
+    <appender type="File" name="File" fileName="${sys:log.file}">
+        <layout type="PatternLayout">
+            <pattern>%d %p %C{1.} [%t] %m%n %throwable{full}</pattern>
+        </layout>
+    </appender>
+
+    <loggers>
+        <root level="info">
+            <appender-ref ref="Console"/>
+        </root>
+    </loggers>
+
+</configuration>

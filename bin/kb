@@ -1,0 +1,5 @@
+#!/bin/bash
+# resets key repeat, a bug in unity
+
+gconftool-2 --type bool --set /desktop/gnome/peripherals/keyboard/repeat false
+gconftool-2 --type bool --set /desktop/gnome/peripherals/keyboard/repeat true

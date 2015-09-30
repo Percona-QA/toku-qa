@@ -1,0 +1,43 @@
+db.coll1.insert({tmc:1});
+db.coll1.insert({foo:1});
+db.coll1.insert({tmc:2});
+db.coll1.insert({foo:2});
+db.coll1.insert({tmc:3});
+db.coll1.insert({tmc:1, foo:1});
+db.coll1.insert({tmc:2, foo:2});
+db.coll1.insert({tmc:3, foo:3});
+
+db.coll2.insert({tmc:1});
+db.coll2.insert({foo:1});
+db.coll2.insert({tmc:2});
+db.coll2.insert({foo:2});
+db.coll2.insert({tmc:3});
+db.coll2.insert({tmc:1, foo:1});
+db.coll2.insert({tmc:2, foo:2});
+db.coll2.insert({tmc:3, foo:3});
+db.coll2.ensureIndex({tmc:1},{background:false});
+db.coll2.ensureIndex({foo:1},{background:true});
+db.coll2.renameCollection('coll2renamed');
+
+db.coll3.ensureIndex({tmc:1});
+db.coll3.ensureIndex({foo:1});
+db.coll3.insert({tmc:1});
+db.coll3.insert({foo:1});
+db.coll3.insert({tmc:2});
+db.coll3.insert({foo:2});
+db.coll3.insert({tmc:3});
+db.coll3.insert({tmc:1, foo:1});
+db.coll3.insert({tmc:2, foo:2});
+db.coll3.insert({tmc:3, foo:3});
+
+db.coll4.ensureIndex({tmc:1});
+db.coll4.ensureIndex({foo:1});
+db.coll4.insert({tmc:1});
+db.coll4.insert({foo:1});
+db.coll4.insert({tmc:2});
+db.coll4.insert({foo:2});
+db.coll4.insert({tmc:3});
+db.coll4.insert({tmc:1, foo:1});
+db.coll4.insert({tmc:2, foo:2});
+db.coll4.insert({tmc:3, foo:3});
+db.runCommand({drop: 'coll4'});

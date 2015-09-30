@@ -1,0 +1,9 @@
+#! /bin/bash
+
+remote_ip=tokulex.tokutek.com
+remote_port=22242
+
+rsync -vrazR --progress --stats --delete -e "ssh -p ${remote_port}" tcallaghan@${remote_ip}:mystuff/personal/tokutek ~
+rsync -vrazR --progress --stats --delete -e "ssh -p ${remote_port}" tcallaghan@${remote_ip}:mystuff/personal/tmc ~
+rsync -vrazR --progress --stats --delete -e "ssh -p ${remote_port}" tcallaghan@${remote_ip}:java_goodies ~
+rsync -vrazR --progress --stats --delete -e "ssh -p ${remote_port}" tcallaghan@${remote_ip}:bin ~

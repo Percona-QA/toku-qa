@@ -1,0 +1,12 @@
+#!/bin/bash
+
+if [ -z "$MONGO_DIR" ]; then
+    echo "Need to set MONGO_DIR"
+    exit 1
+fi
+if [ ! -d "$MONGO_DIR" ]; then
+    echo "Need to create directory MONGO_DIR"
+    exit 1
+fi
+
+$MONGO_DIR/bin/mongo admin --eval "db.createUser({user: \"root\",pwd: \"root\",roles:[{role: \"userAdminAnyDatabase\",db: \"admin\"}]});"

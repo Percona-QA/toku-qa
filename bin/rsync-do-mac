@@ -1,0 +1,6 @@
+#! /bin/bash
+
+ip_addy=192.168.1.242
+
+rsync -vrazR --progress --stats --delete tcallaghan@${ip_addy}:mystuff ~
+#rsync -vraz --progress --stats --copy-links --delete tcallaghan@${ip_addy}:holder/tokutek ~/holder-NOT-BACKED-UP

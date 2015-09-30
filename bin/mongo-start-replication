@@ -1,0 +1,38 @@
+#!/bin/bash
+
+if [ -z "$MONGO_DATA_DIR" ]; then
+    echo "Need to set MONGO_DATA_DIR"
+    exit 1
+fi
+if [ ! -d "$MONGO_DATA_DIR" ]; then
+    echo "Need to create directory MONGO_DATA_DIR"
+    exit 1
+fi
+
+if [ -z "$MONGO_DIR" ]; then
+    echo "Need to set MONGO_DIR"
+    exit 1
+fi
+if [ ! -d "$MONGO_DIR" ]; then
+    echo "Need to create directory MONGO_DIR"
+    exit 1
+fi
+
+
+echo "initiating replication via rs.initiate()"
+
+$MONGO_DIR/bin/mongo --eval "printjson(rs.initiate())"
+
+while [ 1 ]; do
+    echo "checking that replication successfully started..."
+
+    $MONGO_DIR/bin/mongo --eval "printjson(rs.status())" | grep PRIMARY
+    
+    if [ "$?" -eq 0 ]; then
+        break
+    fi    
+    
+    sleep 1
+done
+
+echo "replication started!"

@@ -1,0 +1,5 @@
+rm -rf /tmp/tmcsn*
+rm -rf /tmp/export_overflow/*
+rm -rf /tmp/tmc/export_overflow/*
+ant server
+

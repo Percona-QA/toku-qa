@@ -1,0 +1,9 @@
+#jacksum -a md5 *.tar.gz *.zip
+
+for checkFile in *.tar.gz ; do
+    echo "Computing MD5 for ${checkFile}"
+    md5sum ${checkFile} > ${checkFile}.md5
+done
+
+#echo "Computing SHA-1"
+#jacksum -a sha1 *.tar.gz *.zip

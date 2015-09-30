@@ -1,0 +1,3 @@
+#!/bin/bash
+
+cp ~/mystuff/personal/tokutek/mysql/toku52x/* .

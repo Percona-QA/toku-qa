@@ -1,0 +1,3 @@
+#!/bin/sh
+
+./mysql --port=${1} --host=localhost --protocol=TCP --user=root

@@ -1,0 +1,316 @@
+#!/bin/bash
+
+dirIibench=~/mystuff/personal/tokutek/software/mongodb/iibench-mongodb
+dirSysbench=~/mystuff/personal/tokutek/software/mongodb/sysbench-mongodb
+
+export DO_DISK=Y
+
+# **********************************************************************************************
+# generic variables
+# **********************************************************************************************
+export MONGO_REPLICATION=N
+export SCP_FILES=Y
+export CAPTURE_MEMORY=Y
+export LOCKOUT_MEMORY=N
+export WRITE_CONCERN=SAFE
+
+
+# use semi-colon list of "tarball;id;MONGO_TYPE"
+export benchmarkList=""
+export benchmarkList="${benchmarkList} mongodb-linux-x86_64-2.8.0-rc5.tgz;280rc5wt;wt"
+
+
+# make sure we have valid tarballs for this benchmark run
+echo "checking that all needed tarballs exist."
+for thisBenchmark in ${benchmarkList}; do
+    export TARBALL=$(echo "${thisBenchmark}" | cut -d';' -f1)
+    export MINI_BENCH_ID=$(echo "${thisBenchmark}" | cut -d';' -f2)
+
+    if [ -e ${BACKUP_DIR}/mongodb/${TARBALL} ]; then
+        echo "  located ${TARBALL}"
+    else
+        echo "  unable to locate ${TARBALL}, exiting."
+        exit 1
+    fi
+done
+
+
+for thisBenchmark in ${benchmarkList}; do
+    export TARBALL=$(echo "${thisBenchmark}" | cut -d';' -f1)
+    export MINI_BENCH_ID=$(echo "${thisBenchmark}" | cut -d';' -f2)
+    export MONGO_TYPE=$(echo "${thisBenchmark}" | cut -d';' -f3)
+    
+    echo "benchmarking tarball = ${TARBALL}"
+
+    if [ ${DO_DISK} == "Y" ]; then
+        source ~/machine.config
+        
+        export TOKUMON_CACHE_SIZE=8G
+
+        mongo-clean
+    
+        # **********************************************************************************************
+        # iibench
+        # **********************************************************************************************
+        export TOKUMON_CACHE_SIZE=8G
+        export MONGO_COMPRESSION=zlib
+        export MONGO_BASEMENT=65536
+        export MAX_ROWS=1000000000
+        export RUN_MINUTES=60
+        export NUM_DOCUMENTS_PER_INSERT=1000
+        export MAX_INSERTS_PER_SECOND=999999
+        export NUM_INSERTS_PER_FEEDBACK=100000
+        export NUM_LOADER_THREADS=1
+        export DB_NAME=iibench
+        export BENCHMARK_NUMBER=101
+        export SHUTDOWN_MONGO=N
+    
+        # set these if you want inserts plus queries
+        export QUERIES_PER_INTERVAL=0
+        export QUERY_INTERVAL_SECONDS=15
+        export QUERY_LIMIT=10
+        export QUERY_NUM_DOCS_BEGIN=1000000
+    
+        if [ ${LOCKOUT_MEMORY} == "Y" ] ; then
+            # lock out all but 16G
+            if [ -z "$LOCK_MEM_SIZE_16" ]; then
+                echo "Need to set LOCK_MEM_SIZE_16"
+                exit 1
+            fi
+            export BENCHMARK_SUFFIX=".${LOCK_MEM_SIZE_16}-lock"
+            sudo pkill -9 lockmem
+            echo "locking ${LOCK_MEM_SIZE_16} of RAM on server"
+            sudo ~/bin/lockmem $LOCK_MEM_SIZE_16 &
+            sleep 10
+        fi
+    
+        export BENCH_ID=${MINI_BENCH_ID}-${MONGO_COMPRESSION}
+        
+        pushd ${dirIibench}
+        ./doit.bash
+        popd
+        # keep the files around
+        #   mongo-clean
+        unset SHUTDOWN_MONGO
+    
+        if [ ${LOCKOUT_MEMORY} == "Y" ] ; then
+            # unlock memory
+            echo "returning ${LOCK_MEM_SIZE_16} of RAM to server"
+            sudo pkill -9 lockmem
+            sleep 10
+        fi
+    
+    
+        # **********************************************************************************************
+        # iibench : 4 writer
+        # **********************************************************************************************
+        export TOKUMON_CACHE_SIZE=8G
+        export MONGO_COMPRESSION=zlib
+        export MONGO_BASEMENT=65536
+        export MAX_ROWS=1000000000
+        export RUN_MINUTES=15
+        export NUM_DOCUMENTS_PER_INSERT=1000
+        export MAX_INSERTS_PER_SECOND=999999
+        export NUM_INSERTS_PER_FEEDBACK=100000
+        export NUM_LOADER_THREADS=4
+        export DB_NAME=iibench
+        export BENCHMARK_NUMBER=102
+        export STARTUP_MONGO=N
+        export SHUTDOWN_MONGO=N
+        export CREATE_COLLECTION=N
+    
+        # set these if you want inserts plus queries
+        export QUERIES_PER_INTERVAL=0
+        export QUERY_INTERVAL_SECONDS=15
+        export QUERY_LIMIT=10
+        export QUERY_NUM_DOCS_BEGIN=1000000
+    
+        if [ ${LOCKOUT_MEMORY} == "Y" ] ; then
+            # lock out all but 16G
+            if [ -z "$LOCK_MEM_SIZE_16" ]; then
+                echo "Need to set LOCK_MEM_SIZE_16"
+                exit 1
+            fi
+            export BENCHMARK_SUFFIX=".${LOCK_MEM_SIZE_16}-lock"
+            sudo pkill -9 lockmem
+            echo "locking ${LOCK_MEM_SIZE_16} of RAM on server"
+            sudo ~/bin/lockmem $LOCK_MEM_SIZE_16 &
+            sleep 10
+        fi
+    
+        export BENCH_ID=${MINI_BENCH_ID}-${MONGO_COMPRESSION}
+        
+        pushd ${dirIibench}
+        ./doit.bash
+        popd
+        # keep the files around
+        #   mongo-clean
+        unset STARTUP_MONGO
+        unset SHUTDOWN_MONGO
+        unset CREATE_COLLECTION
+    
+        if [ ${LOCKOUT_MEMORY} == "Y" ] ; then
+            # unlock memory
+            echo "returning ${LOCK_MEM_SIZE_16} of RAM to server"
+            sudo pkill -9 lockmem
+            sleep 10
+        fi
+        
+        
+        # **********************************************************************************************
+        # iibench plus queries
+        # **********************************************************************************************
+        export TOKUMON_CACHE_SIZE=8G
+        export MONGO_COMPRESSION=zlib
+        export MONGO_BASEMENT=65536
+        export MAX_ROWS=1000000000
+        export RUN_MINUTES=15
+        export NUM_DOCUMENTS_PER_INSERT=1000
+        export MAX_INSERTS_PER_SECOND=999999
+        export NUM_INSERTS_PER_FEEDBACK=100000
+        export NUM_LOADER_THREADS=1
+        export DB_NAME=iibench
+        export BENCHMARK_NUMBER=103
+        export STARTUP_MONGO=N
+        export CREATE_COLLECTION=N
+    
+        # 10 queries per minute
+        export QUERIES_PER_INTERVAL=1
+        export QUERY_INTERVAL_SECONDS=6
+        export QUERY_LIMIT=1000
+        export QUERY_NUM_DOCS_BEGIN=5000000
+    
+        if [ ${LOCKOUT_MEMORY} == "Y" ] ; then
+            # lock out all but 16G
+            if [ -z "$LOCK_MEM_SIZE_16" ]; then
+                echo "Need to set LOCK_MEM_SIZE_16"
+                exit 1
+            fi
+            export BENCHMARK_SUFFIX=".${LOCK_MEM_SIZE_16}-lock"
+            sudo pkill -9 lockmem
+            echo "locking ${LOCK_MEM_SIZE_16} of RAM on server"
+            sudo ~/bin/lockmem $LOCK_MEM_SIZE_16 &
+            sleep 10
+        fi
+    
+        export BENCH_ID=${MINI_BENCH_ID}-${MONGO_COMPRESSION}
+        
+        pushd ${dirIibench}
+        ./doit.bash
+        popd
+        mongo-clean
+        unset STARTUP_MONGO
+        unset CREATE_COLLECTION
+    
+        if [ ${LOCKOUT_MEMORY} == "Y" ] ; then
+            # unlock memory
+            echo "returning ${LOCK_MEM_SIZE_16} of RAM to server"
+            sudo pkill -9 lockmem
+            sleep 10
+        fi
+    
+    
+        # **********************************************************************************************
+        # sysbench > RAM
+        # **********************************************************************************************
+        export TOKUMON_CACHE_SIZE=8G
+        export MONGO_COMPRESSION=zlib
+        export MONGO_BASEMENT=65536
+        export NUM_COLLECTIONS=16
+        export NUM_DOCUMENTS_PER_COLLECTION=10000000
+        export NUM_DOCUMENTS_PER_INSERT=1000
+        export NUM_LOADER_THREADS=8
+        export threadCountList="0001 0004 0016 0064 0128 0256 0512 1024"
+        export RUN_TIME_SECONDS=300
+        export DB_NAME=sbtest
+        export BENCHMARK_NUMBER=104
+        export SYSBENCH_TYPE=OLTP
+        export PAUSE_BETWEEN_RUNS=60
+    
+        if [ ${LOCKOUT_MEMORY} == "Y" ] ; then
+            # lock out all but 16G
+            if [ -z "$LOCK_MEM_SIZE_16" ]; then
+                echo "Need to set LOCK_MEM_SIZE_16"
+                exit 1
+            fi
+            export BENCHMARK_SUFFIX=".${LOCK_MEM_SIZE_16}-lock"
+            sudo pkill -9 lockmem
+            echo "locking ${LOCK_MEM_SIZE_16} of RAM on server"
+            sudo ~/bin/lockmem $LOCK_MEM_SIZE_16 &
+            sleep 10
+        fi
+        
+        export BENCH_ID=${MINI_BENCH_ID}-${MONGO_COMPRESSION}
+    
+        pushd ${dirSysbench}
+        ./doit.bash
+        popd
+        mongo-clean
+        
+        if [ ${LOCKOUT_MEMORY} == "Y" ] ; then
+            # unlock memory
+            echo "returning ${LOCK_MEM_SIZE_16} of RAM to server"
+            sudo pkill -9 lockmem
+            sleep 10
+        fi
+        
+        
+        # **********************************************************************************************
+        # sysbench < RAM
+        # **********************************************************************************************
+        export TOKUMON_CACHE_SIZE=12G
+        export MONGO_COMPRESSION=zlib
+        export MONGO_BASEMENT=65536
+        export NUM_COLLECTIONS=16
+        export NUM_DOCUMENTS_PER_COLLECTION=1000000
+        export NUM_DOCUMENTS_PER_INSERT=1000
+        export NUM_LOADER_THREADS=8
+        export threadCountList="0001 0004 0016 0064 0128 0256 0512 1024 2048"
+        export RUN_TIME_SECONDS=300
+        export DB_NAME=sbtest
+        export BENCHMARK_NUMBER=105
+        export SYSBENCH_TYPE=OLTP
+        export PAUSE_BETWEEN_RUNS=60
+    
+        export BENCH_ID=${MINI_BENCH_ID}-${MONGO_COMPRESSION}
+    
+        pushd ${dirSysbench}
+        ./doit.bash
+        popd
+        mongo-clean
+
+
+        # **********************************************************************************************
+        # sysbench point-primary, point-secondary, range-primary, range-secondary
+        # **********************************************************************************************
+        export TOKUMON_CACHE_SIZE=12G
+        export MONGO_COMPRESSION=zlib
+        export MONGO_BASEMENT=65536
+        export NUM_COLLECTIONS=16
+        export NUM_DOCUMENTS_PER_COLLECTION=1000000
+        export SYSBENCH_POINT_SELECTS=1
+        export SYSBENCH_RANGE_SIZE=20000
+        export SYSBENCH_RANGE_LIMIT=1000
+        export NUM_DOCUMENTS_PER_INSERT=1000
+        export NUM_LOADER_THREADS=8
+        export threadCountList="0001 0004 0016 0064 0128 0256 0512 1024"
+        export RUN_TIME_SECONDS=180
+        export DB_NAME=sbtest
+        export BENCHMARK_NUMBER=106
+        export SYSBENCH_TYPE=PILEUP
+        export PAUSE_BETWEEN_RUNS=10
+
+        export BENCH_ID=${MINI_BENCH_ID}-${MONGO_COMPRESSION}
+    
+        pushd ${dirSysbench}
+        ./doit.bash
+        popd
+        mongo-clean
+        unset SYSBENCH_POINT_SELECTS
+        unset SYSBENCH_RANGE_SIZE
+        unset SYSBENCH_RANGE_LIMIT
+        unset SYSBENCH_TYPE
+        
+    fi
+
+done

@@ -1,0 +1,9 @@
+TokuMX mongo shell v1.6.0-pre--mongodb-2.4.10
+connecting to: test
+[object Object]
+... inserted 100000 documents in 56 second(s) at 1759 inserts/second.
+TokuMX mongo shell v1.6.0-pre--mongodb-2.4.10
+connecting to: test
+[object Object]
+... updated 250000 documents in 17 second(s) at 13895 updates/second.
+... 197 oplog bytes/update.

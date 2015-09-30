@@ -1,0 +1,30 @@
+#! /bin/bash
+
+if [ $# -eq 0 ]; then
+  echo "usage: sched-mindy <scheduler>"
+  exit 1
+fi
+
+newScheduler=$1
+
+for device in sdb sdc; do
+    echo "" 
+
+    curval=`cat /sys/block/${device}/queue/scheduler`
+    echo "/dev/${device} was ${curval}"
+
+    echo  ${newScheduler} > /sys/block/${device}/queue/scheduler
+
+    curval=`cat /sys/block/${device}/queue/scheduler`
+    echo "/dev/${device} is ${curval}"
+
+    echo "0" > /sys/block/${device}/queue/rotational
+    echo "975" > /sys/block/${device}/queue/nr_requests
+    echo "975" > /sys/block/${device}/device/queue_depth
+    echo "0" > /sys/block/${device}/queue/rq_affinity
+
+    #echo N > /sys/module/drm_kms_helper/parameters/poll
+
+done
+
+echo ""

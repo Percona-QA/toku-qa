@@ -1,0 +1,35 @@
+#!/bin/bash
+
+if [ $# -eq 0 ]; then
+  echo "usage: mysql-watch <seconds-between-checks> <output-file-name> <mysql-command-to-find>"
+  exit 1
+fi
+
+if [ -z "$MYSQL_SOCKET" ]; then
+    echo "Need to set MYSQL_SOCKET"
+    exit 1
+fi
+
+# wait between checks
+WAIT_TIME_SECONDS=${1}
+
+MYSQL_USER=root
+MYSQL_PASSWORD=""
+LOG_NAME=${2}
+
+MYSQL_COMMAND=${3}
+
+# kill existing log file if it exists
+rm -f $LOG_NAME
+
+while [ 1 -eq 1 ]; do
+    thisDate=`date +"%F %T"`
+    thisProcesslist=`$DB_DIR/bin/mysql --user=${MYSQL_USER} --password=${MYSQL_PASSWORD} --socket=${MYSQL_SOCKET} -e "show processlist;" | grep -i "${MYSQL_COMMAND}" | cut -f7`
+    #thisCPU=`ps aux | grep '[m]ysqld ' | awk '{print $3}'`
+    thisCPU=`top -n1 | grep 'mysqld ' | awk '{print $9}'`
+
+    echo -e "${thisDate}\t${thisProcesslist}\t${thisCPU}"
+    echo -e "${thisDate}\t${thisProcesslist}\t${thisCPU}" >> ${LOG_NAME}
+
+    sleep $WAIT_TIME_SECONDS
+done

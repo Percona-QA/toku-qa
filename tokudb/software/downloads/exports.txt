@@ -1,0 +1,11 @@
+# usual download stuff
+
+mysql --user=root --password=mysql tokutek -e "select userid, username, created, lastloggedin, firstname, lastname, company, title, phone, source, regform, country from t_customers INTO OUTFILE '/tmp/users.tsv' FIELDS TERMINATED BY '\t' OPTIONALLY ENCLOSED BY '\"' LINES TERMINATED BY '\n';"
+mysql --user=root --password=mysql tokutek -e "select pd.download_id, pd.filename, pd.remote_address, pd.create_date, c.firstName, c.lastName, c.company, c.username from t_product_downloads pd left join t_customers c on c.userID = pd.user_id order by pd.download_id INTO OUTFILE '/tmp/data.tsv' FIELDS TERMINATED BY '\t' OPTIONALLY ENCLOSED BY '\"' LINES TERMINATED BY '\n';"
+scp -P 22242 data.tsv tcallaghan@tokulex.tokutek.com:~; scp -P 22242 users.tsv tcallaghan@tokulex.tokutek.com:~; rm -f data.tsv users.tsv
+
+# registrations
+mysql --user=root --password=mysql tokutek -e "select username, created, firstname, lastname, company, title, phone, source, regform, country from t_customers INTO OUTFILE '/tmp/registrations.tsv' FIELDS TERMINATED BY '\t' OPTIONALLY ENCLOSED BY '\"' LINES TERMINATED BY '\n';"
+scp -P 22242 registrations.tsv tcallaghan@tokulex.tokutek.com:~; rm -f registrations.tsv
+
+

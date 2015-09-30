@@ -1,0 +1,10 @@
+1. unpack a pre-built blank database that includes the sql-bench folder
+2. start the server (get your my.cnf parameters proper for a benchmark)
+3. cd sql-bench
+4. chmod 755 *
+5. copy in bench.summary.py and run.sql.bench.manual.bash
+6. check "socket=..." in run.sql.bench.manual.bash
+7. check "engine=..." in run.sql.bench.manual.bash
+8. ./run.sql.bench.manual.bash
+9. results land in sql-bench-tmc-test.trace and sql-bench-tmc-test.summary
+

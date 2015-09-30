@@ -1,0 +1,19 @@
+#!/bin/bash
+
+baseDir=/home/tcallaghan/temp
+
+rm -rf ${baseDir}/binlog
+rm -rf ${baseDir}/tokudata
+rm -rf ${baseDir}/tokulog
+
+mkdir ${baseDir}/binlog
+mkdir ${baseDir}/tokudata
+mkdir ${baseDir}/tokulog
+
+echo "server-id=1" >> my.cnf
+echo "log_bin=${baseDir}/binlog/timbolog" >> my.cnf
+echo "binlog_format=ROW" >> my.cnf
+echo "tokudb_data_dir=${baseDir}/tokudata" >> my.cnf
+echo "tokudb_log_dir=${baseDir}/tokulog" >> my.cnf
+
+mv -v data/*.tokulog* ${baseDir}/tokulog

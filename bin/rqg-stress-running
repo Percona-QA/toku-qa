@@ -1,0 +1,62 @@
+#! /bin/bash
+
+#if [ -z "$DB_DIR" ]; then
+#    echo "Need to set DB_DIR"
+#    exit 1
+#fi
+#if [ ! -d "$DB_DIR" ]; then
+#    echo "Need to create directory DB_DIR"
+#    exit 1
+#fi
+#if [ "$(ls -A $DB_DIR)" ]; then
+#    echo "$DB_DIR contains files, cannot run script"
+#    exit 1
+#fi
+
+export gendata=example.zz
+export grammar=example.yy
+
+
+#export SOURCE1="/home/tcallaghan/holder/tokutek/mysql-releases"
+#export TAR1=mysql-5.5.29-linux2.6-x86_64
+
+#export SOURCE1="/home/tcallaghan/holder/tokutek/mariadb-releases"
+#export TAR1=mariadb-5.5.30-linux-x86_64
+
+#export SOURCE1="/home/tcallaghan/holder/tokutek/tokudb-releases/7.0.1"
+#export TAR1=mysql-5.5.30-tokudb-7.0.1-linux-x86_64-patched
+
+
+
+#if [ ! -f ${SOURCE1}/${TAR1}.tar.gz ] ; then
+#    echo "Unable to locate file ${SOURCE1}/${TAR1}.tar.gz"
+#    exit 1
+#fi
+
+#pushd ${DB_DIR}
+
+#echo "untarring ${SOURCE1}/${TAR1}..."
+#tar xzf ${SOURCE1}/${TAR1}.tar.gz
+
+#popd
+
+#export BASEDIR1=${DB_DIR}/${TAR1}
+#export VARDIR1=${DB_DIR}/vardir1
+
+#rm -rf ${VARDIR1}
+#mkdir ${VARDIR1}
+
+RQG_DIR=/home/tcallaghan/mystuff/personal/tokutek/software/randgen/randgen-2.2.0
+
+export numQueries=10000000
+export numThreads=64
+export secDuration=60
+#export debugSwitch=--debug
+#export sqlLog1=--mysqld=--general_log
+
+
+pushd ${RQG_DIR}
+./gentest.pl --dsn=dbi:mysql:host=127.0.0.1:port=11000:user=root:database=test --gendata=conf/${gendata} --grammar=conf/${grammar} --duration=${secDuration} --queries=${numQueries} --threads=${numThreads} ${debugSwitch}
+popd
+
+#./gentest.pl --dsn=dbi:mysql:host=127.0.0.1:port=11000:user=root:database=test --gendata=conf/example.zz --grammar=conf/example.yy --duration=600 --queries=10000000 --threads=64

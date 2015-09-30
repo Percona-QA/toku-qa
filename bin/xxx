@@ -1,0 +1,13 @@
+#!/bin/bash
+
+dbServer=$1
+numTables=$2
+
+mstop; rm -rf data/* ; scp -r tcallaghan@${dbServer}:/data/tcallaghan/hot-backup/* data; rm data/*.err; mstart
+
+pushd data
+../bin/tokufilecheck.py --socket=/tmp/tmc.sock --user=root
+popd
+
+~/mystuff/personal/tokutek/software/sysbench/backup-test/verify.bash ${numTables}
+

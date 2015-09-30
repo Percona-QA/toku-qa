@@ -1,0 +1,71 @@
+MigrateDB  
+A script to either dump, load or move a mysql database 
+
+
+$ ./migrate_db.sh 
+You must specify either LOAD, DUMP or BOTH for an action
+USAGE: ./migrate_db.sh [options] [action (DUMP|LOAD|BOTH)] [database(s) (grep regex)] [table];
+OPTIONS:
+ -u USER, --mysql_user=USER
+            source mysql username to be used. current user is used if not specified.
+ -p, --mysql_pass=PASSWORD
+            source mysql password to be used.
+ --socket=SOCKET_FILE
+            source socket file to be used.
+ --port=PORT
+            source port to be used.
+ --dest_host=HOST
+            destination mysql host. Used for BOTH action only.
+ --dest_mysql_user=USER
+            destination mysql user. Used for BOTH action only. current user is used if not specified.
+ --dest_mysql_pass=PASSWORD
+            destination mysql password. Used for BOTH action only.
+ --dest_port=DEST_PORT
+            destination source port to be used.
+ --max_threads=NUM_THREADS
+            max parrallel processes used. default is half your processors (best)
+ --chunk_size=SIZE
+            number of rows used to split up large tables. 400000 is the default.
+ --base_dir=DIR
+            base directory to store DUMPS. default is pwd. a directory is created with the current date and time in this dir to store the data
+ --load_dir=DIR
+            directory to LOAD a dump from. The directory should contain a directory per schema in it.
+ --format=FORMAT
+            format of the data to be loaded or dumped. either SQL(default) or INFILE.
+ --validate
+            validate the number of rows on the source and destination. for BOTH option only.
+ --crc
+            validate tables match on source and destination using CHECKSUM TABLE. for BOTH option only.
+if no database is specified, we migrate all databases.
+if no table is specified, we migrate all tables. (either 1 or all)
+ 
+
+
+Examples:
+
+Dumping database Database8 to disk
+./migrate_db.sh -uroot -pfoobar --socket=/tmp/mysqld.sock DUMP Database8
+note: When this is run a directory is made using the current date and timestamp that contains all of the dump files for each schema
+
+Load all databases from a dump directory:
+/migrate_db.sh --dest_mysql_user=root --dest_mysql_pass=foobar --dest_host=10.1.10.112 --load_dir=/home/user/2014-05-14_09h55m45s LOAD
+
+Load just Database8 database from a dump directory:
+/migrate_db.sh --dest_mysql_user=root --dest_mysql_pass=foobar --dest_host=10.1.10.112 --load_dir=/home/user/2014-05-14_09h55m45s LOAD Database8
+
+Migrating from one server to another using the BOTH option:
+example of migrating all schemas and all tables:
+./migrate_db.sh -uroot -pfoobar --dest_mysql_user=root --dest_mysql_pass=foobar --dest_host=10.1.10.112  BOTH
+ 
+example of migrating all databases starting with Database12  and all tables for each
+ ./migrate_db.sh -uroot -pfoobar --dest_mysql_user=root --dest_mysql_pass=foobar --dest_host=10.1.10.112  BOTH Database12
+ 
+example of migrating all databases starting with Database12 and only the Accounts table within them
+ ./migrate_db.sh -uroot -pfoobar --dest_mysql_user=root --dest_mysql_pass=foobar --dest_host=10.1.10.112  BOTH Database12 Accounts 
+
+example of migrating a single table in a given schema (what you want for patching a single table).
+./migrate_db.sh -uroot -pfoobar --dest_mysql_user=root --dest_mysql_pass=foobar --dest_host=10.1.10.112  BOTH Database123 Accounts 
+ 
+Example of validating all databases that have been migrated via BOTH
+./migrate_db.sh -uroot -pfoobar --dest_mysql_user=root --dest_mysql_pass=foobar --dest_host=10.1.10.112 --validate --crc  BOTH
+

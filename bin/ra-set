@@ -1,0 +1,13 @@
+#! /bin/bash
+
+if [ $# -eq 0 ]; then
+  echo "usage: ra-set <blocks>"
+  exit 1
+fi
+
+if [ -z "$DATA_VOLUME" ]; then
+    echo "Need to set DATA_VOLUME"
+    exit 1
+fi
+
+sudo blockdev --setra ${1} $DATA_VOLUME

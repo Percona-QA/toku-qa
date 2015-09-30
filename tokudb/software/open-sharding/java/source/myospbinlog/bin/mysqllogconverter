@@ -1,0 +1,30 @@
+#!/usr/bin/env ruby
+
+# mysqllogconverter
+#
+# Copyright (c) 2011 CodeFutures Corporation. All rights reserved.
+#
+
+require 'fileutils'
+require 'pathname'
+
+# Set the base dir. Expand path gives the absolute path of the current file, dirname gives the bin dir, and dirname again gives the parent dir.
+BASEDIR = File.dirname(File.dirname(Pathname.new(__FILE__).realpath)) 
+
+JAVA = "java"
+CLASS = "org.opensharding.myospbinlog.MysqlLogConverter"
+HEAPSIZE = "128m"
+XMS = "-Xms16m"
+XMX = "-Xmx#{HEAPSIZE}"
+
+jars = "#{BASEDIR}/jars/*.jar"
+user_jars = "#{BASEDIR}/user-jars/*.jar"
+
+class_path = "-classpath #{BASEDIR}/conf:#{Dir.glob(jars).join(':')}"
+
+cmd = [JAVA, XMS, XMX, class_path, CLASS].join(' ')
+    
+# Run the command. Use exec, this outputs STDOUT and STDERR for the process.
+exec(cmd)
+            
+exit 0
