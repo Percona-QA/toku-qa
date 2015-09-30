@@ -1,0 +1,20 @@
+  
+]);
+
+  var options = {
+    title : 'PS iibench performance plot',
+    vAxis: {title: "IPS"},
+    hAxis: {title: "Build"},
+    seriesType: "bars",
+    series: {5: {type: "line"}}
+  };
+
+  var chart = new google.visualization.ComboChart(document.getElementById('chart_div'));
+  chart.draw(data, options);
+}
+    </script>
+  </head>
+  <body>
+    <div id="chart_div" style="width: 900px; height: 500px;"></div>
+  </body>
+</html>
