@@ -91,7 +91,7 @@ PS_VERSION=`$BIN --version | grep -oe '5\.[1567]' | sed 's/\.//' | head -n1`
 if [ -d ${BIG_DIR}/run_dir_${MYSQL_STORAGE_ENGINE}/master-data ]; then
   cp -r ${BIG_DIR}/run_dir_${MYSQL_STORAGE_ENGINE}/master-data/*  ${DB_DIR}/data/
 else
-  ${SCRIPT_DIR}/../../sysbench_create_db_template.sh ${BIG_DIR} $PS_VERSION ${MYSQL_STORAGE_ENGINE}
+  ${SCRIPT_DIR}/sysbench_create_db_template.sh ${BIG_DIR} $PS_VERSION ${MYSQL_STORAGE_ENGINE}
   cp -r ${BIG_DIR}/run_dir_${MYSQL_STORAGE_ENGINE}/master-data/*  ${DB_DIR}/data/
 fi
 mkdir -p  ${DB_DIR}/data/test

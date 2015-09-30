@@ -136,7 +136,7 @@ if [ -d ${BIG_DIR}/tpcc_data_dir_${MYSQL_STORAGE_ENGINE}_${NUM_WAREHOUSES}/maste
   $BIN --no-defaults --basedir=${DB_DIR} --datadir=${DB_DIR}/data ${MYSQL_OPTS}  --port=${MYSQL_PORT} --pid-file=${DB_DIR}/data/pid.pid --core-file --socket=${MYSQL_SOCKET} --log-error=${DB_DIR}/data/error.log.out >  ${DB_DIR}/data/mysqld.out 2>&1 &
   MPID="$!"
 else
-  bash -x ${SCRIPT_DIR}/../../tpcc_create_db_template.sh ${BIG_DIR} $PS_VERSION ${MYSQL_STORAGE_ENGINE}
+  bash -x ${SCRIPT_DIR}/tpcc_create_db_template.sh ${BIG_DIR} $PS_VERSION ${MYSQL_STORAGE_ENGINE}
   cp -r ${BIG_DIR}/tpcc_data_dir_${MYSQL_STORAGE_ENGINE}_${NUM_WAREHOUSES}/master-data/*  ${DB_DIR}/data/
   $BIN --no-defaults --basedir=${DB_DIR} --datadir=${DB_DIR}/data ${MYSQL_OPTS}  --port=${MYSQL_PORT} --pid-file=${DB_DIR}/data/pid.pid --core-file --socket=${MYSQL_SOCKET} --log-error=${DB_DIR}/data/error.log.out >  ${DB_DIR}/data/mysqld.out 2>&1 &
   MPID="$!" 

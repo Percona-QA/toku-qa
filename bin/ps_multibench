@@ -272,5 +272,5 @@ if [ ! -f $WORKSPACE/hw.info ];then
   echo "HW info | $RELEASE $KERNEL"  > $WORKSPACE/hw.info
 fi
 echo "Build #$BUILD_NUMBER | `date +'%d-%m-%Y | %H:%M'` | $PS_VERSION | $UPTIME_HOUR | $SYSTEM_LOAD | Memory: $MEM " >> $WORKSPACE/build_info.log
-$SCRIPT_DIR/../../graph_template/ps_multibench_html_gen.sh    
+$SCRIPT_DIR/../graph_template/ps_multibench_html_gen.sh    
 
