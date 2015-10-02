@@ -111,7 +111,7 @@ if [ ${MYSQL_STORAGE_ENGINE} == "innodb" ]; then
     MYSQL_OPTS="$MYSQL_OPTS --innodb_online_alter_log_max_size=${INNODB_ONLINE_ALTER_LOG_MAX_SIZE}"
   fi
 else
-  MYSQL_OPTS="--tokudb_read_block_size=${TOKUDB_READ_BLOCK_SIZE} --tokudb_row_format=${TOKUDB_ROW_FORMAT} --plugin-load=tokudb=ha_tokudb.so --init-file=${SCRIPT_DIR}/../../TokuDB.sql --tokudb_lock_timeout=60000 --tokudb_loader_memory_size=1G"
+  MYSQL_OPTS="--tokudb_read_block_size=${TOKUDB_READ_BLOCK_SIZE} --tokudb_row_format=${TOKUDB_ROW_FORMAT} --plugin-load=tokudb=ha_tokudb.so --init-file=${SCRIPT_DIR}/TokuDB.sql --tokudb_lock_timeout=60000 --tokudb_loader_memory_size=1G"
   if [ ${DIRECTIO} == "Y" ]; then
      MYSQL_OPTS="$MYSQL_OPTS --tokudb_cache_size=${TOKUDB_DIRECTIO_CACHE} --tokudb_directio=1"
   fi

@@ -229,7 +229,7 @@ if [ ${SKIP_DB_CREATE} == "N" ]; then
         # no customizations for wiredtiger, yet.
         tempWtVar=1
     else
-        MYSQL_OPTS="--tokudb_read_block_size=${TOKUDB_READ_BLOCK_SIZE} --tokudb_row_format=${TOKUDB_ROW_FORMAT} --tokudb_cache_size=${TOKUDB_DIRECTIO_CACHE} --plugin-load=tokudb=ha_tokudb.so --init-file=${SCRIPT_DIR}/../../TokuDB.sql"
+        MYSQL_OPTS="--tokudb_read_block_size=${TOKUDB_READ_BLOCK_SIZE} --tokudb_row_format=${TOKUDB_ROW_FORMAT} --tokudb_cache_size=${TOKUDB_DIRECTIO_CACHE} --plugin-load=tokudb=ha_tokudb.so --init-file=${SCRIPT_DIR}/TokuDB.sql"
         if [ ${DIRECTIO} == "Y" ]; then
             echo "tokudb_directio=1" >> my.cnf
             MYSQL_OPTS="$MYSQL_OPTS --tokudb_directio=1"
