@@ -175,10 +175,10 @@ DATE=`date +"%Y%m%d%H%M%S"`
 tarFileName="sysbench_${BENCH_ID}_perf_result_set_${DATE}.tar.gz"
 tar czvf ${tarFileName} ${MACHINE_NAME}* ${DB_DIR}/data/*.err
 cp ${tarFileName} ${SCP_TARGET}
-cp ${MACHINE_NAME}.summary ${WORKSPACE}/sysbench_${BENCH_ID}_perf_result_set_${DATE}.txt
+cp ${MACHINE_NAME}.summary ${WORKSPACE_LOC}/sysbench_${BENCH_ID}_perf_result_set_${DATE}.txt
 
 result_set=($(cat ${MACHINE_NAME}.summary |  awk '{print ","$5 }'))
 for i in {0..7}; do if [ -z ${result_set[i]} ]; then  result_set[i]=',0' ; fi; done
-echo "[ '${BUILD_NUMBER}' ${result_set[*]} ]," >> ${WORKSPACE}/sysbench_${BENCH_ID}_perf_result_set.txt
+echo "[ '${BUILD_NUMBER}' ${result_set[*]} ]," >> ${WORKSPACE_LOC}/sysbench_${BENCH_ID}_perf_result_set.txt
 rm -f ${MACHINE_NAME}*
 

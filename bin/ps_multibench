@@ -31,6 +31,8 @@ if [ -z $WORKSPACE ]; then
   export WORKSPACE=$BIG_DIR/backups
 fi
 
+export WORKSPACE_LOG=$BIG_DIR/backups
+
 # make sure we have passed basedir parameter for this benchmark run
 if [ -z $2 ]; then
   echo "No valid parameter passed.  Need relative workdir (1st option) and relative basedir (2nd option) settings. Retry."

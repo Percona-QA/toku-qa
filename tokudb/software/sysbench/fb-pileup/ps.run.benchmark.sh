@@ -267,25 +267,25 @@ DATE=`date +"%Y%m%d%H%M%S"`
 tarFileName="fbpileup_${BENCH_ID}_perf_result_set_${DATE}.tar.gz"
 tar czvf ${tarFileName} ${MACHINE_NAME}* ${DB_DIR}/data/*.err
 cp ${tarFileName} ${SCP_TARGET}
-cp ${MACHINE_NAME}.summary ${WORKSPACE}/fbpileup_${BENCH_ID}_perf_result_set_${DATE}.txt
-sed -n '/POINT.PRIMARY/,+8p' ${MACHINE_NAME}.summary > ${WORKSPACE}/fbpileup_POINT.PRIMARY_${BENCH_ID}_perf_result_set_${DATE}.txt
-sed -n '/POINT.SECONDARY/,+8p' ${MACHINE_NAME}.summary > ${WORKSPACE}/fbpileup_POINT.SECONDARY_${BENCH_ID}_perf_result_set_${DATE}.txt
-sed -n '/RANGE.PRIMARY/,+8p' ${MACHINE_NAME}.summary > ${WORKSPACE}/fbpileup_RANGE.PRIMARY_${BENCH_ID}_perf_result_set_${DATE}.txt
-sed -n '/RANGE.SECONDARY/,+8p' ${MACHINE_NAME}.summary > ${WORKSPACE}/fbpileup_RANGE.SECONDARY_${BENCH_ID}_perf_result_set_${DATE}.txt
+cp ${MACHINE_NAME}.summary ${WORKSPACE_LOC}/fbpileup_${BENCH_ID}_perf_result_set_${DATE}.txt
+sed -n '/POINT.PRIMARY/,+8p' ${MACHINE_NAME}.summary > ${WORKSPACE_LOC}/fbpileup_POINT.PRIMARY_${BENCH_ID}_perf_result_set_${DATE}.txt
+sed -n '/POINT.SECONDARY/,+8p' ${MACHINE_NAME}.summary > ${WORKSPACE_LOC}/fbpileup_POINT.SECONDARY_${BENCH_ID}_perf_result_set_${DATE}.txt
+sed -n '/RANGE.PRIMARY/,+8p' ${MACHINE_NAME}.summary > ${WORKSPACE_LOC}/fbpileup_RANGE.PRIMARY_${BENCH_ID}_perf_result_set_${DATE}.txt
+sed -n '/RANGE.SECONDARY/,+8p' ${MACHINE_NAME}.summary > ${WORKSPACE_LOC}/fbpileup_RANGE.SECONDARY_${BENCH_ID}_perf_result_set_${DATE}.txt
 
-result_set1=($(grep threads ${WORKSPACE}/fbpileup_POINT.PRIMARY_${BENCH_ID}_perf_result_set_${DATE}.txt |  awk '{print ","$5 }'))
+result_set1=($(grep threads ${WORKSPACE_LOC}/fbpileup_POINT.PRIMARY_${BENCH_ID}_perf_result_set_${DATE}.txt |  awk '{print ","$5 }'))
 for i in {0..7}; do if [ -z ${result_set1[i]} ]; then  result_set1[i]=',0' ; fi; done
-result_set2=($(grep threads ${WORKSPACE}/fbpileup_POINT.SECONDARY_${BENCH_ID}_perf_result_set_${DATE}.txt |  awk '{print ","$5 }'))
+result_set2=($(grep threads ${WORKSPACE_LOC}/fbpileup_POINT.SECONDARY_${BENCH_ID}_perf_result_set_${DATE}.txt |  awk '{print ","$5 }'))
 for i in {0..7}; do if [ -z ${result_set2[i]} ]; then  result_set2[i]=',0' ; fi; done
-result_set3=($(grep threads ${WORKSPACE}/fbpileup_RANGE.PRIMARY_${BENCH_ID}_perf_result_set_${DATE}.txt |  awk '{print ","$5 }'))
+result_set3=($(grep threads ${WORKSPACE_LOC}/fbpileup_RANGE.PRIMARY_${BENCH_ID}_perf_result_set_${DATE}.txt |  awk '{print ","$5 }'))
 for i in {0..7}; do if [ -z ${result_set3[i]} ]; then  result_set3[i]=',0' ; fi; done
-result_set4=($(grep threads ${WORKSPACE}/fbpileup_RANGE.SECONDARY_${BENCH_ID}_perf_result_set_${DATE}.txt |  awk '{print ","$5 }'))
+result_set4=($(grep threads ${WORKSPACE_LOC}/fbpileup_RANGE.SECONDARY_${BENCH_ID}_perf_result_set_${DATE}.txt |  awk '{print ","$5 }'))
 for i in {0..7}; do if [ -z ${result_set4[i]} ]; then  result_set4[i]=',0' ; fi; done
 
-echo "[ '${BUILD_NUMBER}' ${result_set1[*]} ]," >> ${WORKSPACE}/fbpileup_POINT.PRIMARY_${BENCH_ID}_perf_result_set.txt
-echo "[ '${BUILD_NUMBER}' ${result_set2[*]} ]," >> ${WORKSPACE}/fbpileup_POINT.SECONDARY_${BENCH_ID}_perf_result_set.txt
-echo "[ '${BUILD_NUMBER}' ${result_set3[*]} ]," >> ${WORKSPACE}/fbpileup_RANGE.PRIMARY_${BENCH_ID}_perf_result_set.txt
-echo "[ '${BUILD_NUMBER}' ${result_set4[*]} ]," >> ${WORKSPACE}/fbpileup_RANGE.SECONDARY_${BENCH_ID}_perf_result_set.txt
+echo "[ '${BUILD_NUMBER}' ${result_set1[*]} ]," >> ${WORKSPACE_LOC}/fbpileup_POINT.PRIMARY_${BENCH_ID}_perf_result_set.txt
+echo "[ '${BUILD_NUMBER}' ${result_set2[*]} ]," >> ${WORKSPACE_LOC}/fbpileup_POINT.SECONDARY_${BENCH_ID}_perf_result_set.txt
+echo "[ '${BUILD_NUMBER}' ${result_set3[*]} ]," >> ${WORKSPACE_LOC}/fbpileup_RANGE.PRIMARY_${BENCH_ID}_perf_result_set.txt
+echo "[ '${BUILD_NUMBER}' ${result_set4[*]} ]," >> ${WORKSPACE_LOC}/fbpileup_RANGE.SECONDARY_${BENCH_ID}_perf_result_set.txt
 
 rm -f ${MACHINE_NAME}*
 

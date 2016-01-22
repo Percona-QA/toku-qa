@@ -438,19 +438,19 @@ parse_iibench.pl summary . > ${MACHINE_NAME}.summary
 
 #result_set=($(grep '^[0-9][0-9]' ${LOG_NAME} | awk '{print $6","}'))
 #avg_result=($(cat ${MACHINE_NAME}.summary | awk '{print $3}'))
-#echo "[ '${BUILD_NUMBER}', ${result_set[*]} $avg_result ]," >> ${WORKSPACE}/perf_result_set.txt
+#echo "[ '${BUILD_NUMBER}', ${result_set[*]} $avg_result ]," >> ${WORKSPACE_LOC}/perf_result_set.txt
 
-#cat ${SCRIPT_DIR}/../../graph_template/combo_chart_header.html >  ${WORKSPACE}/perf_result.html
-#echo "['Build', '20M' , '40M' , '60M ' , '80M' , '100M' , 'avg_ips']," >> ${WORKSPACE}/perf_result.html
-#tail -20 ${WORKSPACE}/perf_result_set.txt >> ${WORKSPACE}/perf_result.html
-#cat ${SCRIPT_DIR}/../../graph_template/combo_chart_footer.html >> ${WORKSPACE}/perf_result.html
+#cat ${SCRIPT_DIR}/../../graph_template/combo_chart_header.html >  ${WORKSPACE_LOC}/perf_result.html
+#echo "['Build', '20M' , '40M' , '60M ' , '80M' , '100M' , 'avg_ips']," >> ${WORKSPACE_LOC}/perf_result.html
+#tail -20 ${WORKSPACE_LOC}/perf_result_set.txt >> ${WORKSPACE}/perf_result.html
+#cat ${SCRIPT_DIR}/../../graph_template/combo_chart_footer.html >> ${WORKSPACE_LOC}/perf_result.html
 
 DATE=`date +"%Y%m%d%H%M%S"`
 tarFileName="iibench_${BENCH_ID}_perf_result_set_${DATE}.tar.gz"
 tar czvf ${tarFileName} ${MACHINE_NAME}* ${DB_DIR}/data/*.err
 cp ${tarFileName} ${SCP_TARGET}
-cp ${MACHINE_NAME}.summary ${WORKSPACE}/iibench_${BENCH_ID}_perf_result_set_${DATE}_summ.txt
-cp ${LOG_NAME} ${WORKSPACE}/iibench_${BENCH_ID}_perf_result_set_${DATE}.txt
+cp ${MACHINE_NAME}.summary ${WORKSPACE_LOC}/iibench_${BENCH_ID}_perf_result_set_${DATE}_summ.txt
+cp ${LOG_NAME} ${WORKSPACE_LOC}/iibench_${BENCH_ID}_perf_result_set_${DATE}.txt
 if [ ! -z ${IIBENCH_MODE} ];then
   result_set=($(grep '^[0-9][0-9]' ${LOG_NAME} |  awk '{print $8"," }' | head -5))
   for i in {0..4}; do if [ -z ${result_set[i]} ]; then  result_set[i]='0,' ; fi; done
@@ -460,7 +460,7 @@ else
   for i in {0..4}; do if [ -z ${result_set[i]} ]; then  result_set[i]='0,' ; fi; done
   avg_result=($(cat ${MACHINE_NAME}.summary | awk '{print $3}'))
 fi
-echo "[ '${BUILD_NUMBER}', ${result_set[*]} $avg_result ]," >> ${WORKSPACE}/iibench_${BENCH_ID}_perf_result_set.txt
+echo "[ '${BUILD_NUMBER}', ${result_set[*]} $avg_result ]," >> ${WORKSPACE_LOC}/iibench_${BENCH_ID}_perf_result_set.txt
  
 rm -f ${MACHINE_NAME}*
 

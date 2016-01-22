@@ -1,5 +1,5 @@
 #!/bin/bash
-cd ${WORKSPACE}
+cd ${WORKSPACE_LOC}
 RS_ARRAY=($(ls *perf_result_set.txt))
 echo " <html>"  >  ${WORKSPACE}/multibench_perf_result.html 
 echo "   <head>"  >>  ${WORKSPACE}/multibench_perf_result.html 
