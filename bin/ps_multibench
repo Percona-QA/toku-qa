@@ -31,7 +31,7 @@ if [ -z $WORKSPACE ]; then
   export WORKSPACE=$BIG_DIR/backups
 fi
 
-export WORKSPACE_LOG=$BIG_DIR/backups
+export WORKSPACE_LOC=$BIG_DIR/backups
 
 # make sure we have passed basedir parameter for this benchmark run
 if [ -z $2 ]; then
