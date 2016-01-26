@@ -59,14 +59,14 @@ fi
 # BE VERY CAREFUL TO SET STUFF AFTER THE FOLLOWING
 # ************************************************
 
-export INNODB_CACHE=8G
-export TOKUDB_DIRECTIO_CACHE=8G
+export INNODB_CACHE=36G
+export TOKUDB_DIRECTIO_CACHE=36G
 
 # **********************************************************************************************
 # iibench
 # **********************************************************************************************
-export INNODB_CACHE=8G
-export TOKUDB_DIRECTIO_CACHE=8G
+export INNODB_CACHE=36G
+export TOKUDB_DIRECTIO_CACHE=36G
 export ADDITIONAL_WRITERS=0
 export MAX_ROWS=100000000
 export ROWS_PER_REPORT=20000000
@@ -88,8 +88,8 @@ unset SHUTDOWN_MYSQL
 unset IIBENCH_CREATE_TABLE
     
     # 4 concurrent inserters
-#    export INNODB_CACHE=8G
-#    export TOKUDB_DIRECTIO_CACHE=8G
+#    export INNODB_CACHE=36G
+#    export TOKUDB_DIRECTIO_CACHE=36G
 #    export ADDITIONAL_WRITERS=3
 #    export RUN_MINUTES=15
 #    export BENCH_ID=quicklz.4writers
@@ -108,8 +108,8 @@ unset IIBENCH_CREATE_TABLE
     # **********************************************************************************************
     # iibench plus queries
     # **********************************************************************************************
-export INNODB_CACHE=8G
-export TOKUDB_DIRECTIO_CACHE=8G
+export INNODB_CACHE=36G
+export TOKUDB_DIRECTIO_CACHE=36G
 export ADDITIONAL_WRITERS=0
 export MAX_ROWS=100000000
 export ROWS_PER_REPORT=20000000
@@ -136,8 +136,8 @@ unset IIBENCH_MODE
     # **********************************************************************************************
     # sysbench
     # **********************************************************************************************
-export INNODB_CACHE=8G
-export TOKUDB_DIRECTIO_CACHE=8G
+export INNODB_CACHE=36G
+export TOKUDB_DIRECTIO_CACHE=36G
 export TOKUDB_COMPRESSION=lzma
 export NUM_TABLES=16
 export RUN_TIME_SECONDS=300
@@ -176,8 +176,8 @@ unset threadCountList
 #unset SKIP_DB_CREATE
 
     
-export INNODB_CACHE=8G
-export TOKUDB_DIRECTIO_CACHE=8G
+export INNODB_CACHE=36G
+export TOKUDB_DIRECTIO_CACHE=36G
 export TOKUDB_COMPRESSION=quicklz
 export NUM_ROWS=1000000
 export RAND_TYPE=uniform
