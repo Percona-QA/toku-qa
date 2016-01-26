@@ -264,7 +264,7 @@ popd
 unset threadCountList    
 #'
     #Generate graph
-PS_VERSION=`$DB_DIR/bin/mysqld --version | cut -d' ' -f2-`
+VERSION_INFO=`$DB_DIR/bin/mysqld --version | cut -d' ' -f2-`
 UPTIME_HOUR=`uptime -p`
 SYSTEM_LOAD=`uptime | sed 's|  | |g' | sed -e 's|.*user*.,|System|'`
 MEM=`free -g | grep "Mem:" | awk '{print "Total:"$2"GB  Used:"$3"GB  Free:"$4"GB" }'`
@@ -273,6 +273,6 @@ if [ ! -f $WORKSPACE/hw.info ];then
   KERNEL=`uname -r`
   echo "HW info | $RELEASE $KERNEL"  > $WORKSPACE/hw.info
 fi
-echo "Build #$BUILD_NUMBER | `date +'%d-%m-%Y | %H:%M'` | $PS_VERSION | $UPTIME_HOUR | $SYSTEM_LOAD | Memory: $MEM " >> $WORKSPACE/build_info.log
+echo "Build #$BUILD_NUMBER | `date +'%d-%m-%Y | %H:%M'` | $VERSION_INFO | $UPTIME_HOUR | $SYSTEM_LOAD | Memory: $MEM " >> $WORKSPACE/build_info.log
 $SCRIPT_DIR/../graph_template/ps_multibench_html_gen.sh    
 
