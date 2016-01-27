@@ -34,11 +34,17 @@ elif [ -r /usr/lib/x86_64-linux-gnu/libjemalloc.so.1 ]; then export LD_PRELOAD=/
 elif [ -r $BASE/lib/mysql/libjemalloc.so.1 ]; then export LD_PRELOAD=$BASE/lib/mysql/libjemalloc.so.1
 else echo 'Error: jemalloc was not loaded as it was not found' ; exit 1; fi
 
-rm -Rf $WORK_DIR/tpcc_data_dir_${SE}_${NUM_WAREHOUSES}
+if [ "`$BASE/bin/mysqld --version | grep -oe '5\.[1567]' | head -n1`" == "5.7" ]; then
+  DATA_DIR="tpcc_data_dir_57_$SE_${NUM_WAREHOUSES}"
+else
+  DATA_DIR="tpcc_data_dir_${SE}_${NUM_WAREHOUSES}"
+fi
+
+rm -Rf $WORK_DIR/$DATA_DIR
 cd $BASE/mysql-test
 perl lib/v1/mysql-test-run.pl \
   --start-and-exit --skip-ndb \
-  --vardir=$WORK_DIR/tpcc_data_dir_${SE}_${NUM_WAREHOUSES} \
+  --vardir=$WORK_DIR/$DATA_DIR \
   --master_port=$MYSQL_PORT \
   --mysqld=--core-file \
   --mysqld=--log-output=none \
@@ -46,25 +52,25 @@ perl lib/v1/mysql-test-run.pl \
   --mysqld=--max-connections=900 \
   --mysqld=--plugin-load=tokudb=ha_tokudb.so \
   --mysqld=--init-file=$SCRIPT_DIR/TokuDB.sql \
-  --mysqld=--socket=$WORK_DIR/tpcc_data_dir_${SE}_${NUM_WAREHOUSES}/socket.sock \
+  --mysqld=--socket=$WORK_DIR/$DATA_DIR/socket.sock \
 1st
 
-$BASE/bin/mysqladmin --socket=$WORK_DIR/tpcc_data_dir_${SE}_${NUM_WAREHOUSES}/socket.sock -uroot create ${MYSQL_DATABASE}
+$BASE/bin/mysqladmin --socket=$WORK_DIR/$DATA_DIR/socket.sock -uroot create ${MYSQL_DATABASE}
 
 if [ ${SE} == "innodb" ]; then
   if [ "${INNODB_COMPRESSION}" == "Y" ]; then
-    $BASE/bin/mysql --socket=$WORK_DIR/tpcc_data_dir_${SE}_${NUM_WAREHOUSES}/socket.sock -uroot  ${MYSQL_DATABASE} < $SCRIPT_DIR/tokutek/tokudb/software/tpcc-percona/fastload/create_schema_${SE}_${INNODB_KEY_BLOCK_SIZE}.sql
+    $BASE/bin/mysql --socket=$WORK_DIR/$DATA_DIR/socket.sock -uroot  ${MYSQL_DATABASE} < $SCRIPT_DIR/tokutek/tokudb/software/tpcc-percona/fastload/create_schema_${SE}_${INNODB_KEY_BLOCK_SIZE}.sql
   else
-    $BASE/bin/mysql --socket=$WORK_DIR/tpcc_data_dir_${SE}_${NUM_WAREHOUSES}/socket.sock -uroot ${MYSQL_DATABASE} <  $SCRIPT_DIR/tokutek/tokudb/software/tpcc-percona/fastload/create_schema_${SE}.sql
+    $BASE/bin/mysql --socket=$WORK_DIR/$DATA_DIR/socket.sock -uroot ${MYSQL_DATABASE} <  $SCRIPT_DIR/tokutek/tokudb/software/tpcc-percona/fastload/create_schema_${SE}.sql
   fi
-  $BASE/bin/mysql --socket=$WORK_DIR/tpcc_data_dir_${SE}_${NUM_WAREHOUSES}/socket.sock -uroot  ${MYSQL_DATABASE} < $SCRIPT_DIR/tokutek/tokudb/software/tpcc-percona/fastload/innodb_add_idx.sql
+  $BASE/bin/mysql --socket=$WORK_DIR/$DATA_DIR/socket.sock -uroot  ${MYSQL_DATABASE} < $SCRIPT_DIR/tokutek/tokudb/software/tpcc-percona/fastload/innodb_add_idx.sql
   if [ "${INNODB_FK}" == "Y" ]; then
-    $BASE/bin/mysql --socket=$WORK_DIR/tpcc_data_dir_${SE}_${NUM_WAREHOUSES}/socket.sock -uroot ${MYSQL_DATABASE} < $SCRIPT_DIR/tokutek/tokudb/software/tpcc-percona/fastload/innodb_add_fkey.sql
+    $BASE/bin/mysql --socket=$WORK_DIR/$DATA_DIR/socket.sock -uroot ${MYSQL_DATABASE} < $SCRIPT_DIR/tokutek/tokudb/software/tpcc-percona/fastload/innodb_add_fkey.sql
   else
-    $BASE/bin/mysql --socket=$WORK_DIR/tpcc_data_dir_${SE}_${NUM_WAREHOUSES}/socket.sock -uroot ${MYSQL_DATABASE} < $SCRIPT_DIR/tokutek/tokudb/software/tpcc-percona/fastload/innodb_add_fkey_as_idx.sql
+    $BASE/bin/mysql --socket=$WORK_DIR/$DATA_DIR/socket.sock -uroot ${MYSQL_DATABASE} < $SCRIPT_DIR/tokutek/tokudb/software/tpcc-percona/fastload/innodb_add_fkey_as_idx.sql
   fi
 else
-  $DB_DIR/bin/mysql --socket=$WORK_DIR/tpcc_data_dir_${SE}_${NUM_WAREHOUSES}/socket.sock -uroot ${MYSQL_DATABASE} <  $SCRIPT_DIR/tokutek/tokudb/software/tpcc-percona/fastload/create_schema_${SE}.sql
+  $DB_DIR/bin/mysql --socket=$WORK_DIR/$DATA_DIR/socket.sock -uroot ${MYSQL_DATABASE} <  $SCRIPT_DIR/tokutek/tokudb/software/tpcc-percona/fastload/create_schema_${SE}.sql
 fi
 
 # Running tpcc data loading script
@@ -81,7 +87,7 @@ $WORK_DIR/tpcc-mysql/tpcc_load 127.0.0.1:$MYSQL_PORT ${MYSQL_DATABASE} root "" $
   
 #Stopping mysqld
 echo "Stopping mysqld process"
-$BASE/bin/mysqladmin --socket=$WORK_DIR/tpcc_data_dir_${SE}_${NUM_WAREHOUSES}/socket.sock -uroot shutdown
+$BASE/bin/mysqladmin --socket=$WORK_DIR/$DATA_DIR/socket.sock -uroot shutdown
 
-echo "Data directory template is available in $WORK_DIR/tpcc_data_dir_${SE}_${NUM_WAREHOUSES}/master-data"
+echo "Data directory template is available in $WORK_DIR/$DATA_DIR/master-data"
 

@@ -32,11 +32,16 @@ if [ -z ${DB_DIR} ]; then
 else
   BASE=${DB_DIR}
 fi
-rm -Rf $WORK_DIR/run_dir_$SE
+if [ "`$BASE/bin/mysqld --version | grep -oe '5\.[1567]' | head -n1`" == "5.7" ]; then
+  DATA_DIR="run_dir_57_$SE"
+else
+  DATA_DIR="run_dir_$SE"
+fi
+rm -Rf $WORK_DIR/$DATA_DIR
 cd $BASE/mysql-test
 perl lib/v1/mysql-test-run.pl \
   --start-and-exit --skip-ndb \
-  --vardir=$WORK_DIR/run_dir_$SE \
+  --vardir=$WORK_DIR/$DATA_DIR \
   --master_port=$RANDOM \
   --mysqld=--core-file \
   --mysqld=--log-output=none \
@@ -44,16 +49,16 @@ perl lib/v1/mysql-test-run.pl \
   --mysqld=--max-connections=900 \
   --mysqld=--plugin-load=tokudb=ha_tokudb.so \
   --mysqld=--init-file=$SCRIPT_DIR/TokuDB.sql \
-  --mysqld=--socket=$WORK_DIR/run_dir_$SE/socket.sock \
+  --mysqld=--socket=$WORK_DIR/$DATA_DIR/socket.sock \
 1st
 
 # Running sysbench
 echo "Running sysbench"
-/usr/bin/sysbench --test=/usr/share/doc/sysbench/tests/db/parallel_prepare.lua --mysql-table-engine=$SE --num-threads=${NUM_TABLES} --oltp-tables-count=${NUM_TABLES}  --oltp-table-size=${NUM_ROWS} --mysql-db=test --mysql-user=root    --db-driver=mysql --mysql-socket=$WORK_DIR/run_dir_$SE/socket.sock    run > $WORK_DIR/sysbench_prepare.log 2>&1
+/usr/bin/sysbench --test=/usr/share/doc/sysbench/tests/db/parallel_prepare.lua --mysql-table-engine=$SE --num-threads=${NUM_TABLES} --oltp-tables-count=${NUM_TABLES}  --oltp-table-size=${NUM_ROWS} --mysql-db=test --mysql-user=root    --db-driver=mysql --mysql-socket=$WORK_DIR/$DATA_DIR/socket.sock    run > $WORK_DIR/sysbench_prepare.log 2>&1
 
 #Stopping mysqld
 echo "Stopping mysqld process"
-$BASE/bin/mysqladmin --socket=$WORK_DIR/run_dir_$SE/socket.sock -uroot shutdown
+$BASE/bin/mysqladmin --socket=$WORK_DIR/$DATA_DIR/socket.sock -uroot shutdown
 
-echo "Data directory template is available in $WORK_DIR/run_dir_$SE/master-data"
+echo "Data directory template is available in $WORK_DIR/$DATA_DIR/master-data"
 

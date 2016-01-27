@@ -88,11 +88,17 @@ rm -Rf  ${DB_DIR}/data/*
 mkdir -p  ${DB_DIR}/tmp
 BIN=`find ${DB_DIR} -maxdepth 2 -name mysqld -type f -o -name mysqld-debug -type f | head -1`;if [ -z $BIN ]; then echo "Assert! mysqld binary '$BIN' could not be read";exit 1;fi
 PS_VERSION=`$BIN --version | grep -oe '5\.[1567]' | sed 's/\.//' | head -n1`
-if [ -d ${BIG_DIR}/run_dir_${MYSQL_STORAGE_ENGINE}/master-data ]; then
-  cp -r ${BIG_DIR}/run_dir_${MYSQL_STORAGE_ENGINE}/master-data/*  ${DB_DIR}/data/
+if [ "`$BIN --version | grep -oe '5\.[1567]' | head -n1`" == "5.7" ]; then
+  RUN_DATA_DIR="run_dir_57_${MYSQL_STORAGE_ENGINE}"
+else
+  RUN_DATA_DIR="run_dir_${MYSQL_STORAGE_ENGINE}"
+fi
+
+if [ -d ${BIG_DIR}/$RUN_DATA_DIR/master-data ]; then
+  cp -r ${BIG_DIR}/$RUN_DATA_DIR/master-data/*  ${DB_DIR}/data/
 else
   ${SCRIPT_DIR}/sysbench_create_db_template.sh ${BIG_DIR} $PS_VERSION ${MYSQL_STORAGE_ENGINE}
-  cp -r ${BIG_DIR}/run_dir_${MYSQL_STORAGE_ENGINE}/master-data/*  ${DB_DIR}/data/
+  cp -r ${BIG_DIR}/$RUN_DATA_DIR/master-data/*  ${DB_DIR}/data/
 fi
 mkdir -p  ${DB_DIR}/data/test
 ## Starting mysqld

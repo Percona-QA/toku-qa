@@ -131,13 +131,18 @@ MID=`find ${DB_DIR} -maxdepth 2 -name mysql_install_db`;if [ -z $MID ]; then ech
 if [ "`$BIN --version | grep -oe '5\.[1567]' | head -n1`" == "5.7" ]; then MID_OPTIONS='--insecure'; elif [ "`$BIN --version | grep -oe '5\.[1567]' | head -n1`" == "5.6" ]; then MID_OPTIONS='--force'; elif [ "`$BIN --version| grep -oe '5\.[1567]' | head -n1`" == "5.5" ]; then MID_OPTIONS='--force';else MID_OPTIONS=''; fi
 
 PS_VERSION=`$BIN --version | grep -oe '5\.[1567]' | sed 's/\.//' | head -n1`
-if [ -d ${BIG_DIR}/tpcc_data_dir_${MYSQL_STORAGE_ENGINE}_${NUM_WAREHOUSES}/master-data ]; then
-  cp -r ${BIG_DIR}/tpcc_data_dir_${MYSQL_STORAGE_ENGINE}_${NUM_WAREHOUSES}/master-data/*  ${DB_DIR}/data/
+if [ "`$BIN --version | grep -oe '5\.[1567]' | head -n1`" == "5.7" ]; then
+  RUN_DATA_DIR="tpcc_data_dir_57_${MYSQL_STORAGE_ENGINE}_${NUM_WAREHOUSES}"
+else
+  RUN_DATA_DIR="tpcc_data_dir_${MYSQL_STORAGE_ENGINE}_${NUM_WAREHOUSES}"
+fi
+if [ -d ${BIG_DIR}/$RUN_DATA_DIR/master-data ]; then
+  cp -r ${BIG_DIR}/$RUN_DATA_DIR/master-data/*  ${DB_DIR}/data/
   $BIN --no-defaults --basedir=${DB_DIR} --datadir=${DB_DIR}/data ${MYSQL_OPTS}  --port=${MYSQL_PORT} --pid-file=${DB_DIR}/data/pid.pid --core-file --socket=${MYSQL_SOCKET} --log-error=${DB_DIR}/data/error.log.out >  ${DB_DIR}/data/mysqld.out 2>&1 &
   MPID="$!"
 else
   bash -x ${SCRIPT_DIR}/tpcc_create_db_template.sh ${BIG_DIR} $PS_VERSION ${MYSQL_STORAGE_ENGINE}
-  cp -r ${BIG_DIR}/tpcc_data_dir_${MYSQL_STORAGE_ENGINE}_${NUM_WAREHOUSES}/master-data/*  ${DB_DIR}/data/
+  cp -r ${BIG_DIR}/$RUN_DATA_DIR/master-data/*  ${DB_DIR}/data/
   $BIN --no-defaults --basedir=${DB_DIR} --datadir=${DB_DIR}/data ${MYSQL_OPTS}  --port=${MYSQL_PORT} --pid-file=${DB_DIR}/data/pid.pid --core-file --socket=${MYSQL_SOCKET} --log-error=${DB_DIR}/data/error.log.out >  ${DB_DIR}/data/mysqld.out 2>&1 &
   MPID="$!" 
 fi
