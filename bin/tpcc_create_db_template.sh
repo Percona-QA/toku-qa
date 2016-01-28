@@ -42,10 +42,10 @@ fi
 
 rm -Rf $WORK_DIR/$DATA_DIR
 cd $BASE/mysql-test
-perl lib/v1/mysql-test-run.pl \
+perl mysql-test-run.pl \
   --start-and-exit --skip-ndb \
   --vardir=$WORK_DIR/$DATA_DIR \
-  --master_port=$MYSQL_PORT \
+  --mysqld=--port=$MYSQL_PORT \
   --mysqld=--core-file \
   --mysqld=--log-output=none \
   --mysqld=--secure-file-priv= \
@@ -54,6 +54,7 @@ perl lib/v1/mysql-test-run.pl \
   --mysqld=--init-file=$SCRIPT_DIR/TokuDB.sql \
   --mysqld=--socket=$WORK_DIR/$DATA_DIR/socket.sock \
 1st
+
 
 $BASE/bin/mysqladmin --socket=$WORK_DIR/$DATA_DIR/socket.sock -uroot create ${MYSQL_DATABASE}
 

@@ -39,10 +39,10 @@ else
 fi
 rm -Rf $WORK_DIR/$DATA_DIR
 cd $BASE/mysql-test
-perl lib/v1/mysql-test-run.pl \
+perl mysql-test-run.pl \
   --start-and-exit --skip-ndb \
   --vardir=$WORK_DIR/$DATA_DIR \
-  --master_port=$RANDOM \
+  --mysqld=--port=$RANDOM \
   --mysqld=--core-file \
   --mysqld=--log-output=none \
   --mysqld=--secure-file-priv= \

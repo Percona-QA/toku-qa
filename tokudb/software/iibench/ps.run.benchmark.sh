@@ -261,7 +261,7 @@ if [ ${SKIP_DB_CREATE} == "N" ]; then
       MID="${DB_DIR}/bin/mysql_install_db"
     fi
     
-    $MID --no-defaults --basedir=${DB_DIR} --datadir=${DB_DIR}/data $MID_OPTIONS > ${DB_DIR}/data/mysqld_install.out  2>&1
+    $MID --no-defaults --basedir=${DB_DIR} --datadir=${DB_DIR}/data $MID_OPTIONS > ${DB_DIR}/mysqld_install.out  2>&1
     mkdir -p  ${DB_DIR}/data/test
     ## Starting mysqld
     if [ "${JEMALLOC}" != "" -a -r "${JEMALLOC}" ]; then export LD_PRELOAD=${JEMALLOC}
