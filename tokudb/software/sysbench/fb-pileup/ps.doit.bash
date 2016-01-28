@@ -94,11 +94,11 @@ else
   RUN_DATA_DIR="run_dir_${MYSQL_STORAGE_ENGINE}"
 fi
 
-if [ -d ${BIG_DIR}/$RUN_DATA_DIR/master-data ]; then
-  cp -r ${BIG_DIR}/$RUN_DATA_DIR/master-data/*  ${DB_DIR}/data/
+if [ -d ${BIG_DIR}/$RUN_DATA_DIR/mysqld.1/data ]; then
+  cp -r ${BIG_DIR}/$RUN_DATA_DIR/mysqld.1/data/*  ${DB_DIR}/data/
 else
   ${SCRIPT_DIR}/sysbench_create_db_template.sh ${BIG_DIR} $PS_VERSION ${MYSQL_STORAGE_ENGINE}
-  cp -r ${BIG_DIR}/$RUN_DATA_DIR/master-data/*  ${DB_DIR}/data/
+  cp -r ${BIG_DIR}/$RUN_DATA_DIR/mysqld.1/data/*  ${DB_DIR}/data/
 fi
 mkdir -p  ${DB_DIR}/data/test
 ## Starting mysqld

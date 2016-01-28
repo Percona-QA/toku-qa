@@ -60,5 +60,5 @@ echo "Running sysbench"
 echo "Stopping mysqld process"
 $BASE/bin/mysqladmin --socket=$WORK_DIR/$DATA_DIR/socket.sock -uroot shutdown
 
-echo "Data directory template is available in $WORK_DIR/$DATA_DIR/master-data"
+echo "Data directory template is available in $WORK_DIR/$DATA_DIR/mysqld.1/data"
 

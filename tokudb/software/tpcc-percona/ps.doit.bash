@@ -136,13 +136,13 @@ if [ "`$BIN --version | grep -oe '5\.[1567]' | head -n1`" == "5.7" ]; then
 else
   RUN_DATA_DIR="tpcc_data_dir_${MYSQL_STORAGE_ENGINE}_${NUM_WAREHOUSES}"
 fi
-if [ -d ${BIG_DIR}/$RUN_DATA_DIR/master-data ]; then
-  cp -r ${BIG_DIR}/$RUN_DATA_DIR/master-data/*  ${DB_DIR}/data/
+if [ -d ${BIG_DIR}/$RUN_DATA_DIR/mysqld.1/data ]; then
+  cp -r ${BIG_DIR}/$RUN_DATA_DIR/mysqld.1/data/*  ${DB_DIR}/data/
   $BIN --no-defaults --basedir=${DB_DIR} --datadir=${DB_DIR}/data ${MYSQL_OPTS}  --port=${MYSQL_PORT} --pid-file=${DB_DIR}/data/pid.pid --core-file --socket=${MYSQL_SOCKET} --log-error=${DB_DIR}/data/error.log.out >  ${DB_DIR}/data/mysqld.out 2>&1 &
   MPID="$!"
 else
   bash -x ${SCRIPT_DIR}/tpcc_create_db_template.sh ${BIG_DIR} $PS_VERSION ${MYSQL_STORAGE_ENGINE}
-  cp -r ${BIG_DIR}/$RUN_DATA_DIR/master-data/*  ${DB_DIR}/data/
+  cp -r ${BIG_DIR}/$RUN_DATA_DIR/mysqld.1/data/*  ${DB_DIR}/data/
   $BIN --no-defaults --basedir=${DB_DIR} --datadir=${DB_DIR}/data ${MYSQL_OPTS}  --port=${MYSQL_PORT} --pid-file=${DB_DIR}/data/pid.pid --core-file --socket=${MYSQL_SOCKET} --log-error=${DB_DIR}/data/error.log.out >  ${DB_DIR}/data/mysqld.out 2>&1 &
   MPID="$!" 
 fi
