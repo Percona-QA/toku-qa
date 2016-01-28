@@ -60,18 +60,18 @@ $BASE/bin/mysqladmin --socket=$WORK_DIR/$DATA_DIR/socket.sock -uroot create ${MY
 
 if [ ${SE} == "innodb" ]; then
   if [ "${INNODB_COMPRESSION}" == "Y" ]; then
-    $BASE/bin/mysql --socket=$WORK_DIR/$DATA_DIR/socket.sock -uroot  ${MYSQL_DATABASE} < $SCRIPT_DIR/tokutek/tokudb/software/tpcc-percona/fastload/create_schema_${SE}_${INNODB_KEY_BLOCK_SIZE}.sql
+    $BASE/bin/mysql --socket=$WORK_DIR/$DATA_DIR/socket.sock -uroot  ${MYSQL_DATABASE} < $SCRIPT_DIR/../tokudb/software/tpcc-percona/fastload/create_schema_${SE}_${INNODB_KEY_BLOCK_SIZE}.sql
   else
-    $BASE/bin/mysql --socket=$WORK_DIR/$DATA_DIR/socket.sock -uroot ${MYSQL_DATABASE} <  $SCRIPT_DIR/tokutek/tokudb/software/tpcc-percona/fastload/create_schema_${SE}.sql
+    $BASE/bin/mysql --socket=$WORK_DIR/$DATA_DIR/socket.sock -uroot ${MYSQL_DATABASE} <  $SCRIPT_DIR/../tokudb/software/tpcc-percona/fastload/create_schema_${SE}.sql
   fi
-  $BASE/bin/mysql --socket=$WORK_DIR/$DATA_DIR/socket.sock -uroot  ${MYSQL_DATABASE} < $SCRIPT_DIR/tokutek/tokudb/software/tpcc-percona/fastload/innodb_add_idx.sql
+  $BASE/bin/mysql --socket=$WORK_DIR/$DATA_DIR/socket.sock -uroot  ${MYSQL_DATABASE} < $SCRIPT_DIR/../tokudb/software/tpcc-percona/fastload/innodb_add_idx.sql
   if [ "${INNODB_FK}" == "Y" ]; then
-    $BASE/bin/mysql --socket=$WORK_DIR/$DATA_DIR/socket.sock -uroot ${MYSQL_DATABASE} < $SCRIPT_DIR/tokutek/tokudb/software/tpcc-percona/fastload/innodb_add_fkey.sql
+    $BASE/bin/mysql --socket=$WORK_DIR/$DATA_DIR/socket.sock -uroot ${MYSQL_DATABASE} < $SCRIPT_DIR/../tokudb/software/tpcc-percona/fastload/innodb_add_fkey.sql
   else
-    $BASE/bin/mysql --socket=$WORK_DIR/$DATA_DIR/socket.sock -uroot ${MYSQL_DATABASE} < $SCRIPT_DIR/tokutek/tokudb/software/tpcc-percona/fastload/innodb_add_fkey_as_idx.sql
+    $BASE/bin/mysql --socket=$WORK_DIR/$DATA_DIR/socket.sock -uroot ${MYSQL_DATABASE} < $SCRIPT_DIR/../tokudb/software/tpcc-percona/fastload/innodb_add_fkey_as_idx.sql
   fi
 else
-  $DB_DIR/bin/mysql --socket=$WORK_DIR/$DATA_DIR/socket.sock -uroot ${MYSQL_DATABASE} <  $SCRIPT_DIR/tokutek/tokudb/software/tpcc-percona/fastload/create_schema_${SE}.sql
+  $DB_DIR/bin/mysql --socket=$WORK_DIR/$DATA_DIR/socket.sock -uroot ${MYSQL_DATABASE} <  $SCRIPT_DIR/../tokudb/software/tpcc-percona/fastload/create_schema_${SE}.sql
 fi
 
 # Running tpcc data loading script
