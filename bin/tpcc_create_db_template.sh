@@ -35,7 +35,7 @@ elif [ -r $BASE/lib/mysql/libjemalloc.so.1 ]; then export LD_PRELOAD=$BASE/lib/m
 else echo 'Error: jemalloc was not loaded as it was not found' ; exit 1; fi
 
 if [ "`$BASE/bin/mysqld --version | grep -oe '5\.[1567]' | head -n1`" == "5.7" ]; then
-  DATA_DIR="tpcc_data_dir_57_$SE_${NUM_WAREHOUSES}"
+  DATA_DIR="tpcc_data_dir_57_${SE}_${NUM_WAREHOUSES}"
 else
   DATA_DIR="tpcc_data_dir_${SE}_${NUM_WAREHOUSES}"
 fi
