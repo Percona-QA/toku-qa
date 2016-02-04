@@ -94,6 +94,10 @@ else
   RUN_DATA_DIR="run_dir_${MYSQL_STORAGE_ENGINE}"
 fi
 
+if [ ! -d  ${DB_DIR}/data ];then
+  mkdir -p ${DB_DIR}/data
+fi
+
 if [ -d ${BIG_DIR}/$RUN_DATA_DIR/mysqld.1/data ]; then
   cp -r ${BIG_DIR}/$RUN_DATA_DIR/mysqld.1/data/*  ${DB_DIR}/data/
 else
