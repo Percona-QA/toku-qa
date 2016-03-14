@@ -15,6 +15,7 @@ export MYSQL_STORAGE_ENGINE=tokudb
 export SCP_FILES=Y
 export DIRECTIO=Y
 export PATH=$PATH:$SCRIPT_DIR
+export MYEXTRA=""
 # change the machine.config values as per your configuration 
 source $SCRIPT_DIR/machine.config
 
@@ -25,7 +26,12 @@ if [ ! -z ${WORKDIR} ]; then
   SCP_TARGET=${BIG_DIR}/backups
 fi
 
-# Check if workspace was set by Jenkins, otherwise this is presumably a local run
+
+#Check if MYEXTRA was set by Jenkins, otherwise this is presumably a local run
+if [ ! -z ${MYEXTRA} ]; then
+  export MYEXTRA=${MYEXTRA}
+fi
+
 if [ -z $WORKSPACE ]; then
   echo "Assuming this is a local (i.e. non-Jenkins initiated) run."
   export WORKSPACE=$BIG_DIR/backups

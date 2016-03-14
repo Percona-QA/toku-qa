@@ -138,12 +138,12 @@ else
 fi
 if [ -d ${BIG_DIR}/$RUN_DATA_DIR/mysqld.1/data ]; then
   cp -r ${BIG_DIR}/$RUN_DATA_DIR/mysqld.1/data/*  ${DB_DIR}/data/
-  $BIN --no-defaults --basedir=${DB_DIR} --datadir=${DB_DIR}/data ${MYSQL_OPTS}  --port=${MYSQL_PORT} --pid-file=${DB_DIR}/data/pid.pid --core-file --socket=${MYSQL_SOCKET} --log-error=${DB_DIR}/data/error.log.out >  ${DB_DIR}/data/mysqld.out 2>&1 &
+  $BIN --no-defaults ${MYEXTRA}  --basedir=${DB_DIR} --datadir=${DB_DIR}/data ${MYSQL_OPTS}  --port=${MYSQL_PORT} --pid-file=${DB_DIR}/data/pid.pid --core-file --socket=${MYSQL_SOCKET} --log-error=${DB_DIR}/data/error.log.out >  ${DB_DIR}/data/mysqld.out 2>&1 &
   MPID="$!"
 else
   bash -x ${SCRIPT_DIR}/tpcc_create_db_template.sh ${BIG_DIR} $PS_VERSION ${MYSQL_STORAGE_ENGINE}
   cp -r ${BIG_DIR}/$RUN_DATA_DIR/mysqld.1/data/*  ${DB_DIR}/data/
-  $BIN --no-defaults --basedir=${DB_DIR} --datadir=${DB_DIR}/data ${MYSQL_OPTS}  --port=${MYSQL_PORT} --pid-file=${DB_DIR}/data/pid.pid --core-file --socket=${MYSQL_SOCKET} --log-error=${DB_DIR}/data/error.log.out >  ${DB_DIR}/data/mysqld.out 2>&1 &
+  $BIN --no-defaults ${MYEXTRA}  --basedir=${DB_DIR} --datadir=${DB_DIR}/data ${MYSQL_OPTS}  --port=${MYSQL_PORT} --pid-file=${DB_DIR}/data/pid.pid --core-file --socket=${MYSQL_SOCKET} --log-error=${DB_DIR}/data/error.log.out >  ${DB_DIR}/data/mysqld.out 2>&1 &
   MPID="$!" 
 fi
 for X in $(seq 0 60); do
