@@ -17,7 +17,6 @@ export DIRECTIO=Y
 export PATH=$PATH:$SCRIPT_DIR
 # change the machine.config values as per your configuration 
 source $SCRIPT_DIR/machine.config
-WORKDIR=/home/ramesh/test
 # Check if workdir was set by Jenkins, otherwise this is presumably a local run
 if [ ! -z ${WORKDIR} ]; then
   export BIG_DIR=${WORKDIR}
