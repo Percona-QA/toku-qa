@@ -190,34 +190,7 @@ if [ ${SKIP_DB_CREATE} == "N" ]; then
 
     echo "Creating database from ${TARBALL} in ${DB_DIR}"
     MYSQL_OPTS="--innodb_buffer_pool_size=${INNODB_CACHE} --innodb_flush_method=${INNODB_FLUSH_METHOD}"
-    rm -Rf  ${DB_DIR}/data/*
-    mkdir -p  ${DB_DIR}/tmp
     BIN=`find ${DB_DIR} -maxdepth 2 -name mysqld -type f -o -name mysqld-debug -type f | head -1`;if [ -z $BIN ]; then echo "Assert! mysqld binary '$BIN' could not be read";exit 1;fi
-    MID=`find ${DB_DIR} -maxdepth 2 -name mysql_install_db`;if [ -z $MID ]; then echo "Assert! mysql_install_db '$MID' could not be read";exit 1;fi
-
-    if [ "`$BIN --version | grep -oe '5\.[1567]' | head -n1`" == "5.7" ]; then 
-      VERSION_CHK=`$BIN  --version | grep -oe '5\.[1567]\.[0-9]*' | cut -f3 -d'.' | head -n1`
-      if [[ $VERSION_CHK -ge 5 ]]; then
-        MID_OPTIONS="--initialize-insecure"
-      else
-        MID_OPTIONS="--insecure"
-      fi
-    elif [ "`$BIN --version | grep -oe '5\.[1567]' | head -n1`" == "5.6" ]; then 
-      MID_OPTIONS='--force'; 
-    elif [ "`$BIN --version | grep -oe '5\.[1567]' | head -n1`" == "5.5" ]; then 
-      MID_OPTIONS='--force';
-    else 
-      MID_OPTIONS=''; 
-    fi
-
-    if [ "${MID_OPTIONS}" == "--initialize-insecure" ]; then
-      MID="${DB_DIR}/bin/mysqld"
-    else
-      MID="${DB_DIR}/bin/mysql_install_db"
-    fi
-    
-    $MID --no-defaults --basedir=${DB_DIR} --datadir=${DB_DIR}/data $MID_OPTIONS > ${DB_DIR}/mysqld_install.out  2>&1
-    mkdir -p  ${DB_DIR}/data/test
     ## Starting mysqld
     MYEXTRA="${MYEXTRA} ${MYSQL_OPTS}"
     MYEXTRA=`echo $MYEXTRA | sed 's|--|--mysqld=--|g'`
