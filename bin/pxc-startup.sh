@@ -5,15 +5,17 @@ if [ -z "$DB_DIR" ]; then
   exit 1
 fi
 
+run_mid=0
 if [ ! -z $1 ]; then
-  if [ "$1" == "start-dirty" ];then
-    start_dirty="--start-dirty"
+  if [ "$1" == "startup" ];then
+    run_mid=1
   fi
 fi
 
 # PXC startup script.
 pxc_startup(){
   PXC_MYEXTRA=$1
+  PXC_START_TIMEOUT=200
   ADDR="127.0.0.1"
   RPORT=$(( RANDOM%21 + 10 ))
   RBASE1="$(( RPORT*1000 ))"
@@ -31,12 +33,20 @@ pxc_startup(){
   SUSER=root
   SPASS=
   
+  if [ "$(${DB_DIR}/bin/mysqld --version | grep -oe '5\.[567]' | head -n1)" == "5.7" ]; then
+    MID="${DB_DIR}/bin/mysqld --no-defaults --initialize-insecure --basedir=${DB_DIR}"
+  elif [ "$(${DB_DIR}/bin/mysqld --version | grep -oe '5\.[567]' | head -n1)" == "5.6" ]; then
+    MID="${DB_DIR}/scripts/mysql_install_db --no-defaults --basedir=${DB_DIR}"
+  fi
+
   if [ ${BENCH_SUITE} == "sysbench" ];then
-    if [ -z $start_dirty ]; then
+    if [ $run_mid -eq 1 ]; then
       node1="${BIG_DIR}/sysbench_data_template/node1"
       node2="${BIG_DIR}/sysbench_data_template/node2"
       node3="${BIG_DIR}/sysbench_data_template/node3"
-      mkdir -p $node1 $node2 $node3
+      if [ "$(${DB_DIR}/bin/mysqld --version | grep -oe '5\.[567]' | head -n1)" != "5.7" ]; then
+        mkdir -p $node1 $node2 $node3
+      fi
     else
       node1="${DB_DIR}/node1"
       node2="${DB_DIR}/node2"
@@ -46,126 +56,98 @@ pxc_startup(){
     node1="${DB_DIR}/node1"
     node2="${DB_DIR}/node2"
     node3="${DB_DIR}/node3"
+    if [ "$(${DB_DIR}/bin/mysqld --version | grep -oe '5\.[567]' | head -n1)" != "5.7" ]; then
+      mkdir -p $node1 $node2 $node3
+    fi
   fi
    
   echo 'Starting PXC nodes....'
-  pushd ${DB_DIR}/mysql-test/
-  
-  set +e 
-   perl mysql-test-run.pl \
-      --start-and-exit $start_dirty \
-      --port-base=$RBASE1 \
-      --nowarnings \
-      --vardir=$node1 \
-      --mysqld=--skip-performance-schema  \
-      --mysqld=--innodb_file_per_table \
-      --mysqld=--binlog-format=ROW \
-      --mysqld=--wsrep-slave-threads=2 \
-      --mysqld=--innodb_autoinc_lock_mode=2 \
-      --mysqld=--innodb_locks_unsafe_for_binlog=1 \
-      --mysqld=--wsrep-provider=${DB_DIR}/lib/libgalera_smm.so \
-      --mysqld=--wsrep_cluster_address=gcomm:// \
-      --mysqld=--wsrep_sst_receive_address=$RADDR1 \
-      --mysqld=--wsrep_node_incoming_address=$ADDR \
-      --mysqld=--wsrep_provider_options="gmcast.listen_addr=tcp://$LADDR1" \
-      --mysqld=--wsrep_sst_method=rsync \
-      --mysqld=--wsrep_sst_auth=$SUSER:$SPASS \
-      --mysqld=--wsrep_node_address=$ADDR \
-      --mysqld=--innodb_flush_method=O_DIRECT \
-      --mysqld=--core-file \
-      --mysqld=--loose-new \
-      --mysqld=--sql-mode=no_engine_substitution \
-      --mysqld=--loose-innodb \
-      --mysqld=--secure-file-priv= \
-      --mysqld=--loose-innodb-status-file=1 \
-      --mysqld=--skip-name-resolve \
-      --mysqld=--socket=$node1/pxc-mysql.sock \
-      --mysqld=--log-error=$node1/node1.err \
-      --mysqld=--log-output=none $PXC_MYEXTRA \
-     1st > $node1/node1.err 2>&1 
-  set -e
-  set +e 
-   perl mysql-test-run.pl \
-      --start-and-exit $start_dirty \
-      --port-base=$RBASE2 \
-      --nowarnings \
-      --vardir=$node2 \
-      --mysqld=--skip-performance-schema  \
-      --mysqld=--innodb_file_per_table  \
-      --mysqld=--binlog-format=ROW \
-      --mysqld=--wsrep-slave-threads=2 \
-      --mysqld=--innodb_autoinc_lock_mode=2 \
-      --mysqld=--innodb_locks_unsafe_for_binlog=1 \
-      --mysqld=--wsrep-provider=${DB_DIR}/lib/libgalera_smm.so \
-      --mysqld=--wsrep_cluster_address=gcomm://$LADDR1 \
-      --mysqld=--wsrep_sst_receive_address=$RADDR2 \
-      --mysqld=--wsrep_node_incoming_address=$ADDR \
-      --mysqld=--wsrep_provider_options="gmcast.listen_addr=tcp://$LADDR2" \
-      --mysqld=--wsrep_sst_method=rsync \
-      --mysqld=--wsrep_sst_auth=$SUSER:$SPASS \
-      --mysqld=--wsrep_node_address=$ADDR \
-      --mysqld=--innodb_flush_method=O_DIRECT \
-      --mysqld=--core-file \
-      --mysqld=--loose-new \
-      --mysqld=--sql-mode=no_engine_substitution \
-      --mysqld=--loose-innodb \
-      --mysqld=--secure-file-priv= \
-      --mysqld=--loose-innodb-status-file=1 \
-      --mysqld=--skip-name-resolve \
-      --mysqld=--socket=$node2/pxc-mysql.sock \
-      --mysqld=--log-error=$node2/node2.err \
-      --mysqld=--log-output=none $PXC_MYEXTRA  \
-     1st > $node2/node2.err 2>&1
-  set -e
-  set +e 
-   perl mysql-test-run.pl \
-      --start-and-exit $start_dirty \
-      --port-base=$RBASE3 \
-      --nowarnings \
-      --vardir=$node3 \
-      --mysqld=--skip-performance-schema  \
-      --mysqld=--innodb_file_per_table  \
-      --mysqld=--binlog-format=ROW \
-      --mysqld=--wsrep-slave-threads=2 \
-      --mysqld=--innodb_autoinc_lock_mode=2 \
-      --mysqld=--innodb_locks_unsafe_for_binlog=1 \
-      --mysqld=--wsrep-provider=${DB_DIR}/lib/libgalera_smm.so \
-      --mysqld=--wsrep_cluster_address=gcomm://$LADDR1,$LADDR2 \
-      --mysqld=--wsrep_sst_receive_address=$RADDR3 \
-      --mysqld=--wsrep_node_incoming_address=$ADDR \
-      --mysqld=--wsrep_provider_options="gmcast.listen_addr=tcp://$LADDR3" \
-      --mysqld=--wsrep_sst_method=rsync \
-      --mysqld=--wsrep_sst_auth=$SUSER:$SPASS \
-      --mysqld=--wsrep_node_address=$ADDR \
-      --mysqld=--innodb_flush_method=O_DIRECT \
-      --mysqld=--core-file \
-      --mysqld=--loose-new \
-      --mysqld=--sql-mode=no_engine_substitution \
-      --mysqld=--loose-innodb \
-      --mysqld=--secure-file-priv= \
-      --mysqld=--loose-innodb-status-file=1 \
-      --mysqld=--skip-name-resolve \
-      --mysqld=--socket=$node3/pxc-mysql.sock \
-      --mysqld=--log-error=$node3/node3.err \
-      --mysqld=--log-output=none $PXC_MYEXTRA \
-     1st > $node3/node3.err 2>&1
-   set -e
-  popd
-  if $DB_DIR/bin/mysqladmin -uroot --socket=${node1}/pxc-mysql.sock ping > /dev/null 2>&1; then
-   echo 'Started PXC node1...'
-  else
-   echo 'PXC node1 not started...'
+  if [ $run_mid -eq 1 ]; then
+    ${MID} --datadir=$node1  > ${DB_DIR}/startup_node1.err 2>&1 || exit 1;
   fi
-  if $DB_DIR/bin/mysqladmin -uroot --socket=${node2}/pxc-mysql.sock ping > /dev/null 2>&1; then
-   echo 'Started PXC node2...'
-  else
-   echo 'PXC node2 not started...'
+
+  ${DB_DIR}/bin/mysqld --no-defaults --defaults-group-suffix=.1 \
+    --basedir=${DB_DIR} --datadir=$node1 \
+    --loose-debug-sync-timeout=600 --skip-performance-schema \
+    --innodb_file_per_table $PXC_MYEXTRA --innodb_autoinc_lock_mode=2 --innodb_locks_unsafe_for_binlog=1 \
+    --wsrep-provider=${DB_DIR}/lib/libgalera_smm.so \
+    --wsrep_cluster_address=gcomm:// \
+    --wsrep_node_incoming_address=$ADDR \
+    --wsrep_provider_options=gmcast.listen_addr=tcp://$LADDR1 \
+    --wsrep_sst_method=rsync --wsrep_sst_auth=$SUSER:$SPASS \
+    --wsrep_node_address=$ADDR --innodb_flush_method=O_DIRECT \
+    --core-file --loose-new --sql-mode=no_engine_substitution \
+    --loose-innodb --secure-file-priv= --loose-innodb-status-file=1 \
+    --log-error=$node1/node1.err \
+    --socket=$node1/pxc-mysql.sock --log-output=none \
+    --port=$RBASE1 --server-id=1 --wsrep_slave_threads=2 > $node1/node1.err 2>&1 &
+
+  for X in $(seq 0 ${PXC_START_TIMEOUT}); do
+    sleep 1
+    if ${DB_DIR}/bin/mysqladmin -uroot -S$node1/pxc-mysql.sock ping > /dev/null 2>&1; then
+      echo 'Started PXC node1...'
+      break
+    fi
+  done
+
+  if [ $run_mid -eq 1 ]; then
+    ${MID} --datadir=$node2  > ${DB_DIR}/startup_node2.err 2>&1 || exit 1;
   fi
-  if $DB_DIR/bin/mysqladmin -uroot --socket=${node3}/pxc-mysql.sock ping > /dev/null 2>&1; then
-   echo 'Started PXC node3...'
-  else
-   echo 'PXC node3 not started...'
+
+  ${DB_DIR}/bin/mysqld --no-defaults --defaults-group-suffix=.2 \
+    --basedir=${DB_DIR} --datadir=$node2 \
+    --loose-debug-sync-timeout=600 --skip-performance-schema \
+    --innodb_file_per_table $PXC_MYEXTRA --innodb_autoinc_lock_mode=2 --innodb_locks_unsafe_for_binlog=1 \
+    --wsrep-provider=${DB_DIR}/lib/libgalera_smm.so \
+    --wsrep_cluster_address=gcomm://$LADDR1,gcomm://$LADDR3 \
+    --wsrep_node_incoming_address=$ADDR \
+    --wsrep_provider_options=gmcast.listen_addr=tcp://$LADDR2 \
+    --wsrep_sst_method=rsync --wsrep_sst_auth=$SUSER:$SPASS \
+    --wsrep_node_address=$ADDR --innodb_flush_method=O_DIRECT \
+    --core-file --loose-new --sql-mode=no_engine_substitution \
+    --loose-innodb --secure-file-priv= --loose-innodb-status-file=1 \
+    --log-error=$node2/node2.err \
+    --socket=$node2/pxc-mysql.sock --log-output=none \
+    --port=$RBASE2 --server-id=2 --wsrep_slave_threads=2 > $node2/node2.err 2>&1 &
+
+  for X in $(seq 0 ${PXC_START_TIMEOUT}); do
+    sleep 1
+    if ${DB_DIR}/bin/mysqladmin -uroot -S$node2/pxc-mysql.sock ping > /dev/null 2>&1; then
+      echo 'Started PXC node2...'
+      break
+    fi
+  done
+
+  if [ $run_mid -eq 1 ]; then
+    ${MID} --datadir=$node3  > ${DB_DIR}/startup_node3.err 2>&1 || exit 1;
   fi
+
+  ${DB_DIR}/bin/mysqld --no-defaults --defaults-group-suffix=.3 \
+    --basedir=${DB_DIR} --datadir=$node3 \
+    --loose-debug-sync-timeout=600 --skip-performance-schema \
+    --innodb_file_per_table $PXC_MYEXTRA --innodb_autoinc_lock_mode=2 --innodb_locks_unsafe_for_binlog=1 \
+    --wsrep-provider=${DB_DIR}/lib/libgalera_smm.so \
+    --wsrep_cluster_address=gcomm://$LADDR1,gcomm://$LADDR2 \
+    --wsrep_node_incoming_address=$ADDR \
+    --wsrep_provider_options=gmcast.listen_addr=tcp://$LADDR3 \
+    --wsrep_sst_method=rsync --wsrep_sst_auth=$SUSER:$SPASS \
+    --wsrep_node_address=$ADDR --innodb_flush_method=O_DIRECT \
+    --core-file --loose-new --sql-mode=no_engine_substitution \
+    --loose-innodb --secure-file-priv= --loose-innodb-status-file=1 \
+    --log-error=$node3/node3.err \
+    --socket=$node3/pxc-mysql.sock --log-output=none \
+    --port=$RBASE3 --server-id=3 --wsrep_slave_threads=2 > $node3/node3.err 2>&1 &
+
+  for X in $(seq 0 ${PXC_START_TIMEOUT}); do
+    sleep 1
+    if ${DB_DIR}/bin/mysqladmin -uroot -S$node3/pxc-mysql.sock ping > /dev/null 2>&1; then
+      ${DB_DIR}/bin/mysql -uroot -S$node1/pxc-mysql.sock -e "create database if not exists test" > /dev/null 2>&1
+      sleep 2
+      echo 'Started PXC node3...'
+      break
+    fi
+  done
+
   if [ ${BENCH_SUITE} == "sysbench" ];then
     if [ -z $start_dirty ]; then
       /usr/bin/sysbench --test=/usr/share/doc/sysbench/tests/db/parallel_prepare.lua --num-threads=${NUM_TABLES} --oltp-tables-count=${NUM_TABLES}  --oltp-table-size=${NUM_ROWS} --mysql-db=test --mysql-user=root    --db-driver=mysql --mysql-socket=${node1}/pxc-mysql.sock run > ${BIG_DIR}/sysbench_prepare.log 2>&1

@@ -193,8 +193,7 @@ if [ ${SKIP_DB_CREATE} == "N" ]; then
     BIN=`find ${DB_DIR} -maxdepth 2 -name mysqld -type f -o -name mysqld-debug -type f | head -1`;if [ -z $BIN ]; then echo "Assert! mysqld binary '$BIN' could not be read";exit 1;fi
     ## Starting mysqld
     MYEXTRA="${MYEXTRA} ${MYSQL_OPTS}"
-    MYEXTRA=`echo $MYEXTRA | sed 's|--|--mysqld=--|g'`
-    ${SCRIPT_DIR}/pxc-startup.sh $MYEXTRA
+    ${SCRIPT_DIR}/pxc-startup.sh
     #$BIN --no-defaults ${MYEXTRA} --basedir=${DB_DIR} --datadir=${DB_DIR}/data ${MYSQL_OPTS}  --port=${MYSQL_PORT} --pid-file=${DB_DIR}/data/pid.pid --core-file --socket=${MYSQL_SOCKET} --log-error=${DB_DIR}/data/error.log.out >  ${DB_DIR}/data/mysqld.out 2>&1 &
 
 fi

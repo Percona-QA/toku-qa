@@ -85,13 +85,12 @@ if [ ${SKIP_DB_CREATE} == "N" ]; then
   rm -Rf ${DB_DIR}/node*
   BIN=`find ${DB_DIR} -maxdepth 2 -name mysqld -type f -o -name mysqld-debug -type f | head -1`;if [ -z $BIN ]; then echo "Assert! mysqld binary '$BIN' could not be read";exit 1;fi
   MYEXTRA="${MYEXTRA} ${MYSQL_OPTS}"
-  MYEXTRA=`echo $MYEXTRA | sed 's|--|--mysqld=--|g'`
-  if [ -d ${BIG_DIR}/sysbench_data_template/node1/mysqld.1/data ]; then
+  if [ -d ${BIG_DIR}/sysbench_data_template/node1 ]; then
     cp -r ${BIG_DIR}/sysbench_data_template/node1 ${DB_DIR}/node1
     cp -r ${BIG_DIR}/sysbench_data_template/node2 ${DB_DIR}/node2
     cp -r ${BIG_DIR}/sysbench_data_template/node3 ${DB_DIR}/node3
   else
-    ${SCRIPT_DIR}/pxc-startup.sh
+    ${SCRIPT_DIR}/pxc-startup.sh startup
   #  /usr/bin/sysbench --test=/usr/share/doc/sysbench/tests/db/parallel_prepare.lua --num-threads=${NUM_TABLES} --oltp-tables-count=${NUM_TABLES}  --oltp-table-size=${NUM_ROWS} --mysql-db=test --mysql-user=root    --db-driver=mysql --mysql-socket=${DB_DIR}/node1/pxc-mysql.sock run > ${BIG_DIR}/sysbench_prepare.log 2>&1
    # timeout --signal=9 20s ${DB_DIR}/bin/mysqladmin -uroot --socket=${DB_DIR}/node1/pxc-mysql.sock shutdown > /dev/null 2>&1
    # timeout --signal=9 20s ${DB_DIR}/bin/mysqladmin -uroot --socket=${DB_DIR}/node2/pxc-mysql.sock shutdown > /dev/null 2>&1
@@ -102,13 +101,13 @@ if [ ${SKIP_DB_CREATE} == "N" ]; then
   fi
   #mkdir -p  ${DB_DIR}/data/test
   ## Starting mysqld
-  ${SCRIPT_DIR}/pxc-startup.sh  start-dirty
+  ${SCRIPT_DIR}/pxc-startup.sh
 #  $BIN --no-defaults ${MYEXTRA}  --basedir=${DB_DIR} --datadir=${DB_DIR}/data ${MYSQL_OPTS} --port=${MYSQL_PORT} --pid-file=${DB_DIR}/data/pid.pid --core-file --socket=${MYSQL_SOCKET} --log-error=${DB_DIR}/data/error.log.out >  ${DB_DIR}/data/mysqld.out 2>&1 &
 else
   timeout --signal=9 20s ${DB_DIR}/bin/mysqladmin -uroot --socket=${MYSQL_SOCKET} shutdown > /dev/null 2>&1
   timeout --signal=9 20s ${DB_DIR}/bin/mysqladmin -uroot --socket=${DB_DIR}/node2/pxc-mysql.sock shutdown > /dev/null 2>&1
   timeout --signal=9 20s ${DB_DIR}/bin/mysqladmin -uroot --socket=${DB_DIR}/node3/pxc-mysql.sock shutdown > /dev/null 2>&1
-  if [ -d ${BIG_DIR}/sysbench_data_template/node1/mysqld.1/data ]; then
+  if [ -d ${BIG_DIR}/sysbench_data_template/node1 ]; then
     cp -r ${BIG_DIR}/sysbench_data_template/node1 ${DB_DIR}/node1
     cp -r ${BIG_DIR}/sysbench_data_template/node2 ${DB_DIR}/node2
     cp -r ${BIG_DIR}/sysbench_data_template/node3 ${DB_DIR}/node3
@@ -118,7 +117,7 @@ else
   fi
   ## Starting mysqld
   BIN=`find ${DB_DIR} -maxdepth 2 -name mysqld -type f -o -name mysqld-debug -type f | head -1`;if [ -z $BIN ]; then echo "Assert! mysqld binary '$BIN' could not be read";exit 1;fi
-  ${SCRIPT_DIR}/pxc-startup.sh  start-dirty
+  ${SCRIPT_DIR}/pxc-startup.sh
 fi
 
 echo "Running benchmark"
