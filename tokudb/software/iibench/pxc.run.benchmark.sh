@@ -193,7 +193,7 @@ if [ ${SKIP_DB_CREATE} == "N" ]; then
     BIN=`find ${DB_DIR} -maxdepth 2 -name mysqld -type f -o -name mysqld-debug -type f | head -1`;if [ -z $BIN ]; then echo "Assert! mysqld binary '$BIN' could not be read";exit 1;fi
     ## Starting mysqld
     MYEXTRA="${MYEXTRA} ${MYSQL_OPTS}"
-    ${SCRIPT_DIR}/pxc-startup.sh
+    ${SCRIPT_DIR}/pxc-startup.sh startup
     #$BIN --no-defaults ${MYEXTRA} --basedir=${DB_DIR} --datadir=${DB_DIR}/data ${MYSQL_OPTS}  --port=${MYSQL_PORT} --pid-file=${DB_DIR}/data/pid.pid --core-file --socket=${MYSQL_SOCKET} --log-error=${DB_DIR}/data/error.log.out >  ${DB_DIR}/data/mysqld.out 2>&1 &
 
 fi
@@ -288,8 +288,8 @@ if [ ${SHUTDOWN_MYSQL} == "Y" ]; then
             currentDate=`date`
             
             if [ ${MYSQL_STORAGE_ENGINE} == "innodb" ]; then
-                INNODB_SIZE_BYTES=`du -c --block-size=1 ${DB_DIR}/data/${MYSQL_DATABASE} | tail -n 1 | cut -f1`
-                INNODB_SIZE_APPARENT_BYTES=`du -c --block-size=1 --apparent-size ${DB_DIR}/data/${MYSQL_DATABASE} | tail -n 1 | cut -f1`
+                INNODB_SIZE_BYTES=`du -c --block-size=1 ${DB_DIR}/node1/${MYSQL_DATABASE} | tail -n 1 | cut -f1`
+                INNODB_SIZE_APPARENT_BYTES=`du -c --block-size=1 --apparent-size ${DB_DIR}/node1/${MYSQL_DATABASE} | tail -n 1 | cut -f1`
                 INNODB_SIZE_MB=`echo "scale=2; ${INNODB_SIZE_BYTES}/(1024*1024)" | bc `
                 INNODB_SIZE_APPARENT_MB=`echo "scale=2; ${INNODB_SIZE_APPARENT_BYTES}/(1024*1024)" | bc `
                 echo "${currentDate} | post-benchmark InnoDB sizing (SizeMB / ASizeMB) = ${INNODB_SIZE_MB} / ${INNODB_SIZE_APPARENT_MB}" | tee -a $LOG_NAME
@@ -297,14 +297,14 @@ if [ ${SHUTDOWN_MYSQL} == "Y" ]; then
                 # nothing here yet
                 tmpDeepVar=1
             elif [ ${MYSQL_STORAGE_ENGINE} == "wiredtiger" ]; then
-                WIREDTIGER_SIZE_BYTES=`du -c --block-size=1 ${DB_DIR}/data/*.wt ${DB_DIR}/data/*.lsm ${DB_DIR}/data/*.bf ${DB_DIR}/data/WiredTiger* | tail -n 1 | cut -f1`
-                WIREDTIGER_SIZE_APPARENT_BYTES=`du -c --block-size=1 --apparent-size ${DB_DIR}/data/*.wt ${DB_DIR}/data/*.lsm ${DB_DIR}/data/*.bf ${DB_DIR}/data/WiredTiger* | tail -n 1 | cut -f1`
+                WIREDTIGER_SIZE_BYTES=`du -c --block-size=1 ${DB_DIR}/data/*.wt ${DB_DIR}/node1/*.lsm ${DB_DIR}/node1/*.bf ${DB_DIR}/node1/WiredTiger* | tail -n 1 | cut -f1`
+                WIREDTIGER_SIZE_APPARENT_BYTES=`du -c --block-size=1 --apparent-size ${DB_DIR}/node1/*.wt ${DB_DIR}/node1/*.lsm ${DB_DIR}/node1/*.bf ${DB_DIR}/node1/WiredTiger* | tail -n 1 | cut -f1`
                 WIREDTIGER_SIZE_MB=`echo "scale=2; ${WIREDTIGER_SIZE_BYTES}/(1024*1024)" | bc `
                 WIREDTIGER_SIZE_APPARENT_MB=`echo "scale=2; ${WIREDTIGER_SIZE_APPARENT_BYTES}/(1024*1024)" | bc `
                 echo "${currentDate} | post-benchmark WiredTiger sizing (SizeMB / ASizeMB) = ${WIREDTIGER_SIZE_MB} / ${WIREDTIGER_SIZE_APPARENT_MB}" | tee -a $LOG_NAME
             else
-                TOKUDB_SIZE_BYTES=`du -c --block-size=1 ${DB_DIR}/data/*.tokudb | tail -n 1 | cut -f1`
-                TOKUDB_SIZE_APPARENT_BYTES=`du -c --block-size=1 --apparent-size ${DB_DIR}/data/*.tokudb | tail -n 1 | cut -f1`
+                TOKUDB_SIZE_BYTES=`du -c --block-size=1 ${DB_DIR}/node1/*.tokudb | tail -n 1 | cut -f1`
+                TOKUDB_SIZE_APPARENT_BYTES=`du -c --block-size=1 --apparent-size ${DB_DIR}/node1/*.tokudb | tail -n 1 | cut -f1`
                 TOKUDB_SIZE_MB=`echo "scale=2; ${TOKUDB_SIZE_BYTES}/(1024*1024)" | bc `
                 TOKUDB_SIZE_APPARENT_MB=`echo "scale=2; ${TOKUDB_SIZE_APPARENT_BYTES}/(1024*1024)" | bc `
                 echo "${currentDate} | post-benchmark TokuDB sizing (SizeMB / ASizeMB) = ${TOKUDB_SIZE_MB} / ${TOKUDB_SIZE_APPARENT_MB}" | tee -a $LOG_NAME
@@ -337,8 +337,8 @@ echo "-------------------------------" | tee -a $LOG_NAME
 currentDate=`date`
 
 if [ ${MYSQL_STORAGE_ENGINE} == "innodb" ]; then
-    INNODB_SIZE_BYTES=`du -c --block-size=1 ${DB_DIR}/data/${MYSQL_DATABASE} | tail -n 1 | cut -f1`
-    INNODB_SIZE_APPARENT_BYTES=`du -c --block-size=1 --apparent-size ${DB_DIR}/data/${MYSQL_DATABASE} | tail -n 1 | cut -f1`
+    INNODB_SIZE_BYTES=`du -c --block-size=1 ${DB_DIR}/node1/${MYSQL_DATABASE} | tail -n 1 | cut -f1`
+    INNODB_SIZE_APPARENT_BYTES=`du -c --block-size=1 --apparent-size ${DB_DIR}/node1/${MYSQL_DATABASE} | tail -n 1 | cut -f1`
     INNODB_SIZE_MB=`echo "scale=2; ${INNODB_SIZE_BYTES}/(1024*1024)" | bc `
     INNODB_SIZE_APPARENT_MB=`echo "scale=2; ${INNODB_SIZE_APPARENT_BYTES}/(1024*1024)" | bc `
     echo "${currentDate} | post-benchmark InnoDB sizing (SizeMB / ASizeMB) = ${INNODB_SIZE_MB} / ${INNODB_SIZE_APPARENT_MB}" | tee -a $LOG_NAME
@@ -388,7 +388,7 @@ parse_iibench.pl summary . > ${MACHINE_NAME}.summary
 
 DATE=`date +"%Y%m%d%H%M%S"`
 tarFileName="iibench_${BENCH_ID}_perf_result_set_${DATE}.tar.gz"
-tar czvf ${tarFileName} ${MACHINE_NAME}* ${DB_DIR}/data/*.err
+tar czvf ${tarFileName} ${MACHINE_NAME}* ${DB_DIR}/node1/*.err
 cp ${tarFileName} ${SCP_TARGET}
 cp ${MACHINE_NAME}.summary ${WORKSPACE_LOC}/iibench_${BENCH_ID}_perf_result_set_${DATE}_summ.txt
 cp ${LOG_NAME} ${WORKSPACE_LOC}/iibench_${BENCH_ID}_perf_result_set_${DATE}.txt

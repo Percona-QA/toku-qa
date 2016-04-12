@@ -173,7 +173,7 @@ bkill
 parse_sysbench.pl summary . > ${MACHINE_NAME}.summary
 DATE=`date +"%Y%m%d%H%M%S"`
 tarFileName="sysbench_${BENCH_ID}_perf_result_set_${DATE}.tar.gz"
-tar czvf ${tarFileName} ${MACHINE_NAME}* ${DB_DIR}/data/*.err
+tar czvf ${tarFileName} ${MACHINE_NAME}* ${DB_DIR}/node1/*.err
 cp ${tarFileName} ${SCP_TARGET}
 cp ${MACHINE_NAME}.summary ${WORKSPACE_LOC}/sysbench_${BENCH_ID}_perf_result_set_${DATE}.txt
 
