@@ -41,21 +41,21 @@ pxc_startup(){
 
   if [ ${BENCH_SUITE} == "sysbench" ];then
     if [ $run_mid -eq 1 ]; then
-      node1="${BIG_DIR}/sysbench_data_template/node1"
-      node2="${BIG_DIR}/sysbench_data_template/node2"
-      node3="${BIG_DIR}/sysbench_data_template/node3"
+      export node1="${BIG_DIR}/sysbench_data_template/node1"
+      export node2="${BIG_DIR}/sysbench_data_template/node2"
+      export node3="${BIG_DIR}/sysbench_data_template/node3"
       if [ "$(${DB_DIR}/bin/mysqld --version | grep -oe '5\.[567]' | head -n1)" != "5.7" ]; then
         mkdir -p $node1 $node2 $node3
       fi
     else
-      node1="${DB_DIR}/node1"
-      node2="${DB_DIR}/node2"
-      node3="${DB_DIR}/node3"
+      export node1="${DB_DIR}/node1"
+      export node2="${DB_DIR}/node2"
+      export node3="${DB_DIR}/node3"
     fi
   else
-    node1="${DB_DIR}/node1"
-    node2="${DB_DIR}/node2"
-    node3="${DB_DIR}/node3"
+    export node1="${DB_DIR}/node1"
+    export node2="${DB_DIR}/node2"
+    export node3="${DB_DIR}/node3"
     if [ "$(${DB_DIR}/bin/mysqld --version | grep -oe '5\.[567]' | head -n1)" != "5.7" ]; then
       mkdir -p $node1 $node2 $node3
     fi
@@ -149,7 +149,7 @@ pxc_startup(){
   done
 
   if [ ${BENCH_SUITE} == "sysbench" ];then
-    if [ -z $start_dirty ]; then
+    if [ $run_mid -eq 1 ]; then
       /usr/bin/sysbench --test=/usr/share/doc/sysbench/tests/db/parallel_prepare.lua --num-threads=${NUM_TABLES} --oltp-tables-count=${NUM_TABLES}  --oltp-table-size=${NUM_ROWS} --mysql-db=test --mysql-user=root    --db-driver=mysql --mysql-socket=${node1}/pxc-mysql.sock run > ${BIG_DIR}/sysbench_prepare.log 2>&1
       timeout --signal=9 20s ${DB_DIR}/bin/mysqladmin -uroot --socket=${node1}/pxc-mysql.sock shutdown > /dev/null 2>&1
       timeout --signal=9 20s ${DB_DIR}/bin/mysqladmin -uroot --socket=${node2}/pxc-mysql.sock shutdown > /dev/null 2>&1
