@@ -41,21 +41,21 @@ pxc_startup(){
 
   if [ ${BENCH_SUITE} == "sysbench" ];then
     if [ $run_mid -eq 1 ]; then
-      export node1="${BIG_DIR}/sysbench_data_template/node1"
-      export node2="${BIG_DIR}/sysbench_data_template/node2"
-      export node3="${BIG_DIR}/sysbench_data_template/node3"
+      node1="${BIG_DIR}/sysbench_data_template/node1"
+      node2="${BIG_DIR}/sysbench_data_template/node2"
+      node3="${BIG_DIR}/sysbench_data_template/node3"
       if [ "$(${DB_DIR}/bin/mysqld --version | grep -oe '5\.[567]' | head -n1)" != "5.7" ]; then
         mkdir -p $node1 $node2 $node3
       fi
     else
-      export node1="${DB_DIR}/node1"
-      export node2="${DB_DIR}/node2"
-      export node3="${DB_DIR}/node3"
+      node1="${DB_DIR}/node1"
+      node2="${DB_DIR}/node2"
+      node3="${DB_DIR}/node3"
     fi
   else
-    export node1="${DB_DIR}/node1"
-    export node2="${DB_DIR}/node2"
-    export node3="${DB_DIR}/node3"
+    node1="${DB_DIR}/node1"
+    node2="${DB_DIR}/node2"
+    node3="${DB_DIR}/node3"
     if [ "$(${DB_DIR}/bin/mysqld --version | grep -oe '5\.[567]' | head -n1)" != "5.7" ]; then
       mkdir -p $node1 $node2 $node3
     fi

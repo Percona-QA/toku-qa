@@ -183,9 +183,9 @@ if [ ${SKIP_DB_CREATE} == "N" ]; then
     # ---------------------------------------------------------------------------
     
     if [ -e "${DB_DIR}/bin/mysqladmin" ]; then
-       ${DB_DIR}/bin/mysqladmin --user=${MYSQL_USER} --socket=${node1}/pxc-mysql.sock shutdown >/dev/null 2>&1
-       ${DB_DIR}/bin/mysqladmin --user=${MYSQL_USER} --socket=${node2}/pxc-mysql.sock shutdown >/dev/null 2>&1
-       ${DB_DIR}/bin/mysqladmin --user=${MYSQL_USER} --socket=${node3}/pxc-mysql.sock shutdown >/dev/null 2>&1
+       ${DB_DIR}/bin/mysqladmin --user=${MYSQL_USER} --socket=${DB_DIR}/node1/pxc-mysql.sock shutdown >/dev/null 2>&1
+       ${DB_DIR}/bin/mysqladmin --user=${MYSQL_USER} --socket=${DB_DIR}/node2/pxc-mysql.sock shutdown >/dev/null 2>&1
+       ${DB_DIR}/bin/mysqladmin --user=${MYSQL_USER} --socket=${DB_DIR}/node3/pxc-mysql.sock shutdown >/dev/null 2>&1
        ps -ef | grep 'pxc-mysql.sock' | grep ${BUILD_NUMBER} | grep -v grep | awk '{print $2}' | xargs kill -9 >/dev/null 2>&1 || true
     fi
 
@@ -366,9 +366,9 @@ if [ ${SHUTDOWN_MYSQL} == "Y" ]; then
     # ---------------------------------------------------------------------------
     # stop mysql (leave things as you found them)
     # ---------------------------------------------------------------------------
-    ${DB_DIR}/bin/mysqladmin --user=${MYSQL_USER} --socket=${node1}/pxc-mysql.sock shutdown >/dev/null 2>&1
-    ${DB_DIR}/bin/mysqladmin --user=${MYSQL_USER} --socket=${node2}/pxc-mysql.sock shutdown >/dev/null 2>&1
-    ${DB_DIR}/bin/mysqladmin --user=${MYSQL_USER} --socket=${node3}/pxc-mysql.sock shutdown >/dev/null 2>&1
+    ${DB_DIR}/bin/mysqladmin --user=${MYSQL_USER} --socket=${DB_DIR}/node1/pxc-mysql.sock shutdown >/dev/null 2>&1
+    ${DB_DIR}/bin/mysqladmin --user=${MYSQL_USER} --socket=${DB_DIR}/node2/pxc-mysql.sock shutdown >/dev/null 2>&1
+    ${DB_DIR}/bin/mysqladmin --user=${MYSQL_USER} --socket=${DB_DIR}/node3/pxc-mysql.sock shutdown >/dev/null 2>&1
     ps -ef | grep 'pxc-mysql.sock' | grep ${BUILD_NUMBER} | grep -v grep | awk '{print $2}' | xargs kill -9 >/dev/null 2>&1 || true
     sleep 2;sync
 fi
