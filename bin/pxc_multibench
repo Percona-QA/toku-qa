@@ -65,16 +65,16 @@ export MYSQL_SOCKET=${DB_DIR}/node1/pxc-mysql.sock
 # BE VERY CAREFUL TO SET STUFF AFTER THE FOLLOWING
 # ************************************************
 
-export INNODB_CACHE=36G
-export TOKUDB_DIRECTIO_CACHE=36G
+export INNODB_CACHE=8G
+export TOKUDB_DIRECTIO_CACHE=8G
 
 
 # **********************************************************************************************
 # iibench
 # **********************************************************************************************
 export BENCH_SUITE=iibench
-export INNODB_CACHE=36G
-export TOKUDB_DIRECTIO_CACHE=36G
+export INNODB_CACHE=8G
+export TOKUDB_DIRECTIO_CACHE=8G
 export ADDITIONAL_WRITERS=0
 export MAX_ROWS=1000000
 export ROWS_PER_REPORT=200000
@@ -96,8 +96,8 @@ unset IIBENCH_CREATE_TABLE
 # **********************************************************************************************
 
 export BENCH_SUITE=iibench
-export INNODB_CACHE=36G
-export TOKUDB_DIRECTIO_CACHE=36G
+export INNODB_CACHE=8G
+export TOKUDB_DIRECTIO_CACHE=8G
 export ADDITIONAL_WRITERS=0
 export MAX_ROWS=1000000
 export ROWS_PER_REPORT=200000
@@ -122,8 +122,8 @@ unset IIBENCH_MODE
 # sysbench
 # **********************************************************************************************
 export BENCH_SUITE=sysbench
-export INNODB_CACHE=36G
-export TOKUDB_DIRECTIO_CACHE=36G
+export INNODB_CACHE=8G
+export TOKUDB_DIRECTIO_CACHE=8G
 export TOKUDB_COMPRESSION=lzma
 export NUM_TABLES=16
 export RUN_TIME_SECONDS=300
@@ -153,8 +153,8 @@ unset threadCountList
 #unset SKIP_DB_CREATE
 
     
-export INNODB_CACHE=36G
-export TOKUDB_DIRECTIO_CACHE=36G
+export INNODB_CACHE=8G
+export TOKUDB_DIRECTIO_CACHE=8G
 export TOKUDB_COMPRESSION=quicklz
 export NUM_ROWS=500000
 export RAND_TYPE=uniform
