@@ -206,5 +206,3 @@ fi
 echo "Build #$BUILD_NUMBER | `date +'%d-%m-%Y | %H:%M'` | $VERSION_INFO | $UPTIME_HOUR | $SYSTEM_LOAD | Memory: $MEM " >> $WORKSPACE/build_info.log
 $SCRIPT_DIR/../graph_template/ps_multibench_html_gen.sh    
 
-# Clear the space
-rm -Rf $BIG_DIR/$BUILD_NUMBER
