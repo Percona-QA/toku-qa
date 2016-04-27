@@ -379,19 +379,12 @@ bkill
 
 parse_iibench.pl summary . > ${MACHINE_NAME}.summary
 
-#result_set=($(grep '^[0-9][0-9]' ${LOG_NAME} | awk '{print $6","}'))
-#avg_result=($(cat ${MACHINE_NAME}.summary | awk '{print $3}'))
-#echo "[ '${BUILD_NUMBER}', ${result_set[*]} $avg_result ]," >> ${WORKSPACE_LOC}/perf_result_set.txt
-
-#cat ${SCRIPT_DIR}/../../graph_template/combo_chart_header.html >  ${WORKSPACE_LOC}/perf_result.html
-#echo "['Build', '20M' , '40M' , '60M ' , '80M' , '100M' , 'avg_ips']," >> ${WORKSPACE_LOC}/perf_result.html
-#tail -20 ${WORKSPACE_LOC}/perf_result_set.txt >> ${WORKSPACE}/perf_result.html
-#cat ${SCRIPT_DIR}/../../graph_template/combo_chart_footer.html >> ${WORKSPACE_LOC}/perf_result.html
-
 DATE=`date +"%Y%m%d%H%M%S"`
 tarFileName="iibench_${BENCH_ID}_perf_result_set_${DATE}.tar.gz"
 tar czvf ${tarFileName} ${MACHINE_NAME}* ${DB_DIR}/node1/*.err
-cp ${tarFileName} ${SCP_TARGET}
+mkdir -p ${SCP_TARGET}/${BUILD_NUMBER}/${BENCH_SUITE}/${BENCH_ID}
+BACKUP_FILES="${SCP_TARGET}/${BUILD_NUMBER}/${BENCH_SUITE}/${BENCH_ID}"
+cp ${tarFileName} ${BACKUP_FILES}
 cp ${MACHINE_NAME}.summary ${WORKSPACE_LOC}/iibench_${BENCH_ID}_perf_result_set_${DATE}_summ.txt
 cp ${LOG_NAME} ${WORKSPACE_LOC}/iibench_${BENCH_ID}_perf_result_set_${DATE}.txt
 if [ ! -z ${IIBENCH_MODE} ];then

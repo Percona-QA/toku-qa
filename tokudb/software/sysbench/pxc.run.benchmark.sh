@@ -62,7 +62,7 @@ if [ -z "$SCP_TARGET" ]; then
 fi
 
 if [ -z "$WARMUP" ]; then
-    export WARMUP=N
+    export WARMUP=Y
 fi
 if [ -z "$SCP_FILES" ]; then
     export SCP_FILES=Y
@@ -174,7 +174,9 @@ parse_sysbench.pl summary . > ${MACHINE_NAME}.summary
 DATE=`date +"%Y%m%d%H%M%S"`
 tarFileName="sysbench_${BENCH_ID}_perf_result_set_${DATE}.tar.gz"
 tar czvf ${tarFileName} ${MACHINE_NAME}* ${DB_DIR}/node1/*.err
-cp ${tarFileName} ${SCP_TARGET}
+mkdir -p ${SCP_TARGET}/${BUILD_NUMBER}/${BENCH_SUITE}/${BENCH_ID}
+BACKUP_FILES="${SCP_TARGET}/${BUILD_NUMBER}/${BENCH_SUITE}/${BENCH_ID}"
+cp ${tarFileName} ${BACKUP_FILES}
 cp ${MACHINE_NAME}.summary ${WORKSPACE_LOC}/sysbench_${BENCH_ID}_perf_result_set_${DATE}.txt
 
 result_set=($(cat ${MACHINE_NAME}.summary |  awk '{print ","$5 }'))

@@ -20,6 +20,9 @@ source $SCRIPT_DIR/machine.config
 # Check if workdir was set by Jenkins, otherwise this is presumably a local run
 if [ ! -z ${WORKDIR} ]; then
   export BIG_DIR=${WORKDIR}
+fi
+
+if [ ! -d ${BIG_DIR}/backups ]; then
   mkdir -p ${BIG_DIR}/backups
   SCP_TARGET=${BIG_DIR}/backups
 fi
@@ -64,10 +67,6 @@ export MYSQL_SOCKET=${DB_DIR}/node1/pxc-mysql.sock
 # ************************************************
 # BE VERY CAREFUL TO SET STUFF AFTER THE FOLLOWING
 # ************************************************
-
-export INNODB_CACHE=8G
-export TOKUDB_DIRECTIO_CACHE=8G
-
 
 # **********************************************************************************************
 # iibench
@@ -121,16 +120,14 @@ unset IIBENCH_MODE
 # **********************************************************************************************
 # sysbench
 # **********************************************************************************************
+# CPU bound performance run
 export BENCH_SUITE=sysbench
-export INNODB_CACHE=8G
-export TOKUDB_DIRECTIO_CACHE=8G
-export TOKUDB_COMPRESSION=lzma
+export INNODB_CACHE=25G
 export NUM_TABLES=16
 export RUN_TIME_SECONDS=300
 export RAND_TYPE=uniform
-export BENCH_ID=innodb.1mm.${RAND_TYPE}
+export BENCH_ID=innodb.1mm.${RAND_TYPE}.cpubound
 export NUM_ROWS=1000000
-export TOKUDB_READ_BLOCK_SIZE=64K
 export BENCHMARK_NUMBER=003
 export threadCountList="0001 0004 0016 0064 0128 0256 0512 1024"
     
@@ -138,11 +135,27 @@ pushd ${dirSysbench}
 ./pxc.doit.bash
 popd
 unset threadCountList
+
+# IO bound performance run
+export BENCH_SUITE=sysbench
+export INNODB_CACHE=15G
+export NUM_TABLES=16
+export RUN_TIME_SECONDS=300
+export RAND_TYPE=uniform
+export BENCH_ID=innodb.5mm.${RAND_TYPE}.iobound
+export NUM_ROWS=5000000
+export BENCHMARK_NUMBER=004
+export threadCountList="0001 0004 0016 0064 0128 0256 0512 1024"
+
+pushd ${dirSysbench}
+./pxc.doit.bash
+popd
+unset threadCountList
   
 #export SKIP_DB_CREATE=Y
 export RAND_TYPE=special
-export BENCH_ID=innodb.10mm.${RAND_TYPE}
-export BENCHMARK_NUMBER=004
+export BENCH_ID=innodb.5mm.${RAND_TYPE}
+export BENCHMARK_NUMBER=005
 export threadCountList="0001 0004 0016 0064 0128 0256 0512 1024"
     
     # > RAM - special - lzma
@@ -152,16 +165,28 @@ popd
 unset threadCountList
 #unset SKIP_DB_CREATE
 
-    
-export INNODB_CACHE=8G
-export TOKUDB_DIRECTIO_CACHE=8G
-export TOKUDB_COMPRESSION=quicklz
-export NUM_ROWS=500000
+# IO bound performance run   
+export INNODB_CACHE=15G
+export NUM_ROWS=1000000
 export RAND_TYPE=uniform
-export BENCH_ID=innodb-.5mm.${RAND_TYPE}
-export BENCHMARK_NUMBER=005
+export BENCH_ID=innodb-1mm.${RAND_TYPE}.iobound
+export BENCHMARK_NUMBER=006
 export threadCountList="0001 0004 0016 0064 0128 0256 0512 1024"
     
+    # < RAM
+pushd ${dirSysbench}
+./pxc.doit.bash
+popd
+unset threadCountList
+
+# CPU bound performance run
+export INNODB_CACHE=25G
+export NUM_ROWS=1000000
+export RAND_TYPE=uniform
+export BENCH_ID=innodb-1mm.${RAND_TYPE}.cpubound
+export BENCHMARK_NUMBER=007
+export threadCountList="0001 0004 0016 0064 0128 0256 0512 1024"
+
     # < RAM
 pushd ${dirSysbench}
 ./pxc.doit.bash
@@ -181,3 +206,5 @@ fi
 echo "Build #$BUILD_NUMBER | `date +'%d-%m-%Y | %H:%M'` | $VERSION_INFO | $UPTIME_HOUR | $SYSTEM_LOAD | Memory: $MEM " >> $WORKSPACE/build_info.log
 $SCRIPT_DIR/../graph_template/ps_multibench_html_gen.sh    
 
+# Clear the space
+rm -Rf $BIG_DIR/$BUILD_NUMBER
