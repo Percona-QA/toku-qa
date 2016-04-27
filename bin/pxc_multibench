@@ -15,6 +15,7 @@ export MYSQL_STORAGE_ENGINE=innodb
 export SCP_FILES=Y
 export DIRECTIO=Y
 export PATH=$PATH:$SCRIPT_DIR
+export PS_MODE=0
 # change the machine.config values as per your configuration 
 source $SCRIPT_DIR/machine.config
 # Check if workdir was set by Jenkins, otherwise this is presumably a local run

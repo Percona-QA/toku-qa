@@ -12,26 +12,27 @@ if [ ! -z $1 ]; then
   fi
 fi
 
+PXC_START_TIMEOUT=200
+ADDR="127.0.0.1"
+RPORT=$(( RANDOM%21 + 10 ))
+RBASE1="$(( RPORT*1000 ))"
+RADDR1="$ADDR:$(( RBASE1 + 7 ))"
+LADDR1="$ADDR:$(( RBASE1 + 8 ))"
+
+RBASE2="$(( RBASE1 + 100 ))"
+RADDR2="$ADDR:$(( RBASE2 + 7 ))"
+LADDR2="$ADDR:$(( RBASE2 + 8 ))"
+
+RBASE3="$(( RBASE1 + 200 ))"
+RADDR3="$ADDR:$(( RBASE3 + 7 ))"
+LADDR3="$ADDR:$(( RBASE3 + 8 ))"
+
+SUSER=root
+SPASS=
+
 # PXC startup script.
 pxc_startup(){
   PXC_MYEXTRA=$1
-  PXC_START_TIMEOUT=200
-  ADDR="127.0.0.1"
-  RPORT=$(( RANDOM%21 + 10 ))
-  RBASE1="$(( RPORT*1000 ))"
-  RADDR1="$ADDR:$(( RBASE1 + 7 ))"
-  LADDR1="$ADDR:$(( RBASE1 + 8 ))"
-
-  RBASE2="$(( RBASE1 + 100 ))"
-  RADDR2="$ADDR:$(( RBASE2 + 7 ))"
-  LADDR2="$ADDR:$(( RBASE2 + 8 ))"
-  
-  RBASE3="$(( RBASE1 + 200 ))"
-  RADDR3="$ADDR:$(( RBASE3 + 7 ))"
-  LADDR3="$ADDR:$(( RBASE3 + 8 ))"
-  
-  SUSER=root
-  SPASS=
   
   if [ "$(${DB_DIR}/bin/mysqld --version | grep -oe '5\.[567]' | head -n1)" == "5.7" ]; then
     MID="${DB_DIR}/bin/mysqld --no-defaults --initialize-insecure --basedir=${DB_DIR}"
@@ -158,4 +159,65 @@ pxc_startup(){
   fi
 }
 
-pxc_startup ${MYEXTRA}
+psmode_startup(){
+  PXC_MYEXTRA=$1
+  
+  if [ "$(${DB_DIR}/bin/mysqld --version | grep -oe '5\.[567]' | head -n1)" == "5.7" ]; then
+    MID="${DB_DIR}/bin/mysqld --no-defaults --initialize-insecure --basedir=${DB_DIR}"
+  elif [ "$(${DB_DIR}/bin/mysqld --version | grep -oe '5\.[567]' | head -n1)" == "5.6" ]; then
+    MID="${DB_DIR}/scripts/mysql_install_db --no-defaults --basedir=${DB_DIR}"
+  fi
+
+  if [ ${BENCH_SUITE} == "sysbench" ];then
+    if [ $run_mid -eq 1 ]; then
+      node1="${BIG_DIR}/sysbench_data_template/node1"
+      if [ "$(${DB_DIR}/bin/mysqld --version | grep -oe '5\.[567]' | head -n1)" != "5.7" ]; then
+        mkdir -p $node1
+      fi
+    else
+      node1="${DB_DIR}/node1"
+    fi
+  else
+    node1="${DB_DIR}/node1"
+    if [ "$(${DB_DIR}/bin/mysqld --version | grep -oe '5\.[567]' | head -n1)" != "5.7" ]; then
+      mkdir -p $node1
+    fi
+  fi
+   
+  echo 'Starting PXC nodes....'
+  if [ $run_mid -eq 1 ]; then
+    ${MID} --datadir=$node1  > ${DB_DIR}/startup_node1.err 2>&1 || exit 1;
+  fi
+
+  ${DB_DIR}/bin/mysqld --no-defaults --defaults-group-suffix=.1 \
+    --basedir=${DB_DIR} --datadir=$node1 \
+    --loose-debug-sync-timeout=600 --skip-performance-schema \
+    --innodb_file_per_table $PXC_MYEXTRA --innodb_autoinc_lock_mode=2 --innodb_locks_unsafe_for_binlog=1 \
+    --innodb_flush_method=O_DIRECT \
+    --core-file --loose-new --sql-mode=no_engine_substitution \
+    --loose-innodb --secure-file-priv= --loose-innodb-status-file=1 \
+    --log-error=$node1/node1.err \
+    --socket=$node1/pxc-mysql.sock --log-output=none \
+    --port=$RBASE1 --server-id=1  > $node1/node1.err 2>&1 &
+
+  for X in $(seq 0 ${PXC_START_TIMEOUT}); do
+    sleep 1
+    if ${DB_DIR}/bin/mysqladmin -uroot -S$node1/pxc-mysql.sock ping > /dev/null 2>&1; then
+      echo 'Started PXC node1...'
+      break
+    fi
+  done
+
+  if [ ${BENCH_SUITE} == "sysbench" ];then
+    if [ $run_mid -eq 1 ]; then
+      /usr/bin/sysbench --test=/usr/share/doc/sysbench/tests/db/parallel_prepare.lua --num-threads=${NUM_TABLES} --oltp-tables-count=${NUM_TABLES}  --oltp-table-size=${NUM_ROWS} --mysql-db=test --mysql-user=root    --db-driver=mysql --mysql-socket=${node1}/pxc-mysql.sock run > ${BIG_DIR}/sysbench_prepare.log 2>&1
+      timeout --signal=9 20s ${DB_DIR}/bin/mysqladmin -uroot --socket=${node1}/pxc-mysql.sock shutdown > /dev/null 2>&1
+    fi
+  fi
+
+}
+if [ ${PS_MODE} -eq 1 ];then
+  psmode_startup ${MYEXTRA}
+else
+  pxc_startup ${MYEXTRA}
+fi
