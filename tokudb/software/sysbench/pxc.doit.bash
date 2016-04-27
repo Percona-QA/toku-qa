@@ -85,7 +85,7 @@ if [ ${SKIP_DB_CREATE} == "N" ]; then
   ps -ef | grep 'pxc-mysql.sock' | grep ${BUILD_NUMBER} | grep -v grep | awk '{print $2}' | xargs kill -9 >/dev/null 2>&1 || true
   rm -Rf ${DB_DIR}/node*
   BIN=`find ${DB_DIR} -maxdepth 2 -name mysqld -type f -o -name mysqld-debug -type f | head -1`;if [ -z $BIN ]; then echo "Assert! mysqld binary '$BIN' could not be read";exit 1;fi
-  MYEXTRA="${MYEXTRA} ${MYSQL_OPTS}"
+  export MYEXTRA="${MYEXTRA} ${MYSQL_OPTS}"
   if [ -d ${BIG_DIR}/sysbench_data_template/node1 ]; then
     cp -r ${BIG_DIR}/sysbench_data_template/node1 ${DB_DIR}/node1
     cp -r ${BIG_DIR}/sysbench_data_template/node2 ${DB_DIR}/node2
@@ -100,6 +100,7 @@ if [ ${SKIP_DB_CREATE} == "N" ]; then
   ## Starting pxc nodes 
   ${SCRIPT_DIR}/pxc-startup.sh
 else
+  export MYEXTRA="${MYEXTRA} ${MYSQL_OPTS}"
   timeout --signal=9 20s ${DB_DIR}/bin/mysqladmin -uroot --socket=${DB_DIR}/node1/pxc-mysql.sock shutdown > /dev/null 2>&1
   timeout --signal=9 20s ${DB_DIR}/bin/mysqladmin -uroot --socket=${DB_DIR}/node2/pxc-mysql.sock shutdown > /dev/null 2>&1
   timeout --signal=9 20s ${DB_DIR}/bin/mysqladmin -uroot --socket=${DB_DIR}/node3/pxc-mysql.sock shutdown > /dev/null 2>&1
