@@ -203,6 +203,8 @@ psmode_startup(){
   for X in $(seq 0 ${PXC_START_TIMEOUT}); do
     sleep 1
     if ${DB_DIR}/bin/mysqladmin -uroot -S$node1/pxc-mysql.sock ping > /dev/null 2>&1; then
+      ${DB_DIR}/bin/mysql -uroot -S$node1/pxc-mysql.sock -e "create database if not exists test" > /dev/null 2>&1
+      sleep 2
       echo 'Started PXC node1...'
       break
     fi
