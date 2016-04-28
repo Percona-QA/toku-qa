@@ -71,6 +71,7 @@ pxc_startup(){
     --basedir=${DB_DIR} --datadir=$node1 \
     --loose-debug-sync-timeout=600 --skip-performance-schema \
     --innodb_file_per_table $PXC_MYEXTRA --innodb_autoinc_lock_mode=2 --innodb_locks_unsafe_for_binlog=1 \
+    --binlog-format=ROW --log-bin=mysql-bin  --gtid-mode=ON  --log-slave-updates --enforce-gtid-consistency \
     --wsrep-provider=${DB_DIR}/lib/libgalera_smm.so \
     --wsrep_cluster_address=gcomm:// \
     --wsrep_node_incoming_address=$ADDR \
@@ -99,6 +100,7 @@ pxc_startup(){
     --basedir=${DB_DIR} --datadir=$node2 \
     --loose-debug-sync-timeout=600 --skip-performance-schema \
     --innodb_file_per_table $PXC_MYEXTRA --innodb_autoinc_lock_mode=2 --innodb_locks_unsafe_for_binlog=1 \
+    --binlog-format=ROW --log-bin=mysql-bin  --gtid-mode=ON  --log-slave-updates --enforce-gtid-consistency \
     --wsrep-provider=${DB_DIR}/lib/libgalera_smm.so \
     --wsrep_cluster_address=gcomm://$LADDR1,gcomm://$LADDR3 \
     --wsrep_node_incoming_address=$ADDR \
@@ -127,6 +129,7 @@ pxc_startup(){
     --basedir=${DB_DIR} --datadir=$node3 \
     --loose-debug-sync-timeout=600 --skip-performance-schema \
     --innodb_file_per_table $PXC_MYEXTRA --innodb_autoinc_lock_mode=2 --innodb_locks_unsafe_for_binlog=1 \
+    --binlog-format=ROW --log-bin=mysql-bin  --gtid-mode=ON  --log-slave-updates --enforce-gtid-consistency \
     --wsrep-provider=${DB_DIR}/lib/libgalera_smm.so \
     --wsrep_cluster_address=gcomm://$LADDR1,gcomm://$LADDR2 \
     --wsrep_node_incoming_address=$ADDR \
@@ -193,6 +196,7 @@ psmode_startup(){
     --basedir=${DB_DIR} --datadir=$node1 \
     --loose-debug-sync-timeout=600 --skip-performance-schema \
     --innodb_file_per_table $PXC_MYEXTRA --innodb_autoinc_lock_mode=2 --innodb_locks_unsafe_for_binlog=1 \
+    --binlog-format=ROW --log-bin=mysql-bin  --gtid-mode=ON  --log-slave-updates --enforce-gtid-consistency \
     --innodb_flush_method=O_DIRECT \
     --core-file --loose-new --sql-mode=no_engine_substitution \
     --loose-innodb --secure-file-priv= --loose-innodb-status-file=1 \
