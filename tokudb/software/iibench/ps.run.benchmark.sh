@@ -106,6 +106,11 @@ elif [ ${MYSQL_STORAGE_ENGINE} == "deepdb" ]; then
     fi
 elif [ ${MYSQL_STORAGE_ENGINE} == "wiredtiger" ]; then
     echo "Currently no customized settings for WIREDTIGER."
+elif [ ${MYSQL_STORAGE_ENGINE} == "rocksdb" ]; then
+    if [ -z "$ROCKSDB_CACHE" ]; then
+        echo "Need to set ROCKSDB_CACHE"
+        exit 1
+    fi
 else
     # pick your basement node size: 64k=65536, 128K=131072
     if [ -z "$TOKUDB_READ_BLOCK_SIZE" ]; then
@@ -221,6 +226,8 @@ if [ ${SKIP_DB_CREATE} == "N" ]; then
     echo "Creating database from ${TARBALL} in ${DB_DIR}"
     if [ ${MYSQL_STORAGE_ENGINE} == "innodb" ]; then
         MYSQL_OPTS="--innodb_buffer_pool_size=${INNODB_CACHE} --innodb_flush_method=${INNODB_FLUSH_METHOD}"
+    elif [ ${MYSQL_STORAGE_ENGINE} == "rocksdb" ]; then
+        MYSQL_OPTS="--rocksdb-block-cache-size=${ROCKSDB_CACHE} --plugin-load-add=rocksdb=ha_rocksdb.so --init-file=${SCRIPT_DIR}/MyRocks.sql --default-storage-engine=ROCKSDB --rocksdb_block_size=16384"
     elif [ ${MYSQL_STORAGE_ENGINE} == "deepdb" ]; then
         MYSQL_OPTS="deepdb_cache_size=${DEEBDB_CACHE_SIZE}"
         #echo "[mysqld_safe]" >> my.cnf
@@ -375,6 +382,12 @@ if [ ${SHUTDOWN_MYSQL} == "Y" ]; then
                 INNODB_SIZE_MB=`echo "scale=2; ${INNODB_SIZE_BYTES}/(1024*1024)" | bc `
                 INNODB_SIZE_APPARENT_MB=`echo "scale=2; ${INNODB_SIZE_APPARENT_BYTES}/(1024*1024)" | bc `
                 echo "${currentDate} | post-benchmark InnoDB sizing (SizeMB / ASizeMB) = ${INNODB_SIZE_MB} / ${INNODB_SIZE_APPARENT_MB}" | tee -a $LOG_NAME
+            elif [ ${MYSQL_STORAGE_ENGINE} == "rocksdb" ]; then
+                ROCKSDB_SST_FILE_SIZE_BYTES=`du -c --block-size=1 ${DB_DIR}/data/.rocksdb/*.sst | tail -n 1 | cut -f1`
+                ROCKSDB_LOG_FILE_SIZE_BYTES=`du -c --block-size=1 ${DB_DIR}/data/.rocksdb/*.log | tail -n 1 | cut -f1`
+                ROCKSDB_SST_FILE_SIZE_MB=`echo "scale=2; ${ROCKSDB_SST_FILE_SIZE_BYTES}/(1024*1024)" | bc `
+                ROCKSDB_LOG_FILE_SIZE_MB=`echo "scale=2; ${ROCKSDB_LOG_FILE_SIZE_BYTES}/(1024*1024)" | bc `
+                echo "${currentDate} | post-benchmark RocksDB sizing (SSTSizeMB / LOGSizeMB) = ${ROCKSDB_SST_FILE_SIZE_MB} / ${ROCKSDB_LOG_FILE_SIZE_MB}" | tee -a $LOG_NAME
             elif [ ${MYSQL_STORAGE_ENGINE} == "deepdb" ]; then
                 # nothing here yet
                 tmpDeepVar=1
@@ -424,6 +437,12 @@ if [ ${MYSQL_STORAGE_ENGINE} == "innodb" ]; then
     INNODB_SIZE_MB=`echo "scale=2; ${INNODB_SIZE_BYTES}/(1024*1024)" | bc `
     INNODB_SIZE_APPARENT_MB=`echo "scale=2; ${INNODB_SIZE_APPARENT_BYTES}/(1024*1024)" | bc `
     echo "${currentDate} | post-benchmark InnoDB sizing (SizeMB / ASizeMB) = ${INNODB_SIZE_MB} / ${INNODB_SIZE_APPARENT_MB}" | tee -a $LOG_NAME
+elif [ ${MYSQL_STORAGE_ENGINE} == "rocksdb" ]; then
+    ROCKSDB_SST_FILE_SIZE_BYTES=`du -c --block-size=1 ${DB_DIR}/data/.rocksdb/*.sst | tail -n 1 | cut -f1`
+    ROCKSDB_LOG_FILE_SIZE_BYTES=`du -c --block-size=1 ${DB_DIR}/data/.rocksdb/*.log | tail -n 1 | cut -f1`
+    ROCKSDB_SST_FILE_SIZE_MB=`echo "scale=2; ${ROCKSDB_SST_FILE_SIZE_BYTES}/(1024*1024)" | bc `
+    ROCKSDB_LOG_FILE_SIZE_MB=`echo "scale=2; ${ROCKSDB_LOG_FILE_SIZE_BYTES}/(1024*1024)" | bc `
+    echo "${currentDate} | post-benchmark RocksDB sizing (SSTSizeMB / LOGSizeMB) = ${ROCKSDB_SST_FILE_SIZE_MB} / ${ROCKSDB_LOG_FILE_SIZE_MB}" | tee -a $LOG_NAME
 elif [ ${MYSQL_STORAGE_ENGINE} == "deepdb" ]; then
     # nothing here yet
     tmpDeepVar=1
