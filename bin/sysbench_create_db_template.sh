@@ -1,6 +1,14 @@
 #!/bin/bash
 SCRIPT_DIR=$(cd `dirname $0` && pwd)
 
+if [ ${MYSQL_STORAGE_ENGINE} == "rocksdb" ]; then
+  MYSQLD_OPTS="--mysqld=--plugin-load=tokudb=ha_tokudb.so --mysqld=--init-file=${SCRIPT_DIR}/MyRocks.sql --mysqld=--default-storage-engine=ROCKSDB"
+elif [ ${MYSQL_STORAGE_ENGINE} == "tokudb" ]; then
+  MYSQLD_OPTS="--mysqld=--plugin-load=tokudb=ha_tokudb.so --mysqld=--init-file=${SCRIPT_DIR}/TokuDB.sql --mysqld=--default-storage-engine=TOKUDB"
+else
+  MYSQL_OPTS=""
+fi
+
 if [ -z ${NUM_ROWS} -a  -z ${NUM_TABLES} ]; then
   NUM_ROWS=10
   NUM_TABLES=1000000
@@ -47,8 +55,7 @@ perl mysql-test-run.pl \
   --mysqld=--log-output=none \
   --mysqld=--secure-file-priv= \
   --mysqld=--max-connections=900 \
-  --mysqld=--plugin-load=tokudb=ha_tokudb.so \
-  --mysqld=--init-file=$SCRIPT_DIR/TokuDB.sql \
+  $MYSQLD_OPTS \
   --mysqld=--socket=$WORK_DIR/$DATA_DIR/socket.sock \
 1st
 
