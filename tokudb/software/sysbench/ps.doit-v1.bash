@@ -96,8 +96,6 @@ fi
 MYSQL_OPTS="$MYSQL_OPTS --max_connections=2048"
 
 if [ ${SKIP_DB_CREATE} == "N" ]; then
-    
-    MYSQL_OPTS="$MYSQL_OPTS --max_connections=2048"
     timeout --signal=9 20s ${DB_DIR}/bin/mysqladmin -uroot --socket=${MYSQL_SOCKET} shutdown > /dev/null 2>&1
     rm -Rf  ${DB_DIR}/data/*
     mkdir -p  ${DB_DIR}/tmp
