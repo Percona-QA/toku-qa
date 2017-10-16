@@ -58,7 +58,7 @@ else
   export BUILD_NUMBER=$1
   export DB_DIR=$BIG_DIR/$1/$2
 fi
-export MYSQL_SOCKET=${DB_DIR}/node1/ps-mysql.sock
+export MYSQL_SOCKET=/tmp/ps-perf-mysql.sock
 
 # ************************************************
 # BE VERY CAREFUL TO SET STUFF AFTER THE FOLLOWING
@@ -132,7 +132,7 @@ export BENCHMARK_NUMBER=003
 export threadCountList="0001 0004 0016 0064 0128 0256 0512 1024"
     
 pushd ${dirSysbench}
-./ps.doit.bash
+./ps.doit-v1.bash
 popd
 unset threadCountList
 
@@ -150,7 +150,7 @@ export BENCHMARK_NUMBER=004
 export threadCountList="0001 0004 0016 0064 0128 0256 0512 1024"
 
 pushd ${dirSysbench}
-./ps.doit.bash
+./ps.doit-v1.bash
 popd
 unset threadCountList
   
@@ -162,7 +162,7 @@ export threadCountList="0001 0004 0016 0064 0128 0256 0512 1024"
     
     # > RAM - special - lzma
 pushd ${dirSysbench}
-./ps.doit.bash
+./ps.doit-v1.bash
 popd
 unset threadCountList
 #unset SKIP_DB_CREATE
@@ -195,7 +195,7 @@ export threadCountList="0001 0004 0016 0064 0128 0256 0512 1024"
 
     # < RAM
 pushd ${dirSysbench}
-./ps.doit.bash
+./ps.doit-v1.bash
 popd
 unset threadCountList
     
