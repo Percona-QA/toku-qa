@@ -97,7 +97,7 @@ MYSQL_OPTS="$MYSQL_OPTS --max_connections=2048"
 
 if [ ${SKIP_DB_CREATE} == "N" ]; then
     timeout --signal=9 20s ${DB_DIR}/bin/mysqladmin -uroot --socket=${MYSQL_SOCKET} shutdown > /dev/null 2>&1
-    rm -Rf  ${DB_DIR}/data/*
+    rm -Rf  ${DB_DIR}/data ; mkdir ${DB_DIR}/data  
     mkdir -p  ${DB_DIR}/tmp
     BIN=`find ${DB_DIR} -maxdepth 2 -name mysqld -type f -o -name mysqld-debug -type f | head -1`;if [ -z $BIN ]; then echo "Assert! mysqld binary '$BIN' could not be read";exit 1;fi
     PS_VERSION=`$BIN --version | grep -oe '5\.[1567]' | sed 's/\.//' | head -n1`
@@ -110,10 +110,16 @@ if [ ${SKIP_DB_CREATE} == "N" ]; then
       mkdir -p ${DB_DIR}/data
     fi
     if [ -d ${BIG_DIR}/$RUN_DATA_DIR/mysqld.1/data ]; then
-      cp -r ${BIG_DIR}/$RUN_DATA_DIR/mysqld.1/data/*  ${DB_DIR}/data/ 
+      cp -r ${BIG_DIR}/$RUN_DATA_DIR/mysqld.1/data/*  ${DB_DIR}/data/
+      if [ ${MYSQL_STORAGE_ENGINE} == "rocksdb" ]; then 
+        cp -r ${BIG_DIR}/$RUN_DATA_DIR/mysqld.1/data/.rocksdb  ${DB_DIR}/data/
+      fi
     else
       ${SCRIPT_DIR}/sysbench_create_db_template.sh ${BIG_DIR} $PS_VERSION ${MYSQL_STORAGE_ENGINE}
       cp -r ${BIG_DIR}/$RUN_DATA_DIR/mysqld.1/data/*  ${DB_DIR}/data/
+      if [ ${MYSQL_STORAGE_ENGINE} == "rocksdb" ]; then 
+        cp -r ${BIG_DIR}/$RUN_DATA_DIR/mysqld.1/data/.rocksdb  ${DB_DIR}/data/
+      fi
     fi
     mkdir -p  ${DB_DIR}/data/test
     ## Starting mysqld

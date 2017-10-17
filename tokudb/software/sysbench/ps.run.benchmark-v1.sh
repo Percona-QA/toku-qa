@@ -121,27 +121,6 @@ fi
 # run for real
 for num_threads in ${threadCountList}; do
     LOG_NAME=${MACHINE_NAME}-${MYSQL_NAME}-${MYSQL_VERSION}-${MYSQL_STORAGE_ENGINE}-${BENCH_ID}-$LOG_BENCHMARK_NAME-$NUM_ROWS-$num_threads-$COMMIT_SYNC-DEFAULTS.txt
-    LOG_NAME_EXTENDED_STATUS=${LOG_NAME}.extended_status
-    LOG_NAME_ENGINE_STATUS=${LOG_NAME}.engine_status
-    LOG_NAME_PROCESSLIST=${LOG_NAME}.processlist
-    LOG_NAME_MEMORY=${LOG_NAME}.memory
-    LOG_NAME_IOSTAT=${LOG_NAME}.iostat
-    LOG_NAME_DSTAT=${LOG_NAME}.dstat
-    LOG_NAME_DSTAT_CSV=${LOG_NAME}.dstat.csv
-    LOG_NAME_PMPROF=${LOG_NAME}.pmprof
-
-    if [ ${BENCHMARK_LOGGING} == "Y" ]; then
-        # verbose logging
-        echo "*** verbose benchmark logging enabled ***"
-
-        # capture-extended-status.bash $RUN_TIME_SECONDS $SHOW_EXTENDED_STATUS_INTERVAL $MYSQL_USER $MYSQL_SOCKET $LOG_NAME_EXTENDED_STATUS &
-        capture-tokustat.bash $SHOW_ENGINE_STATUS_INTERVAL $MYSQL_USER $MYSQL_SOCKET $LOG_NAME_ENGINE_STATUS &
-        # capture-show-processlist.bash $RUN_TIME_SECONDS $SHOW_PROCESSLIST_INTERVAL $MYSQL_USER $MYSQL_SOCKET $LOG_NAME_PROCESSLIST ${MYSQL_STORAGE_ENGINE} &
-        capture-memory.bash $RUN_TIME_SECONDS ${SHOW_MEMORY_INTERVAL} ${LOG_NAME_MEMORY} mysqld &
-        iostat -dxm $IOSTAT_INTERVAL $IOSTAT_ROUNDS  > $LOG_NAME_IOSTAT &
-        dstat -t -v --nocolor --output $LOG_NAME_DSTAT_CSV $DSTAT_INTERVAL $DSTAT_ROUNDS > $LOG_NAME_DSTAT &
-        #pmprof.bash 200 2 1 mysqld ${LOG_NAME_PMPROF} 120 &
-    fi
 
     if [ ${MYSQL_STORAGE_ENGINE} == "myisam" ]; then
         # myisam version has special table lock command in oltp_myisam.lua and passes one additional parameter
@@ -157,19 +136,10 @@ for num_threads in ${threadCountList}; do
         sysbench /usr/share/sysbench/oltp_read_write.lua --non-index-updates=$SYSBENCH_NON_INDEX_UPDATES_PER_TXN --tables=$NUM_TABLES --table-size=$NUM_ROWS --threads=$num_threads --report-interval=$REPORT_INTERVAL --rand-type=$RAND_TYPE --mysql-socket=$MYSQL_SOCKET --mysql-storage-engine=${MYSQL_STORAGE_ENGINE} --time=$RUN_TIME_SECONDS --mysql-user=$MYSQL_USER --mysql-password=$MYSQL_PASSWORD --mysql-db=${MYSQL_DATABASE} --events=0 --percentile=99 run | tee $LOG_NAME
       fi 
     fi
-    echo "BEGIN-SHOW-VARIABLES" >> $LOG_NAME
-    $DB_DIR/bin/mysql --user=$MYSQL_USER --password=$MYSQL_PASSWORD --socket=$MYSQL_SOCKET -e "show variables" >> $LOG_NAME
-    echo "END-SHOW-VARIABLES" >> $LOG_NAME
-    echo "BEGIN-SHOW-ENGINE-STATUS" >> $LOG_NAME
-    $DB_DIR/bin/mysql --user=$MYSQL_USER --password=$MYSQL_PASSWORD --socket=$MYSQL_SOCKET -e "show engine ${MYSQL_STORAGE_ENGINE} status" >> $LOG_NAME
-    echo "END-SHOW-ENGINE-STATUS" >> $LOG_NAME
     
     sleep 6
-    
-    bkill
 done
 
-bkill
 
 parse_sysbench.pl summary . > ${MACHINE_NAME}.summary
 DATE=`date +"%Y%m%d%H%M%S"`

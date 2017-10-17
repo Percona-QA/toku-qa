@@ -82,7 +82,7 @@ export BENCHMARK_NUMBER=001
 export SHUTDOWN_MYSQL=N
 export IIBENCH_CREATE_TABLE=Y
 pushd ${dirIibench}
-./ps.run.benchmark.sh
+./ps.run.benchmark-v1.sh
 popd
 unset SHUTDOWN_MYSQL
 unset IIBENCH_CREATE_TABLE
@@ -108,7 +108,7 @@ export SKIP_DB_CREATE=Y
 export IIBENCH_CREATE_TABLE=N
    
 pushd ${dirIibench}
-./ps.run.benchmark.sh
+./ps.run.benchmark-v1.sh
 popd
 unset SKIP_DB_CREATE
 unset IIBENCH_CREATE_TABLE
