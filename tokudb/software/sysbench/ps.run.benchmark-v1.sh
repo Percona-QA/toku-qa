@@ -62,7 +62,7 @@ if [ -z "$SCP_TARGET" ]; then
 fi
 
 if [ -z "$WARMUP" ]; then
-    export WARMUP=N
+    export WARMUP=Y
 fi
 if [ -z "$SCP_FILES" ]; then
     export SCP_FILES=Y
@@ -136,19 +136,15 @@ for num_threads in ${threadCountList}; do
         sysbench /usr/share/sysbench/oltp_read_write.lua --non-index-updates=$SYSBENCH_NON_INDEX_UPDATES_PER_TXN --tables=$NUM_TABLES --table-size=$NUM_ROWS --threads=$num_threads --report-interval=$REPORT_INTERVAL --rand-type=$RAND_TYPE --mysql-socket=$MYSQL_SOCKET --mysql-storage-engine=${MYSQL_STORAGE_ENGINE} --time=$RUN_TIME_SECONDS --mysql-user=$MYSQL_USER --mysql-password=$MYSQL_PASSWORD --mysql-db=${MYSQL_DATABASE} --events=0 --percentile=99 run | tee $LOG_NAME
       fi 
     fi
-    
     sleep 6
+	result_set+=(`grep  "queries:" $LOG_NAME | cut -d'(' -f2 | awk '{print $1}'`)
 done
 
-
-parse_sysbench.pl summary . > ${MACHINE_NAME}.summary
 DATE=`date +"%Y%m%d%H%M%S"`
 tarFileName="sysbench_${BENCH_ID}_perf_result_set_${DATE}.tar.gz"
 tar czvf ${tarFileName} ${MACHINE_NAME}* ${DB_DIR}/data/*.err
 cp ${tarFileName} ${SCP_TARGET}
-cp ${MACHINE_NAME}.summary ${WORKSPACE_LOC}/sysbench_${BENCH_ID}_perf_result_set_${DATE}.txt
 
-result_set=($(cat ${MACHINE_NAME}.summary |  awk '{print ","$5 }'))
 for i in {0..7}; do if [ -z ${result_set[i]} ]; then  result_set[i]=',0' ; fi; done
 echo "[ '${BUILD_NUMBER}' ${result_set[*]} ]," >> ${WORKSPACE_LOC}/sysbench_${BENCH_ID}_perf_result_set.txt
 rm -f ${MACHINE_NAME}*
