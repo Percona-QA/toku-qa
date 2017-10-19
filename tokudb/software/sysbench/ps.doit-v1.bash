@@ -83,7 +83,7 @@ elif [ ${MYSQL_STORAGE_ENGINE} == "rocksdb" ]; then
     echo "Need to set ROCKSDB_CACHE"
     exit 1
   fi
-  MYSQL_OPTS="--rocksdb-block-cache-size=${ROCKSDB_CACHE} --plugin-load-add=rocksdb=ha_rocksdb.so --init-file=${SCRIPT_DIR}/MyRocks.sql --default-storage-engine=ROCKSDB --rocksdb_block_size=16384"
+  MYSQL_OPTS="--rocksdb-block-cache-size=${ROCKSDB_CACHE} --plugin-load-add=rocksdb=ha_rocksdb.so --init-file=${SCRIPT_DIR}/MyRocks.sql --default-storage-engine=ROCKSDB --max-prepared-stmt-count=1048576"
 elif [ ${MYSQL_STORAGE_ENGINE} == "myisam" ]; then
   MYSQL_OPTS="key_buffer_size=8G"
 #    echo "table_open_cache=2048" >> my.cnf
