@@ -83,7 +83,7 @@ elif [ ${MYSQL_STORAGE_ENGINE} == "rocksdb" ]; then
     echo "Need to set ROCKSDB_CACHE"
     exit 1
   fi
-  MYSQL_OPTS="--rocksdb-block-cache-size=${ROCKSDB_CACHE} --plugin-load-add=rocksdb=ha_rocksdb.so --init-file=${SCRIPT_DIR}/MyRocks.sql --default-storage-engine=ROCKSDB --max-prepared-stmt-count=100000000"
+  MYSQL_OPTS="--rocksdb-block-cache-size=${ROCKSDB_CACHE} --plugin-load-add=rocksdb=ha_rocksdb.so --init-file=${SCRIPT_DIR}/MyRocks.sql --default-storage-engine=ROCKSDB"
 elif [ ${MYSQL_STORAGE_ENGINE} == "myisam" ]; then
   MYSQL_OPTS="key_buffer_size=8G"
 #    echo "table_open_cache=2048" >> my.cnf
@@ -93,7 +93,7 @@ else
     MYSQL_OPTS="$MYSQL_OPTS --tokudb_directio=1"
   fi
 fi
-MYSQL_OPTS="$MYSQL_OPTS --max_connections=2048"
+MYSQL_OPTS="$MYSQL_OPTS --max_connections=2048 --max-prepared-stmt-count=100000000"
 
 if [ ${SKIP_DB_CREATE} == "N" ]; then
     timeout --signal=9 20s ${DB_DIR}/bin/mysqladmin -uroot --socket=${MYSQL_SOCKET} shutdown > /dev/null 2>&1
