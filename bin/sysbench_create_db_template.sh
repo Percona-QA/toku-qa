@@ -41,9 +41,9 @@ else
   BASE=${DB_DIR}
 fi
 if [ "`$BASE/bin/mysqld --version | grep -oe '5\.[1567]' | head -n1`" == "5.7" ]; then
-  DATA_DIR="run_dir_57_$SE"
+  DATA_DIR="run_dir_57_${BENCH_SIZE}_$SE"
 else
-  DATA_DIR="run_dir_$SE"
+  DATA_DIR="run_dir_${BENCH_SIZE}_$SE"
 fi
 rm -Rf $WORK_DIR/$DATA_DIR
 cd $BASE/mysql-test
