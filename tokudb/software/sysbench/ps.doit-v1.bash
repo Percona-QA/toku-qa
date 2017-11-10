@@ -102,9 +102,9 @@ if [ ${SKIP_DB_CREATE} == "N" ]; then
     BIN=`find ${DB_DIR} -maxdepth 2 -name mysqld -type f -o -name mysqld-debug -type f | head -1`;if [ -z $BIN ]; then echo "Assert! mysqld binary '$BIN' could not be read";exit 1;fi
     PS_VERSION=`$BIN --version | grep -oe '5\.[1567]' | sed 's/\.//' | head -n1`
     if [ "`$BIN --version | grep -oe '5\.[1567]' | head -n1`" == "5.7" ]; then
-      RUN_DATA_DIR="run_dir_57_${MYSQL_STORAGE_ENGINE}"
+      RUN_DATA_DIR="run_dir_57_${BENCH_SIZE}_${MYSQL_STORAGE_ENGINE}"
     else
-      RUN_DATA_DIR="run_dir_${MYSQL_STORAGE_ENGINE}"
+      RUN_DATA_DIR="run_dir_${BENCH_SIZE}_${MYSQL_STORAGE_ENGINE}"
     fi
     if [ ! -d  ${DB_DIR}/data ];then
       mkdir -p ${DB_DIR}/data

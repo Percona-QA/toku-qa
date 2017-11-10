@@ -76,7 +76,7 @@ export MAX_ROWS=1000000
 export ROWS_PER_REPORT=200000
 export RUN_MINUTES=1200
 export UNIQUE_CHECKS=1
-export BENCH_ID=innodb
+export BENCH_ID=${MYSQL_STORAGE_ENGINE}
 export INSERT_ONLY=1
 export BENCHMARK_NUMBER=001
 export SHUTDOWN_MYSQL=N
@@ -101,7 +101,7 @@ export ROWS_PER_REPORT=200000
 export RUN_MINUTES=1200
 export IIBENCH_MODE=QPS
 export UNIQUE_CHECKS=1
-export BENCH_ID=innodb.qps
+export BENCH_ID=${MYSQL_STORAGE_ENGINE}.qps
 export INSERT_ONLY=0
 export BENCHMARK_NUMBER=002
 export SKIP_DB_CREATE=Y
@@ -126,8 +126,9 @@ export ROCKSDB_CACHE=25G
 export NUM_TABLES=16
 export RUN_TIME_SECONDS=300
 export RAND_TYPE=uniform
-export BENCH_ID=innodb.5mm.${RAND_TYPE}.cpubound
+export BENCH_ID=${MYSQL_STORAGE_ENGINE}.5mm.${RAND_TYPE}.cpubound
 export NUM_ROWS=5000000
+export BENCH_SIZE=5M
 export BENCHMARK_NUMBER=003
 export threadCountList="0001 0004 0016 0064 0128 0256 0512 1024"
     
@@ -144,8 +145,9 @@ export ROCKSDB_CACHE=15G
 export NUM_TABLES=16
 export RUN_TIME_SECONDS=300
 export RAND_TYPE=uniform
-export BENCH_ID=innodb.5mm.${RAND_TYPE}.iobound
+export BENCH_ID=${MYSQL_STORAGE_ENGINE}.5mm.${RAND_TYPE}.iobound
 export NUM_ROWS=5000000
+export BENCH_SIZE=5M
 export BENCHMARK_NUMBER=004
 export threadCountList="0001 0004 0016 0064 0128 0256 0512 1024"
 
@@ -153,43 +155,36 @@ pushd ${dirSysbench}
 ./ps.doit-v1.bash
 popd
 unset threadCountList
-  
-#export SKIP_DB_CREATE=Y
-export RAND_TYPE=special
-export BENCH_ID=innodb.5mm.${RAND_TYPE}
-export BENCHMARK_NUMBER=005
-export threadCountList="0001 0004 0016 0064 0128 0256 0512 1024"
-    
-    # > RAM - special - lzma
-pushd ${dirSysbench}
-./ps.doit-v1.bash
-popd
-unset threadCountList
-#unset SKIP_DB_CREATE
 
-# IO bound performance run   
-export INNODB_CACHE=15G
-export TOKUDB_DIRECTIO_CACHE=15G
-export ROCKSDB_CACHE=15G
+# IO bound performance run
+export BENCH_SUITE=sysbench   
+export INNODB_CACHE=3G
+export TOKUDB_DIRECTIO_CACHE=3G
+export ROCKSDB_CACHE=3G
+export NUM_TABLES=16
+export RUN_TIME_SECONDS=300
 export NUM_ROWS=1000000
+export BENCH_SIZE=1M
 export RAND_TYPE=uniform
-export BENCH_ID=innodb-1mm.${RAND_TYPE}.iobound
+export BENCH_ID=${MYSQL_STORAGE_ENGINE}-1mm.${RAND_TYPE}.iobound
 export BENCHMARK_NUMBER=006
 export threadCountList="0001 0004 0016 0064 0128 0256 0512 1024"
     
     # < RAM
 pushd ${dirSysbench}
-./ps.doit.bash
+./ps.doit-v1.bash
 popd
 unset threadCountList
 
 # CPU bound performance run
-export INNODB_CACHE=25G
-export TOKUDB_DIRECTIO_CACHE=25G
-export ROCKSDB_CACHE=25G
+export BENCH_SUITE=sysbench
+export INNODB_CACHE=5G
+export TOKUDB_DIRECTIO_CACHE=5G
+export ROCKSDB_CACHE=5G
 export NUM_ROWS=1000000
+export BENCH_SIZE=1M
 export RAND_TYPE=uniform
-export BENCH_ID=innodb-1mm.${RAND_TYPE}.cpubound
+export BENCH_ID=${MYSQL_STORAGE_ENGINE}-1mm.${RAND_TYPE}.cpubound
 export BENCHMARK_NUMBER=007
 export threadCountList="0001 0004 0016 0064 0128 0256 0512 1024"
 
