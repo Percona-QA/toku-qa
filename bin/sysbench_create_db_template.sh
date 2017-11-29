@@ -2,9 +2,9 @@
 SCRIPT_DIR=$(cd `dirname $0` && pwd)
 
 if [ ${MYSQL_STORAGE_ENGINE} == "rocksdb" ]; then
-  MYSQLD_OPTS="--mysqld=--plugin-load=rocksdb=ha_rocksdb.so --mysqld=--init-file=${SCRIPT_DIR}/MyRocks.sql --mysqld=--default-storage-engine=ROCKSDB"
+  MYSQLD_OPTS="--plugin-load=rocksdb=ha_rocksdb.so --init-file=${SCRIPT_DIR}/MyRocks.sql --default-storage-engine=ROCKSDB"
 elif [ ${MYSQL_STORAGE_ENGINE} == "tokudb" ]; then
-  MYSQLD_OPTS="--mysqld=--plugin-load=tokudb=ha_tokudb.so --mysqld=--init-file=${SCRIPT_DIR}/TokuDB.sql --mysqld=--default-storage-engine=TOKUDB"
+  MYSQLD_OPTS="--plugin-load=tokudb=ha_tokudb.so --init-file=${SCRIPT_DIR}/TokuDB.sql --default-storage-engine=TOKUDB"
 else
   MYSQL_OPTS=""
 fi
