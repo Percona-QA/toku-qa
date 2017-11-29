@@ -46,14 +46,14 @@ else
   DATA_DIR="run_dir_${BENCH_SIZE}_$SE"
 fi
 
-$BASE/bin/mysqld --no-defaults --initialize-insecure --basedir=${DB_DIR} --datadir=${DB_DIR}/data >  ${DB_DIR}/startup.err 2>&1
+$BASE/bin/mysqld --no-defaults --initialize-insecure --basedir=${DB_DIR} --datadir=$WORK_DIR/${DATA_DIR}/data >  ${DB_DIR}/startup.err 2>&1
 
-$BASE/bin/mysqld ${MYEXTRA} $MYSQLD_OPTS  --basedir=${DB_DIR} --datadir=${DB_DIR}/data ${MYSQL_OPTS} --port=${MYSQL_PORT} --pid-file=${DB_DIR}/data/pid.pid --core-file --socket=$DATA_DIR/socket.sock --log-error=${DB_DIR}/data/error.log.out >  ${DB_DIR}/data/mysqld.out 2>&1 &
+$BASE/bin/mysqld ${MYEXTRA} $MYSQLD_OPTS  --basedir=${DB_DIR} --datadir=$WORK_DIR/${DATA_DIR}/data ${MYSQL_OPTS} --port=${MYSQL_PORT} --pid-file=${DB_DIR}/data/pid.pid --core-file --socket=$WORK_DIR/${DATA_DIR}/socket.sock --log-error=$WORK_DIR/${DATA_DIR}/data/error.log.out >  $WORK_DIR/${DATA_DIR}/data/mysqld.out 2>&1 &
 	
 for X in $(seq 0 60); do
   sleep 1
-  if ${DB_DIR}/bin/mysqladmin -uroot -S$DATA_DIR/socket.sock ping > /dev/null 2>&1; then
-    ${DB_DIR}/bin/mysql -uroot -S$DATA_DIR/socket.sock -e"create database test;"
+  if ${DB_DIR}/bin/mysqladmin -uroot -S$WORK_DIR/${DATA_DIR}/socket.sock ping > /dev/null 2>&1; then
+    ${DB_DIR}/bin/mysql -uroot -S$WORK_DIR/${DATA_DIR}/socket.sock -e"create database test;"
     break
   fi
 done
