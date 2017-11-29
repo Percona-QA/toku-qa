@@ -45,26 +45,17 @@ if [ "`$BASE/bin/mysqld --version | grep -oe '5\.[1567]' | head -n1`" == "5.7" ]
 else
   DATA_DIR="run_dir_${BENCH_SIZE}_$SE"
 fi
-rm -Rf $WORK_DIR/$DATA_DIR
-cd $BASE/mysql-test
-perl mysql-test-run.pl \
-  --start-and-exit --skip-ndb \
-  --vardir=$WORK_DIR/$DATA_DIR \
-  --mysqld=--port=$RANDOM \
-  --mysqld=--core-file \
-  --mysqld=--log-output=none \
-  --mysqld=--secure-file-priv= \
-  --mysqld=--max-connections=900 \
-  $MYSQLD_OPTS \
-  --mysqld=--socket=$WORK_DIR/$DATA_DIR/socket.sock \
-1st
 
+$BASE/bin/mysqld --no-defaults --initialize-insecure --basedir=${DB_DIR} --datadir=${DB_DIR}/data >  ${DB_DIR}/startup.err 2>&1
+
+$BASE/bin/mysqld ${MYEXTRA} $MYSQLD_OPTS  --basedir=${DB_DIR} --datadir=${DB_DIR}/data ${MYSQL_OPTS} --port=${MYSQL_PORT} --pid-file=${DB_DIR}/data/pid.pid --core-file --socket=$DATA_DIR/socket.sock --log-error=${DB_DIR}/data/error.log.out >  ${DB_DIR}/data/mysqld.out 2>&1 &
+	
 # Running sysbench
 echo "Running sysbench"
 if [ "$(sysbench --version | cut -d ' ' -f2 | grep -oe '[0-9]\.[0-9]')" == "0.5" ]; then
-  sysbench --test=/usr/share/doc/sysbench/tests/db/parallel_prepare.lua --mysql-table-engine=$SE --num-threads=${NUM_TABLES} --oltp-tables-count=${NUM_TABLES}  --oltp-table-size=${NUM_ROWS} --mysql-db=test --mysql-user=root    --db-driver=mysql --mysql-socket=$WORK_DIR/$DATA_DIR/socket.sock    run > $WORK_DIR/sysbench_prepare.log 2>&1
+  sysbench --test=/usr/share/doc/sysbench/tests/db/parallel_prepare.lua --mysql-table-engine=$SE --rand-type=$RAND_TYPE --num-threads=${NUM_TABLES} --oltp-tables-count=${NUM_TABLES}  --oltp-table-size=${NUM_ROWS} --mysql-db=test --mysql-user=root  --db-driver=mysql --mysql-socket=$WORK_DIR/$DATA_DIR/socket.sock    run > $WORK_DIR/sysbench_prepare.log 2>&1
 elif [ "$(sysbench --version | cut -d ' ' -f2 | grep -oe '[0-9]\.[0-9]')" == "1.0" ]; then
-  sysbench /usr/share/sysbench/oltp_insert.lua --mysql-storage-engine=$SE --threads=${NUM_TABLES} --tables=${NUM_TABLES}  --table-size=${NUM_ROWS} --mysql-db=test --mysql-user=root    --db-driver=mysql --mysql-socket=$WORK_DIR/$DATA_DIR/socket.sock    prepare > $WORK_DIR/sysbench_prepare.log 2>&1
+  sysbench /usr/share/sysbench/oltp_insert.lua --mysql-storage-engine=$SE --rand-type=$RAND_TYPE  --threads=${NUM_TABLES} --tables=${NUM_TABLES}  --table-size=${NUM_ROWS} --mysql-db=test --mysql-user=root    --db-driver=mysql --mysql-socket=$WORK_DIR/$DATA_DIR/socket.sock    prepare > $WORK_DIR/sysbench_prepare.log 2>&1
 fi
 
 #Stopping mysqld

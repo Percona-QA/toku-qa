@@ -37,6 +37,12 @@ else
   export MYEXTRA=""
 fi
 
+if [ "$MYSQL_STORAGE_ENGINE" == "rocksdb" ]];then
+ MYEXTRA="--defaults-file=$SCRIPT_DIR/my_rocks.cnf $MYEXTRA"
+else
+ MYEXTRA="--defaults-file=$SCRIPT_DIR/my_inno.cnf $MYEXTRA"
+fi
+
 if [ -z $WORKSPACE ]; then
   echo "Assuming this is a local (i.e. non-Jenkins initiated) run."
   export WORKSPACE=$BIG_DIR/backups

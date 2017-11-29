@@ -93,7 +93,6 @@ else
     MYSQL_OPTS="$MYSQL_OPTS --tokudb_directio=1"
   fi
 fi
-MYSQL_OPTS="$MYSQL_OPTS --max_connections=2048 --max-prepared-stmt-count=100000000"
 
 if [ ${SKIP_DB_CREATE} == "N" ]; then
     timeout --signal=9 20s ${DB_DIR}/bin/mysqladmin -uroot --socket=${MYSQL_SOCKET} shutdown > /dev/null 2>&1
@@ -109,16 +108,16 @@ if [ ${SKIP_DB_CREATE} == "N" ]; then
     if [ ! -d  ${DB_DIR}/data ];then
       mkdir -p ${DB_DIR}/data
     fi
-    if [ -d ${BIG_DIR}/$RUN_DATA_DIR/mysqld.1/data ]; then
-      cp -r ${BIG_DIR}/$RUN_DATA_DIR/mysqld.1/data/*  ${DB_DIR}/data/
+    if [ -d ${BIG_DIR}/$RUN_DATA_DIR/data ]; then
+      cp -r ${BIG_DIR}/$RUN_DATA_DIR/data/*  ${DB_DIR}/data/
       if [ ${MYSQL_STORAGE_ENGINE} == "rocksdb" ]; then 
-        cp -r ${BIG_DIR}/$RUN_DATA_DIR/mysqld.1/data/.rocksdb  ${DB_DIR}/data/
+        cp -r ${BIG_DIR}/$RUN_DATA_DIR/data/.rocksdb  ${DB_DIR}/data/
       fi
     else
       ${SCRIPT_DIR}/sysbench_create_db_template.sh ${BIG_DIR} $PS_VERSION ${MYSQL_STORAGE_ENGINE}
-      cp -r ${BIG_DIR}/$RUN_DATA_DIR/mysqld.1/data/*  ${DB_DIR}/data/
+      cp -r ${BIG_DIR}/$RUN_DATA_DIR/data/*  ${DB_DIR}/data/
       if [ ${MYSQL_STORAGE_ENGINE} == "rocksdb" ]; then 
-        cp -r ${BIG_DIR}/$RUN_DATA_DIR/mysqld.1/data/.rocksdb  ${DB_DIR}/data/
+        cp -r ${BIG_DIR}/$RUN_DATA_DIR/data/.rocksdb  ${DB_DIR}/data/
       fi
     fi
     mkdir -p  ${DB_DIR}/data/test
@@ -128,7 +127,7 @@ if [ ${SKIP_DB_CREATE} == "N" ]; then
     elif [ -r /usr/lib/x86_64-linux-gnu/libjemalloc.so.1 ]; then export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.1
     elif [ -r ${DB_DIR}/lib/mysql/libjemalloc.so.1 ]; then export LD_PRELOAD=${DB_DIR}/lib/mysql/libjemalloc.so.1
     else echo 'Warning: jemalloc was not loaded as it was not found (this is fine for MS, but do check ./1430715139_DB_DIR to set correct jemalloc location for PS)'; fi
-    $BIN --no-defaults ${MYEXTRA}  --basedir=${DB_DIR} --datadir=${DB_DIR}/data ${MYSQL_OPTS} --port=${MYSQL_PORT} --pid-file=${DB_DIR}/data/pid.pid --core-file --socket=${MYSQL_SOCKET} --log-error=${DB_DIR}/data/error.log.out >  ${DB_DIR}/data/mysqld.out 2>&1 &
+    $BIN ${MYEXTRA}  --basedir=${DB_DIR} --datadir=${DB_DIR}/data ${MYSQL_OPTS} --port=${MYSQL_PORT} --pid-file=${DB_DIR}/data/pid.pid --core-file --socket=${MYSQL_SOCKET} --log-error=${DB_DIR}/data/error.log.out >  ${DB_DIR}/data/mysqld.out 2>&1 &
     MPID="$!"
     for X in $(seq 0 60); do
       sleep 1
@@ -146,7 +145,7 @@ else
     elif [ -r /usr/lib/x86_64-linux-gnu/libjemalloc.so.1 ]; then export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.1
     elif [ -r ${DB_DIR}/lib/mysql/libjemalloc.so.1 ]; then export LD_PRELOAD=${DB_DIR}/lib/mysql/libjemalloc.so.1
     else echo 'Warning: jemalloc was not loaded as it was not found (this is fine for MS, but do check ./1430715139_DB_DIR to set correct jemalloc location for PS)'; fi
-    $BIN --no-defaults ${MYEXTRA} --basedir=${DB_DIR} --datadir=${DB_DIR}/data ${MYSQL_OPTS} --port=${MYSQL_PORT} --pid-file=${DB_DIR}/data/pid.pid --core-file --socket=${MYSQL_SOCKET} --log-error=${DB_DIR}/data/error.log.out >  ${DB_DIR}/data/mysqld.out 2>&1 &
+    $BIN ${MYEXTRA} --basedir=${DB_DIR} --datadir=${DB_DIR}/data ${MYSQL_OPTS} --port=${MYSQL_PORT} --pid-file=${DB_DIR}/data/pid.pid --core-file --socket=${MYSQL_SOCKET} --log-error=${DB_DIR}/data/error.log.out >  ${DB_DIR}/data/mysqld.out 2>&1 &
     MPID="$!"
     for X in $(seq 0 60); do
       sleep 1
