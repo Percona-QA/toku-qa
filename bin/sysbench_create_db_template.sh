@@ -46,6 +46,8 @@ else
   DATA_DIR="run_dir_${BENCH_SIZE}_$SE"
 fi
 
+mkdir -p $WORK_DIR/${DATA_DIR}
+
 $BASE/bin/mysqld --no-defaults --initialize-insecure --basedir=${DB_DIR} --datadir=$WORK_DIR/${DATA_DIR}/data >  ${DB_DIR}/startup.err 2>&1
 
 $BASE/bin/mysqld ${MYEXTRA} $MYSQLD_OPTS  --basedir=${DB_DIR} --datadir=$WORK_DIR/${DATA_DIR}/data ${MYSQL_OPTS} --port=${MYSQL_PORT} --pid-file=${DB_DIR}/data/pid.pid --core-file --socket=$WORK_DIR/${DATA_DIR}/socket.sock --log-error=$WORK_DIR/${DATA_DIR}/data/error.log.out >  $WORK_DIR/${DATA_DIR}/data/mysqld.out 2>&1 &
