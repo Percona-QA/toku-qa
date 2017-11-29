@@ -10,7 +10,7 @@ dirFbPileup=$SCRIPT_DIR/../tokudb/software/sysbench/fb-pileup
 # generic variables
 # **********************************************************************************************
 export MYSQL_NAME=percona
-export MYSQL_VERSION=5.6.23
+export MYSQL_VERSION=5.7.20
 export MYSQL_STORAGE_ENGINE=innodb
 export SCP_FILES=Y
 export DIRECTIO=Y

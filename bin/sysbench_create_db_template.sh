@@ -50,6 +50,13 @@ $BASE/bin/mysqld --no-defaults --initialize-insecure --basedir=${DB_DIR} --datad
 
 $BASE/bin/mysqld ${MYEXTRA} $MYSQLD_OPTS  --basedir=${DB_DIR} --datadir=${DB_DIR}/data ${MYSQL_OPTS} --port=${MYSQL_PORT} --pid-file=${DB_DIR}/data/pid.pid --core-file --socket=$DATA_DIR/socket.sock --log-error=${DB_DIR}/data/error.log.out >  ${DB_DIR}/data/mysqld.out 2>&1 &
 	
+for X in $(seq 0 60); do
+  sleep 1
+  if ${DB_DIR}/bin/mysqladmin -uroot -S$DATA_DIR/socket.sock ping > /dev/null 2>&1; then
+    ${DB_DIR}/bin/mysql -uroot -S$DATA_DIR/socket.sock -e"create database test;"
+    break
+  fi
+done
 # Running sysbench
 echo "Running sysbench"
 if [ "$(sysbench --version | cut -d ' ' -f2 | grep -oe '[0-9]\.[0-9]')" == "0.5" ]; then
