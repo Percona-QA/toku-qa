@@ -2,11 +2,11 @@
 SCRIPT_DIR=$(cd `dirname $0` && pwd)
 
 if [ ${MYSQL_STORAGE_ENGINE} == "rocksdb" ]; then
-  MYSQLD_OPTS="--plugin-load=rocksdb=ha_rocksdb.so --init-file=${SCRIPT_DIR}/MyRocks.sql --default-storage-engine=ROCKSDB"
+  MYSQLD_OPTS="--plugin-load=rocksdb=ha_rocksdb.so --init-file=${SCRIPT_DIR}/MyRocks.sql --default-storage-engine=ROCKSDB --rocksdb-block-cache-size=${ROCKSDB_CACHE}"
 elif [ ${MYSQL_STORAGE_ENGINE} == "tokudb" ]; then
-  MYSQLD_OPTS="--plugin-load=tokudb=ha_tokudb.so --init-file=${SCRIPT_DIR}/TokuDB.sql --default-storage-engine=TOKUDB"
+  MYSQLD_OPTS="--plugin-load=tokudb=ha_tokudb.so --init-file=${SCRIPT_DIR}/TokuDB.sql --default-storage-engine=TOKUDB --tokudb_read_block_size=${TOKUDB_READ_BLOCK_SIZE} --tokudb_row_format=${TOKUDB_ROW_FORMAT}"
 else
-  MYSQL_OPTS=""
+  MYSQL_OPTS="--innodb_buffer_pool_size=${INNODB_CACHE}"
 fi
 
 if [ -z ${NUM_ROWS} -a  -z ${NUM_TABLES} ]; then
@@ -66,6 +66,9 @@ if [ "$(sysbench --version | cut -d ' ' -f2 | grep -oe '[0-9]\.[0-9]')" == "0.5"
 elif [ "$(sysbench --version | cut -d ' ' -f2 | grep -oe '[0-9]\.[0-9]')" == "1.0" ]; then
   sysbench /usr/share/sysbench/oltp_insert.lua --mysql-storage-engine=$SE --rand-type=$RAND_TYPE  --threads=${NUM_TABLES} --tables=${NUM_TABLES}  --table-size=${NUM_ROWS} --mysql-db=test --mysql-user=root    --db-driver=mysql --mysql-socket=$WORK_DIR/$DATA_DIR/socket.sock    prepare > $WORK_DIR/sysbench_prepare.log 2>&1
 fi
+
+#Purging binary log files to clear the space 
+$BASE/bin/mysql --socket=$WORK_DIR/$DATA_DIR/socket.sock -uroot -e"select @ttime := from_unixtime(unix_timestamp(now())-60);purge binary logs before @ttime;" 2>&1
 
 #Stopping mysqld
 echo "Stopping mysqld process"
