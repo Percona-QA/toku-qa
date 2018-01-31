@@ -123,7 +123,7 @@ if [ ${SKIP_DB_CREATE} == "N" ]; then
     mkdir -p  ${DB_DIR}/data/test
     ## Clearing OS cache
     ECHO=$(which echo)
-    sudo sh -c "$ECHO 3 > /proc/sys/vm/drop_caches"
+    sudo sync;sudo sh -c "$ECHO 3 > /proc/sys/vm/drop_caches"
 
     ## Starting mysqld
     if [ "${JEMALLOC}" != "" -a -r "${JEMALLOC}" ]; then export LD_PRELOAD=${JEMALLOC}
@@ -160,10 +160,12 @@ else
 fi
 
 if [ ${MYSQL_STORAGE_ENGINE} == "rocksdb" ]; then
-  cgcreate -g memory:DBLimitedGroup
-  echo $CGROUP_MEM > /cgroup/memory/DBLimitedGroup/memory.limit_in_bytes
-  sync; echo 3 > /proc/sys/vm/drop_caches
-  cgclassify -g memory:DBLimitedGroup `pidof mysqld`
+  sudo service cgconfig start
+  sudo cgcreate -g memory:DBLimitedGroup
+  sudo echo $CGROUP_MEM > /cgroup/memory/DBLimitedGroup/memory.limit_in_bytes
+  ECHO=$(which echo)
+  sudo sync;sudo sh -c "$ECHO 3 > /proc/sys/vm/drop_caches"
+  sudo cgclassify -g memory:DBLimitedGroup `pidof mysqld`
 fi
   
 echo "Running benchmark"
