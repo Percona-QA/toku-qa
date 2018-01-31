@@ -131,7 +131,7 @@ if [ ${SKIP_DB_CREATE} == "N" ]; then
     elif [ -r /usr/lib/x86_64-linux-gnu/libjemalloc.so.1 ]; then export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.1
     elif [ -r ${DB_DIR}/lib/mysql/libjemalloc.so.1 ]; then export LD_PRELOAD=${DB_DIR}/lib/mysql/libjemalloc.so.1
     else echo 'Warning: jemalloc was not loaded as it was not found (this is fine for MS, but do check ./1430715139_DB_DIR to set correct jemalloc location for PS)'; fi
-    $BIN ${MYEXTRA}  --basedir=${DB_DIR} --datadir=${DB_DIR}/data ${MYSQL_OPTS} --port=${MYSQL_PORT} --pid-file=${DB_DIR}/data/pid.pid --core-file --socket=${MYSQL_SOCKET} --log-error=${DB_DIR}/data/error.log.out >  ${DB_DIR}/data/mysqld.out 2>&1 &
+    $BIN ${MYEXTRA}  --user=$STARTUP_USER --basedir=${DB_DIR} --datadir=${DB_DIR}/data ${MYSQL_OPTS} --port=${MYSQL_PORT} --pid-file=${DB_DIR}/data/pid.pid --core-file --socket=${MYSQL_SOCKET} --log-error=${DB_DIR}/data/error.log.out >  ${DB_DIR}/data/mysqld.out 2>&1 &
     MPID="$!"
     for X in $(seq 0 60); do
       sleep 1
@@ -149,7 +149,7 @@ else
     elif [ -r /usr/lib/x86_64-linux-gnu/libjemalloc.so.1 ]; then export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.1
     elif [ -r ${DB_DIR}/lib/mysql/libjemalloc.so.1 ]; then export LD_PRELOAD=${DB_DIR}/lib/mysql/libjemalloc.so.1
     else echo 'Warning: jemalloc was not loaded as it was not found (this is fine for MS, but do check ./1430715139_DB_DIR to set correct jemalloc location for PS)'; fi
-    $BIN ${MYEXTRA} --basedir=${DB_DIR} --datadir=${DB_DIR}/data ${MYSQL_OPTS} --port=${MYSQL_PORT} --pid-file=${DB_DIR}/data/pid.pid --core-file --socket=${MYSQL_SOCKET} --log-error=${DB_DIR}/data/error.log.out >  ${DB_DIR}/data/mysqld.out 2>&1 &
+    $BIN ${MYEXTRA} --user=$STARTUP_USER --basedir=${DB_DIR} --datadir=${DB_DIR}/data ${MYSQL_OPTS} --port=${MYSQL_PORT} --pid-file=${DB_DIR}/data/pid.pid --core-file --socket=${MYSQL_SOCKET} --log-error=${DB_DIR}/data/error.log.out >  ${DB_DIR}/data/mysqld.out 2>&1 &
     MPID="$!"
     for X in $(seq 0 60); do
       sleep 1
@@ -160,10 +160,10 @@ else
 fi
 
 if [ ${MYSQL_STORAGE_ENGINE} == "rocksdb" ]; then
-  sudo service cgconfig start
-  sudo cgcreate -g memory:DBLimitedGroup
-  sudo echo $CGROUP_MEM > /cgroup/memory/DBLimitedGroup/memory.limit_in_bytes
   ECHO=$(which echo)
+  sudo service cgconfig restart
+  sudo cgcreate -g memory:DBLimitedGroup
+  sudo sh -c "$ECHO $CGROUP_MEM > /cgroup/memory/DBLimitedGroup/memory.limit_in_bytes"
   sudo sync;sudo sh -c "$ECHO 3 > /proc/sys/vm/drop_caches"
   sudo cgclassify -g memory:DBLimitedGroup `pidof mysqld`
 fi
