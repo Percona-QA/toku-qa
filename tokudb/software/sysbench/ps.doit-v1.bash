@@ -121,6 +121,10 @@ if [ ${SKIP_DB_CREATE} == "N" ]; then
       fi
     fi
     mkdir -p  ${DB_DIR}/data/test
+    ## Clearing OS cache
+    ECHO=$(which echo)
+    sudo sh -c "$ECHO 3 > /proc/sys/vm/drop_caches"
+
     ## Starting mysqld
     if [ "${JEMALLOC}" != "" -a -r "${JEMALLOC}" ]; then export LD_PRELOAD=${JEMALLOC}
     elif [ -r /usr/lib64/libjemalloc.so.1 ]; then export LD_PRELOAD=/usr/lib64/libjemalloc.so.1
@@ -154,6 +158,14 @@ else
       fi
     done
 fi
+
+if [ ${MYSQL_STORAGE_ENGINE} == "rocksdb" ]; then
+  cgcreate -g memory:DBLimitedGroup
+  echo $CGROUP_MEM > /cgroup/memory/DBLimitedGroup/memory.limit_in_bytes
+  sync; echo 3 > /proc/sys/vm/drop_caches
+  cgclassify -g memory:DBLimitedGroup `pidof mysqld`
+fi
+  
 echo "Running benchmark"
 bash -x ./ps.run.benchmark-v1.sh
 cp ${DB_DIR}/data/error.log.out ${BIG_DIR}/${BUILD_NUMBER}/${BENCH_ID}_error.log.out
