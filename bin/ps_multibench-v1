@@ -9,6 +9,7 @@ dirFbPileup=$SCRIPT_DIR/../tokudb/software/sysbench/fb-pileup
 # **********************************************************************************************
 # generic variables
 # **********************************************************************************************
+export BIG_DIR=/data/perf
 export MYSQL_NAME=percona
 export MYSQL_VERSION=5.7.20
 export MYSQL_STORAGE_ENGINE=innodb
@@ -18,7 +19,7 @@ export PATH=$PATH:$SCRIPT_DIR
 export PS_MODE=0
 export STARTUP_USER=$(whoami)
 # change the machine.config values as per your configuration 
-source $SCRIPT_DIR/machine.config
+# source $SCRIPT_DIR/machine.config
 # Check if workdir was set by Jenkins, otherwise this is presumably a local run
 if [ ! -z ${WORKDIR} ]; then
   export BIG_DIR=${WORKDIR}
