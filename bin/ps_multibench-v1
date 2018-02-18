@@ -6,24 +6,126 @@ dirSysbench=$SCRIPT_DIR/../tokudb/software/sysbench
 dirTpcc=$SCRIPT_DIR/../tokudb/software/tpcc-percona
 dirFbPileup=$SCRIPT_DIR/../tokudb/software/sysbench/fb-pileup
 
+# Dispay script usage details
+usage () {
+  echo "Usage: [ options ]"
+  echo "Options:"
+  echo "  --workdir                  	       Specify work directory"
+  echo "  --mysql-name                         Specify mysql server name. eg percona|mysql|mariadb"
+  echo "  --mysql-version                      Specify mysql server version"
+  echo "  --storage-engine                     Specify mysql server storage engine"
+  echo "  --build-number                       Specify work build directory"
+  echo "  --basedir                            Specify base directory name"
+  echo "  --benchmark=[sysbench|iibench|all]   Specify benchmark name"
+}
+
+# Check if we have a functional getopt(1)
+if ! getopt --test
+  then
+  go_out="$(getopt --options=edv --longoptions=workdir:,mysql-name:,mysql-version:,storage-engine:,build-number:,basedir:,benchmark:,help \
+  --name="$(basename "$0")" -- "$@")"
+  test $? -eq 0 || exit 1
+  eval set -- "$go_out"
+fi
+
+if [[ $go_out == " --" ]];then
+  usage
+  exit 1
+fi
+
+for arg
+do
+  case "$arg" in
+    -- ) shift; break;;
+    --workdir )
+    export BIG_DIR="$2"
+    if [[ ! -d "$BIG_DIR" ]]; then
+      echo "ERROR: Workdir ($BIG_DIR) directory does not exist. Terminating!"
+      exit 1
+    fi
+    shift 2
+    ;;
+    --build-number )
+    export BUILD_NUMBER="$2"
+    shift 2
+    ;;
+    --mysql-name )
+    export MYSQL_NAME="$2"
+    shift 2
+    ;;
+    --mysql-version )
+    export MYSQL_VERSION="$2"
+    shift 2
+    ;;
+    --storage-engine )
+    export MYSQL_STORAGE_ENGINE="$2"
+    if [ "$MYSQL_STORAGE_ENGINE" != "innodb" ] && [ "$MYSQL_STORAGE_ENGINE" != "rocksdb" ] && [ "$MYSQL_STORAGE_ENGINE" != "tokudb" ]; then
+      echo "ERROR: Invalid --storage-engine passed:"
+      echo "  Please choose any of these storage engine options: innodb, rocksdb, tokudb"
+      exit 1
+    fi
+    shift 2
+    ;;
+    --basedir )
+    export BASEDIR="$2"
+    shift 2
+    ;;
+    --benchmark )
+    BENCHMARK="$2"
+    shift 2
+    if [ "$BENCHMARK" != "sysbench" ] && [ "$BENCHMARK" != "iibench" ] && [ "$BENCHMARK" != "all" ]; then
+      echo "ERROR: Invalid --benchmark passed:"
+      echo "  Please choose any of these benchmark options: sysbench, iibench, all"
+      exit 1
+    fi
+    ;;
+    --help )
+    usage
+    exit 0
+    ;;
+  esac
+done
+
 # **********************************************************************************************
 # generic variables
 # **********************************************************************************************
-export BIG_DIR=/data/perf
-export MYSQL_NAME=percona
-export MYSQL_VERSION=5.7.20
-export MYSQL_STORAGE_ENGINE=innodb
+if [[ -z "$BIG_DIR" ]]; then
+  export BIG_DIR=${PWD}
+fi
+if [[ -z "$MYSQL_NAME" ]]; then
+  export MYSQL_NAME="percona"
+fi
+if [[ -z "$MYSQL_VERSION" ]]; then
+  export MYSQL_VERSION="5.x"
+fi
+if [[ -z "$MYSQL_STORAGE_ENGINE" ]]; then
+  export MYSQL_STORAGE_ENGINE="innodb"
+fi
+if [[ -z "$BASEDIR" ]]; then
+  echo "ERROR: You have not passed mysql base directory name. Terminating!"
+  exit 1
+else
+  if [[ ! -d "$BIG_DIR/$BASEDIR" ]]; then
+    echo "ERROR: MySQL base directory ($BIG_DIR/$BASEDIR) does not exist. Terminating!"
+    exit 1
+  fi
+fi
+if [[ -z "$BUILD_NUMBER" ]]; then
+  export BUILD_NUMBER="100"
+else
+  mkdir -p $BIG_DIR/$BUILD_NUMBER
+  cp -r $BIG_DIR/$BASEDIR $BIG_DIR/$BUILD_NUMBER
+  export DB_DIR=$BIG_DIR/$BUILD_NUMBER/$BASEDIR
+fi
+if [[ -z "$BENCHMARK" ]]; then
+  export BENCHMARK="all"
+fi
+
 export SCP_FILES=Y
 export DIRECTIO=Y
 export PATH=$PATH:$SCRIPT_DIR
 export PS_MODE=0
 export STARTUP_USER=$(whoami)
-# change the machine.config values as per your configuration 
-# source $SCRIPT_DIR/machine.config
-# Check if workdir was set by Jenkins, otherwise this is presumably a local run
-if [ ! -z ${WORKDIR} ]; then
-  export BIG_DIR=${WORKDIR}
-fi
 
 if [ ! -d ${BIG_DIR}/backups ]; then
   mkdir -p ${BIG_DIR}/backups
@@ -51,161 +153,160 @@ if [ -z $WORKSPACE ]; then
 fi
 
 export WORKSPACE_LOC=$BIG_DIR/backups
-
-# make sure we have passed basedir parameter for this benchmark run
-if [ -z $2 ]; then
-  echo "No valid parameter passed.  Need relative workdir (1st option) and relative basedir (2nd option) settings. Retry."
-  echo "Usage example:"
-  echo "$./ps.multibench-v1 10 Percona-Server-5.5.28-rel29.3-435.Linux.x86_64"
-  echo "This would lead to $BIG_DIR/100 being created, in which testing takes place and"
-  echo "$BIG_DIR/$1/Percona-Server-5.5.28-rel29.3-435.Linux.x86_64 would be used to test."
-  exit 1
-else
-  mkdir -p $BIG_DIR/$1
-  cp -r $BIG_DIR/$2 $BIG_DIR/$1
-  export BUILD_NUMBER=$1
-  export DB_DIR=$BIG_DIR/$1/$2
-fi
 export MYSQL_SOCKET=/tmp/ps-perf-mysql.sock
 
 # ************************************************
 # BE VERY CAREFUL TO SET STUFF AFTER THE FOLLOWING
 # ************************************************
 
-# **********************************************************************************************
-# iibench
-# **********************************************************************************************
-export BENCH_SUITE=iibench
-export INNODB_CACHE=8G
-export TOKUDB_DIRECTIO_CACHE=8G
-export ROCKSDB_CACHE=8G
-export ADDITIONAL_WRITERS=0
-export MAX_ROWS=1000000
-export ROWS_PER_REPORT=200000
-export RUN_MINUTES=1200
-export UNIQUE_CHECKS=1
-export BENCH_ID=${MYSQL_STORAGE_ENGINE}
-export INSERT_ONLY=1
-export BENCHMARK_NUMBER=001
-export SHUTDOWN_MYSQL=N
-export IIBENCH_CREATE_TABLE=Y
-pushd ${dirIibench}
-./ps.run.benchmark-v1.sh
-popd
-unset SHUTDOWN_MYSQL
-unset IIBENCH_CREATE_TABLE
-    
-# **********************************************************************************************
-# iibench plus queries
-# **********************************************************************************************
+iibench_run(){
+  # **********************************************************************************************
+  # iibench
+  # **********************************************************************************************
+  export BENCH_SUITE=iibench
+  export INNODB_CACHE=8G
+  export TOKUDB_DIRECTIO_CACHE=8G
+  export ROCKSDB_CACHE=8G
+  export ADDITIONAL_WRITERS=0
+  export MAX_ROWS=1000000
+  export ROWS_PER_REPORT=200000
+  export RUN_MINUTES=1200
+  export UNIQUE_CHECKS=1
+  export BENCH_ID=${MYSQL_STORAGE_ENGINE}
+  export INSERT_ONLY=1
+  export BENCHMARK_NUMBER=001
+  export SHUTDOWN_MYSQL=N
+  export IIBENCH_CREATE_TABLE=Y
+  pushd ${dirIibench}
+  ./ps.run.benchmark-v1.sh
+  popd
+  unset SHUTDOWN_MYSQL
+  unset IIBENCH_CREATE_TABLE
+      
+  # **********************************************************************************************
+  # iibench plus queries
+  # **********************************************************************************************
+  
+  export BENCH_SUITE=iibench
+  export INNODB_CACHE=8G
+  export TOKUDB_DIRECTIO_CACHE=8G
+  export ROCKSDB_CACHE=8G
+  export ADDITIONAL_WRITERS=0
+  export MAX_ROWS=1000000
+  export ROWS_PER_REPORT=200000
+  export RUN_MINUTES=1200
+  export IIBENCH_MODE=QPS
+  export UNIQUE_CHECKS=1
+  export BENCH_ID=${MYSQL_STORAGE_ENGINE}.qps
+  export INSERT_ONLY=0
+  export BENCHMARK_NUMBER=002
+  export SKIP_DB_CREATE=Y
+  export IIBENCH_CREATE_TABLE=N
+     
+  pushd ${dirIibench}
+  ./ps.run.benchmark-v1.sh
+  popd
+  unset SKIP_DB_CREATE
+  unset IIBENCH_CREATE_TABLE
+  unset IIBENCH_MODE
+}
 
-export BENCH_SUITE=iibench
-export INNODB_CACHE=8G
-export TOKUDB_DIRECTIO_CACHE=8G
-export ROCKSDB_CACHE=8G
-export ADDITIONAL_WRITERS=0
-export MAX_ROWS=1000000
-export ROWS_PER_REPORT=200000
-export RUN_MINUTES=1200
-export IIBENCH_MODE=QPS
-export UNIQUE_CHECKS=1
-export BENCH_ID=${MYSQL_STORAGE_ENGINE}.qps
-export INSERT_ONLY=0
-export BENCHMARK_NUMBER=002
-export SKIP_DB_CREATE=Y
-export IIBENCH_CREATE_TABLE=N
-   
-pushd ${dirIibench}
-./ps.run.benchmark-v1.sh
-popd
-unset SKIP_DB_CREATE
-unset IIBENCH_CREATE_TABLE
-unset IIBENCH_MODE
+sysbench_run(){
+  # **********************************************************************************************
+  # sysbench
+  # **********************************************************************************************
+  # CPU bound performance run
+  export BENCH_SUITE=sysbench
+  export INNODB_CACHE=25G
+  export TOKUDB_DIRECTIO_CACHE=25G
+  export ROCKSDB_CACHE=25G
+  export CGROUP_MEM=30G
+  export NUM_TABLES=16
+  export RUN_TIME_SECONDS=300
+  export RAND_TYPE=uniform
+  export BENCH_ID=${MYSQL_STORAGE_ENGINE}.5mm.${RAND_TYPE}.cpubound
+  export NUM_ROWS=5000000
+  export BENCH_SIZE=5M
+  export BENCHMARK_NUMBER=003
+  export threadCountList="0001 0004 0016 0064 0128 0256 0512 1024"
+      
+  pushd ${dirSysbench}
+  ./ps.doit-v1.bash
+  popd
+  unset threadCountList
+  
+  # IO bound performance run
+  export BENCH_SUITE=sysbench
+  export INNODB_CACHE=15G
+  export TOKUDB_DIRECTIO_CACHE=15G
+  export ROCKSDB_CACHE=15G
+  export CGROUP_MEM=20G
+  export NUM_TABLES=16
+  export RUN_TIME_SECONDS=300
+  export RAND_TYPE=uniform
+  export BENCH_ID=${MYSQL_STORAGE_ENGINE}.5mm.${RAND_TYPE}.iobound
+  export NUM_ROWS=5000000
+  export BENCH_SIZE=5M
+  export BENCHMARK_NUMBER=004
+  export threadCountList="0001 0004 0016 0064 0128 0256 0512 1024"
+  
+  pushd ${dirSysbench}
+  ./ps.doit-v1.bash
+  popd
+  unset threadCountList
+  
+  # IO bound performance run
+  export BENCH_SUITE=sysbench   
+  export INNODB_CACHE=3G
+  export TOKUDB_DIRECTIO_CACHE=3G
+  export ROCKSDB_CACHE=3G
+  export CGROUP_MEM=5G
+  export NUM_TABLES=16
+  export RUN_TIME_SECONDS=300
+  export NUM_ROWS=1000000
+  export BENCH_SIZE=1M
+  export RAND_TYPE=uniform
+  export BENCH_ID=${MYSQL_STORAGE_ENGINE}-1mm.${RAND_TYPE}.iobound
+  export BENCHMARK_NUMBER=006
+  export threadCountList="0001 0004 0016 0064 0128 0256 0512 1024"
+      
+      # < RAM
+  pushd ${dirSysbench}
+  ./ps.doit-v1.bash
+  popd
+  unset threadCountList
+  
+  # CPU bound performance run
+  export BENCH_SUITE=sysbench
+  export INNODB_CACHE=5G
+  export TOKUDB_DIRECTIO_CACHE=5G
+  export ROCKSDB_CACHE=5G
+  export CGROUP_MEM=8G
+  export NUM_ROWS=1000000
+  export BENCH_SIZE=1M
+  export RAND_TYPE=uniform
+  export BENCH_ID=${MYSQL_STORAGE_ENGINE}-1mm.${RAND_TYPE}.cpubound
+  export BENCHMARK_NUMBER=007
+  export threadCountList="0001 0004 0016 0064 0128 0256 0512 1024"
+  
+      # < RAM
+  pushd ${dirSysbench}
+  ./ps.doit-v1.bash
+  popd
+  unset threadCountList
+}   
 
-
-# **********************************************************************************************
-# sysbench
-# **********************************************************************************************
-# CPU bound performance run
-export BENCH_SUITE=sysbench
-export INNODB_CACHE=25G
-export TOKUDB_DIRECTIO_CACHE=25G
-export ROCKSDB_CACHE=25G
-export CGROUP_MEM=30G
-export NUM_TABLES=16
-export RUN_TIME_SECONDS=300
-export RAND_TYPE=uniform
-export BENCH_ID=${MYSQL_STORAGE_ENGINE}.5mm.${RAND_TYPE}.cpubound
-export NUM_ROWS=5000000
-export BENCH_SIZE=5M
-export BENCHMARK_NUMBER=003
-export threadCountList="0001 0004 0016 0064 0128 0256 0512 1024"
-    
-pushd ${dirSysbench}
-./ps.doit-v1.bash
-popd
-unset threadCountList
-
-# IO bound performance run
-export BENCH_SUITE=sysbench
-export INNODB_CACHE=15G
-export TOKUDB_DIRECTIO_CACHE=15G
-export ROCKSDB_CACHE=15G
-export CGROUP_MEM=20G
-export NUM_TABLES=16
-export RUN_TIME_SECONDS=300
-export RAND_TYPE=uniform
-export BENCH_ID=${MYSQL_STORAGE_ENGINE}.5mm.${RAND_TYPE}.iobound
-export NUM_ROWS=5000000
-export BENCH_SIZE=5M
-export BENCHMARK_NUMBER=004
-export threadCountList="0001 0004 0016 0064 0128 0256 0512 1024"
-
-pushd ${dirSysbench}
-./ps.doit-v1.bash
-popd
-unset threadCountList
-
-# IO bound performance run
-export BENCH_SUITE=sysbench   
-export INNODB_CACHE=3G
-export TOKUDB_DIRECTIO_CACHE=3G
-export ROCKSDB_CACHE=3G
-export CGROUP_MEM=5G
-export NUM_TABLES=16
-export RUN_TIME_SECONDS=300
-export NUM_ROWS=1000000
-export BENCH_SIZE=1M
-export RAND_TYPE=uniform
-export BENCH_ID=${MYSQL_STORAGE_ENGINE}-1mm.${RAND_TYPE}.iobound
-export BENCHMARK_NUMBER=006
-export threadCountList="0001 0004 0016 0064 0128 0256 0512 1024"
-    
-    # < RAM
-pushd ${dirSysbench}
-./ps.doit-v1.bash
-popd
-unset threadCountList
-
-# CPU bound performance run
-export BENCH_SUITE=sysbench
-export INNODB_CACHE=5G
-export TOKUDB_DIRECTIO_CACHE=5G
-export ROCKSDB_CACHE=5G
-export CGROUP_MEM=8G
-export NUM_ROWS=1000000
-export BENCH_SIZE=1M
-export RAND_TYPE=uniform
-export BENCH_ID=${MYSQL_STORAGE_ENGINE}-1mm.${RAND_TYPE}.cpubound
-export BENCHMARK_NUMBER=007
-export threadCountList="0001 0004 0016 0064 0128 0256 0512 1024"
-
-    # < RAM
-pushd ${dirSysbench}
-./ps.doit-v1.bash
-popd
-unset threadCountList
-    
+if [[ "$BENCHMARK" == "all" ]] ; then
+  echo "Initiated iibench/sysbench performance run"
+  iibench_run
+  sysbench_run
+elif [[ "$BENCHMARK" == "iibench" ]] ; then
+  echo "Initiated iibench performance run"
+  iibench_run
+elif [[ "$BENCHMARK" == "sysbench" ]] ; then
+  echo "Initiated sysbench performance run"
+  sysbench_run
+fi
     #Generate graph
 VERSION_INFO=`$DB_DIR/bin/mysqld --version | cut -d' ' -f2-`
 UPTIME_HOUR=`uptime -p`
