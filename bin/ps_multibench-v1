@@ -126,12 +126,13 @@ export DIRECTIO=Y
 export PATH=$PATH:$SCRIPT_DIR
 export PS_MODE=0
 export STARTUP_USER=$(whoami)
+export MACHINE_NAME=$(echo ${HOSTNAME%%.*})
 
 if [ ! -d ${BIG_DIR}/backups ]; then
   mkdir -p ${BIG_DIR}/backups
-  SCP_TARGET=${BIG_DIR}/backups
+  export SCP_TARGET=${BIG_DIR}/backups
 else
-  SCP_TARGET=${BIG_DIR}/backups
+  export SCP_TARGET=${BIG_DIR}/backups
 fi
 
 #Check if MYEXTRA was set by Jenkins, otherwise this is presumably a local run
