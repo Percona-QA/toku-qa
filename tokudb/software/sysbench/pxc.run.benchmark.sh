@@ -98,7 +98,11 @@ if [ ${WARMUP} == "Y" ]; then
     # *** REMEMBER *** warmmup is READ ONLY!
     num_threads=64
     WARMUP_TIME_SECONDS=600
-    sysbench --test=${SYSBENCH_DIR}/tests/db/oltp.lua --oltp_tables_count=$NUM_TABLES --oltp-table-size=$NUM_ROWS --rand-init=on --num-threads=$num_threads --oltp-read-only=on --report-interval=$REPORT_INTERVAL --rand-type=$RAND_TYPE --mysql-socket=$MYSQL_SOCKET --mysql-table-engine=${MYSQL_STORAGE_ENGINE} --max-time=$WARMUP_TIME_SECONDS --mysql-user=$MYSQL_USER --mysql-password=$MYSQL_PASSWORD --mysql-db=${MYSQL_DATABASE} --max-requests=0 --percentile=99 run
+    if [ "$(sysbench --version | cut -d ' ' -f2 | grep -oe '[0-9]\.[0-9]')" == "0.5" ]; then
+      sysbench --test=${SYSBENCH_DIR}/tests/db/oltp.lua --oltp_tables_count=$NUM_TABLES --oltp-table-size=$NUM_ROWS --rand-init=on --num-threads=$num_threads --oltp-read-only=on --report-interval=$REPORT_INTERVAL --rand-type=$RAND_TYPE --mysql-socket=$MYSQL_SOCKET --mysql-table-engine=${MYSQL_STORAGE_ENGINE} --max-time=$WARMUP_TIME_SECONDS --mysql-user=$MYSQL_USER --mysql-password=$MYSQL_PASSWORD --mysql-db=${MYSQL_DATABASE} --max-requests=0 --percentile=99 run
+    else
+      sysbench /usr/share/sysbench/oltp_read_only.lua --tables=$NUM_TABLES --table-size=$NUM_ROWS --threads=$num_threads --report-interval=$REPORT_INTERVAL --rand-type=$RAND_TYPE --mysql-socket=$MYSQL_SOCKET --mysql-storage-engine=${MYSQL_STORAGE_ENGINE} --time=$WARMUP_TIME_SECONDS --mysql-user=$MYSQL_USER --mysql-password=$MYSQL_PASSWORD --mysql-db=${MYSQL_DATABASE}  --db-driver=mysql --events=0 --percentile=99 run
+    fi
     sleep 60
 fi
 
@@ -150,11 +154,18 @@ for num_threads in ${threadCountList}; do
     fi
 
     if [ ${MYSQL_STORAGE_ENGINE} == "myisam" ]; then
+	  if [ "$(sysbench --version | cut -d ' ' -f2 | grep -oe '[0-9]\.[0-9]')" == "0.5" ]; then
         # myisam version has special table lock command in oltp_myisam.lua and passes one additional parameter
         sysbench --test=${SYSBENCH_DIR}/tests/db/oltp_myisam.lua             --oltp-non-index-updates=$SYSBENCH_NON_INDEX_UPDATES_PER_TXN --oltp_tables_count=$NUM_TABLES --oltp-table-size=$NUM_ROWS --rand-init=on --num-threads=$num_threads --oltp-read-only=$READONLY --report-interval=$REPORT_INTERVAL --rand-type=$RAND_TYPE --mysql-socket=$MYSQL_SOCKET --mysql-table-engine=${MYSQL_STORAGE_ENGINE} --max-time=$RUN_TIME_SECONDS --mysql-user=$MYSQL_USER --mysql-password=$MYSQL_PASSWORD --mysql-db=${MYSQL_DATABASE} --max-requests=0 --percentile=99 --myisam-max-rows=${NUM_ROWS} run | tee $LOG_NAME
+      elif [ "$(sysbench --version | cut -d ' ' -f2 | grep -oe '[0-9]\.[0-9]')" == "1.0" ]; then
+        sysbench /usr/share/sysbench/oltp_read_write.lua --tables=$NUM_TABLES --table-size=$NUM_ROWS --threads=$num_threads --report-interval=$REPORT_INTERVAL --rand-type=$RAND_TYPE --mysql-socket=$MYSQL_SOCKET --mysql-storage-engine=${MYSQL_STORAGE_ENGINE} --time=$RUN_TIME_SECONDS --mysql-user=$MYSQL_USER --mysql-password=$MYSQL_PASSWORD --mysql-db=${MYSQL_DATABASE}  --db-driver=mysql --events=0 --percentile=99 run | tee $LOG_NAME
+      fi
     else
-        sysbench --test=${SYSBENCH_DIR}/tests/db/oltp.lua                    --oltp-non-index-updates=$SYSBENCH_NON_INDEX_UPDATES_PER_TXN --oltp_tables_count=$NUM_TABLES --oltp-table-size=$NUM_ROWS --rand-init=on --num-threads=$num_threads --oltp-read-only=$READONLY --report-interval=$REPORT_INTERVAL --rand-type=$RAND_TYPE --mysql-socket=$MYSQL_SOCKET --mysql-table-engine=${MYSQL_STORAGE_ENGINE} --max-time=$RUN_TIME_SECONDS --mysql-user=$MYSQL_USER --mysql-password=$MYSQL_PASSWORD --mysql-db=${MYSQL_DATABASE} --max-requests=0 --percentile=99 run | tee $LOG_NAME
-        #sysbench --test=${SYSBENCH_DIR}/tests/db/tokudb_oltp_fast_update.lua --oltp-non-index-updates=$SYSBENCH_NON_INDEX_UPDATES_PER_TXN --oltp_tables_count=$NUM_TABLES --oltp-table-size=$NUM_ROWS --rand-init=on --num-threads=$num_threads --oltp-read-only=$READONLY --report-interval=$REPORT_INTERVAL --rand-type=$RAND_TYPE --mysql-socket=$MYSQL_SOCKET --mysql-table-engine=${MYSQL_STORAGE_ENGINE} --max-time=$RUN_TIME_SECONDS --mysql-user=$MYSQL_USER --mysql-password=$MYSQL_PASSWORD --mysql-db=${MYSQL_DATABASE} --max-requests=0 --percentile=99 run | tee $LOG_NAME    
+      if [ "$(sysbench --version | cut -d ' ' -f2 | grep -oe '[0-9]\.[0-9]')" == "0.5" ]; then
+        sysbench --test=${SYSBENCH_DIR}/tests/db/oltp.lua                    --oltp-non-index-updates=$SYSBENCH_NON_INDEX_UPDATES_PER_TXN --oltp_tables_count=$NUM_TABLES --oltp-table-size=$NUM_ROWS --rand-init=on --num-threads=$num_threads --oltp-read-only=$READONLY --report-interval=$REPORT_INTERVAL --rand-type=$RAND_TYPE --mysql-socket=$MYSQL_SOCKET --mysql-table-engine=${MYSQL_STORAGE_ENGINE} --max-time=$RUN_TIME_SECONDS --mysql-user=$MYSQL_USER --mysql-password=$MYSQL_PASSWORD --mysql-db=${MYSQL_DATABASE} --max-requests=0 --percentile=99 run | tee $LOG_NAME    
+      elif [ "$(sysbench --version | cut -d ' ' -f2 | grep -oe '[0-9]\.[0-9]')" == "1.0" ]; then
+        sysbench /usr/share/sysbench/oltp_read_write.lua --tables=$NUM_TABLES --table-size=$NUM_ROWS --threads=$num_threads --report-interval=$REPORT_INTERVAL --rand-type=$RAND_TYPE --mysql-socket=$MYSQL_SOCKET --mysql-storage-engine=${MYSQL_STORAGE_ENGINE} --time=$RUN_TIME_SECONDS --mysql-user=$MYSQL_USER --mysql-password=$MYSQL_PASSWORD --mysql-db=${MYSQL_DATABASE}  --db-driver=mysql --events=0 --percentile=99 run | tee $LOG_NAME
+      fi 	
     fi
     echo "BEGIN-SHOW-VARIABLES" >> $LOG_NAME
     $DB_DIR/bin/mysql --user=$MYSQL_USER --password=$MYSQL_PASSWORD --socket=$MYSQL_SOCKET -e "show variables" >> $LOG_NAME
