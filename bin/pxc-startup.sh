@@ -67,22 +67,17 @@ pxc_startup(){
     ${MID} --datadir=$node1  > ${DB_DIR}/startup_node1.err 2>&1 || exit 1;
   fi
 
-  ${DB_DIR}/bin/mysqld --no-defaults --defaults-group-suffix=.1 \
-    --basedir=${DB_DIR} --datadir=$node1 \
-    --loose-debug-sync-timeout=600 --skip-performance-schema \
-    --innodb_file_per_table $PXC_MYEXTRA --innodb_autoinc_lock_mode=2 --innodb_locks_unsafe_for_binlog=1 \
-    --binlog-format=ROW --log-bin=mysql-bin  --gtid-mode=ON  --log-slave-updates --enforce-gtid-consistency \
+  ${DB_DIR}/bin/mysqld $PXC_MYEXTRA --basedir=${DB_DIR} --datadir=$node1 \
+    --innodb_autoinc_lock_mode=2 \
     --wsrep-provider=${DB_DIR}/lib/libgalera_smm.so \
     --wsrep_cluster_address=gcomm:// \
     --wsrep_node_incoming_address=$ADDR \
     --wsrep_provider_options=gmcast.listen_addr=tcp://$LADDR1 \
     --wsrep_sst_method=rsync --wsrep_sst_auth=$SUSER:$SPASS \
-    --wsrep_node_address=$ADDR --innodb_flush_method=O_DIRECT \
-    --core-file --loose-new --sql-mode=no_engine_substitution \
-    --loose-innodb --secure-file-priv= --loose-innodb-status-file=1 \
+    --wsrep_node_address=$ADDR  \
     --log-error=$node1/node1.err \
     --socket=$node1/pxc-mysql.sock --log-output=none \
-    --port=$RBASE1 --server-id=1 --wsrep_slave_threads=2 > $node1/node1.err 2>&1 &
+    --port=$RBASE1 --wsrep_slave_threads=2 > $node1/node1.err 2>&1 &
 
   for X in $(seq 0 ${PXC_START_TIMEOUT}); do
     sleep 1
@@ -96,22 +91,17 @@ pxc_startup(){
     ${MID} --datadir=$node2  > ${DB_DIR}/startup_node2.err 2>&1 || exit 1;
   fi
 
-  ${DB_DIR}/bin/mysqld --no-defaults --defaults-group-suffix=.2 \
-    --basedir=${DB_DIR} --datadir=$node2 \
-    --loose-debug-sync-timeout=600 --skip-performance-schema \
-    --innodb_file_per_table $PXC_MYEXTRA --innodb_autoinc_lock_mode=2 --innodb_locks_unsafe_for_binlog=1 \
-    --binlog-format=ROW --log-bin=mysql-bin  --gtid-mode=ON  --log-slave-updates --enforce-gtid-consistency \
+  ${DB_DIR}/bin/mysqld $PXC_MYEXTRA --basedir=${DB_DIR} --datadir=$node2 \
+    --innodb_autoinc_lock_mode=2 \
     --wsrep-provider=${DB_DIR}/lib/libgalera_smm.so \
     --wsrep_cluster_address=gcomm://$LADDR1,gcomm://$LADDR3 \
     --wsrep_node_incoming_address=$ADDR \
     --wsrep_provider_options=gmcast.listen_addr=tcp://$LADDR2 \
     --wsrep_sst_method=rsync --wsrep_sst_auth=$SUSER:$SPASS \
-    --wsrep_node_address=$ADDR --innodb_flush_method=O_DIRECT \
-    --core-file --loose-new --sql-mode=no_engine_substitution \
-    --loose-innodb --secure-file-priv= --loose-innodb-status-file=1 \
+    --wsrep_node_address=$ADDR  \
     --log-error=$node2/node2.err \
     --socket=$node2/pxc-mysql.sock --log-output=none \
-    --port=$RBASE2 --server-id=2 --wsrep_slave_threads=2 > $node2/node2.err 2>&1 &
+    --port=$RBASE2 --wsrep_slave_threads=2 > $node2/node2.err 2>&1 &
 
   for X in $(seq 0 ${PXC_START_TIMEOUT}); do
     sleep 1
@@ -125,22 +115,17 @@ pxc_startup(){
     ${MID} --datadir=$node3  > ${DB_DIR}/startup_node3.err 2>&1 || exit 1;
   fi
 
-  ${DB_DIR}/bin/mysqld --no-defaults --defaults-group-suffix=.3 \
-    --basedir=${DB_DIR} --datadir=$node3 \
-    --loose-debug-sync-timeout=600 --skip-performance-schema \
-    --innodb_file_per_table $PXC_MYEXTRA --innodb_autoinc_lock_mode=2 --innodb_locks_unsafe_for_binlog=1 \
-    --binlog-format=ROW --log-bin=mysql-bin  --gtid-mode=ON  --log-slave-updates --enforce-gtid-consistency \
+  ${DB_DIR}/bin/mysqld $PXC_MYEXTRA --basedir=${DB_DIR} --datadir=$node3 \
+    --innodb_autoinc_lock_mode=2 \
     --wsrep-provider=${DB_DIR}/lib/libgalera_smm.so \
     --wsrep_cluster_address=gcomm://$LADDR1,gcomm://$LADDR2 \
     --wsrep_node_incoming_address=$ADDR \
     --wsrep_provider_options=gmcast.listen_addr=tcp://$LADDR3 \
     --wsrep_sst_method=rsync --wsrep_sst_auth=$SUSER:$SPASS \
-    --wsrep_node_address=$ADDR --innodb_flush_method=O_DIRECT \
-    --core-file --loose-new --sql-mode=no_engine_substitution \
-    --loose-innodb --secure-file-priv= --loose-innodb-status-file=1 \
+    --wsrep_node_address=$ADDR  \
     --log-error=$node3/node3.err \
     --socket=$node3/pxc-mysql.sock --log-output=none \
-    --port=$RBASE3 --server-id=3 --wsrep_slave_threads=2 > $node3/node3.err 2>&1 &
+    --port=$RBASE3 --wsrep_slave_threads=2 > $node3/node3.err 2>&1 &
 
   for X in $(seq 0 ${PXC_START_TIMEOUT}); do
     sleep 1
@@ -154,7 +139,11 @@ pxc_startup(){
 
   if [ ${BENCH_SUITE} == "sysbench" ];then
     if [ $run_mid -eq 1 ]; then
-      /usr/bin/sysbench --test=/usr/share/doc/sysbench/tests/db/parallel_prepare.lua --num-threads=${NUM_TABLES} --oltp-tables-count=${NUM_TABLES}  --oltp-table-size=${NUM_ROWS} --mysql-db=test --mysql-user=root    --db-driver=mysql --mysql-socket=${node1}/pxc-mysql.sock run > ${BIG_DIR}/sysbench_prepare.log 2>&1
+      if [ "$(sysbench --version | cut -d ' ' -f2 | grep -oe '[0-9]\.[0-9]')" == "0.5" ]; then
+        /usr/bin/sysbench --test=/usr/share/doc/sysbench/tests/db/parallel_prepare.lua --num-threads=${NUM_TABLES} --oltp-tables-count=${NUM_TABLES}  --oltp-table-size=${NUM_ROWS} --mysql-db=test --mysql-user=root    --db-driver=mysql --mysql-socket=${node1}/pxc-mysql.sock run > ${BIG_DIR}/sysbench_prepare.log 2>&1
+      elif [ "$(sysbench --version | cut -d ' ' -f2 | grep -oe '[0-9]\.[0-9]')" == "1.0" ]; then
+        sysbench /usr/share/sysbench/oltp_insert.lua --mysql-storage-engine=$MYSQL_STORAGE_ENGINE --rand-type=$RAND_TYPE  --threads=${NUM_TABLES} --tables=${NUM_TABLES}  --table-size=${NUM_ROWS} --mysql-db=test --mysql-user=root    --db-driver=mysql --mysql-socket=${node1}/pxc-mysql.sock prepare > $WORK_DIR/sysbench_prepare.log 2>&1
+      fi
       timeout --signal=9 20s ${DB_DIR}/bin/mysqladmin -uroot --socket=${node1}/pxc-mysql.sock shutdown > /dev/null 2>&1
       timeout --signal=9 20s ${DB_DIR}/bin/mysqladmin -uroot --socket=${node2}/pxc-mysql.sock shutdown > /dev/null 2>&1
       timeout --signal=9 20s ${DB_DIR}/bin/mysqladmin -uroot --socket=${node3}/pxc-mysql.sock shutdown > /dev/null 2>&1
@@ -214,14 +203,21 @@ psmode_startup(){
     fi
   done
 
+  # Running sysbench
+  echo "Running sysbench"
   if [ ${BENCH_SUITE} == "sysbench" ];then
     if [ $run_mid -eq 1 ]; then
-      /usr/bin/sysbench --test=/usr/share/doc/sysbench/tests/db/parallel_prepare.lua --num-threads=${NUM_TABLES} --oltp-tables-count=${NUM_TABLES}  --oltp-table-size=${NUM_ROWS} --mysql-db=test --mysql-user=root    --db-driver=mysql --mysql-socket=${node1}/pxc-mysql.sock run > ${BIG_DIR}/sysbench_prepare.log 2>&1
+      if [ "$(sysbench --version | cut -d ' ' -f2 | grep -oe '[0-9]\.[0-9]')" == "0.5" ]; then
+        /usr/bin/sysbench --test=/usr/share/doc/sysbench/tests/db/parallel_prepare.lua --rand-type=$RAND_TYPE --num-threads=${NUM_TABLES} --oltp-tables-count=${NUM_TABLES}  --oltp-table-size=${NUM_ROWS} --mysql-db=test --mysql-user=root    --db-driver=mysql --mysql-socket=${node1}/pxc-mysql.sock run > ${BIG_DIR}/sysbench_prepare.log 2>&1
+      elif [ "$(sysbench --version | cut -d ' ' -f2 | grep -oe '[0-9]\.[0-9]')" == "1.0" ]; then
+        sysbench /usr/share/sysbench/oltp_insert.lua --mysql-storage-engine=$MYSQL_STORAGE_ENGINE --rand-type=$RAND_TYPE  --threads=${NUM_TABLES} --tables=${NUM_TABLES}  --table-size=${NUM_ROWS} --mysql-db=test --mysql-user=root    --db-driver=mysql --mysql-socket=${node1}/pxc-mysql.sock prepare > $WORK_DIR/sysbench_prepare.log 2>&1
+      fi
       timeout --signal=9 20s ${DB_DIR}/bin/mysqladmin -uroot --socket=${node1}/pxc-mysql.sock shutdown > /dev/null 2>&1
     fi
   fi
 
 }
+
 if [ ${PS_MODE} -eq 1 ];then
   psmode_startup ${MYEXTRA}
 else
