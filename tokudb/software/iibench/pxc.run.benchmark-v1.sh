@@ -32,7 +32,7 @@ if [ -z "$MYSQL_VERSION" ]; then
     export MYSQL_VERSION=5.5.28
 fi
 if [ -z "$MYSQL_STORAGE_ENGINE" ]; then
-    export MYSQL_STORAGE_ENGINE=tokudb
+    export MYSQL_STORAGE_ENGINE=innodb
 fi
 if [ -z "$BENCHMARK_NUMBER" ]; then
     export BENCHMARK_NUMBER=001
@@ -72,63 +72,27 @@ if [ -z "$IIBENCH_CREATE_TABLE" ]; then
 fi
 
 
-if [ ${MYSQL_STORAGE_ENGINE} == "innodb" ]; then
-    if [ -z "$INNODB_CACHE" ]; then
-        echo "Need to set INNODB_CACHE"
-        exit 1
-    fi
-    export INNODB_COMPRESSION=N
-    export INNODB_KEY_BLOCK_SIZE=8
-    export INNODB_BUFFER_POOL_SIZE=${INNODB_CACHE}
-    # O_DIRECT, O_DSYNC, **default is special case and not yet supported by this script**
-    export INNODB_FLUSH_METHOD=O_DIRECT
-    if [ -z "$TARBALL" ]; then
-        export TARBALL=blank-mysql5529
-    fi
-    if [ ${INNODB_COMPRESSION} == "Y" ]; then
-        if [ -z "$BENCH_ID" ]; then
-            export BENCH_ID=118.compressed.${INNODB_KEY_BLOCK_SIZE}
-        fi
-        IIBENCH_EXTRA_ARGS="--innodb_compression --innodb_key_block_size=${INNODB_KEY_BLOCK_SIZE}"
-    else
-        if [ -z "$BENCH_ID" ]; then
-            export BENCH_ID=118
-        fi
-    fi
-elif [ ${MYSQL_STORAGE_ENGINE} == "deepdb" ]; then
-    if [ -z "$DEEPDB_CACHE_SIZE" ]; then
-        echo "Need to set DEEPDB_CACHE_SIZE"
-        exit 1
-    fi
-    if [ -z "$TARBALL" ]; then
-        echo "Need to set TARBALL"
-        exit 1
-    fi
-elif [ ${MYSQL_STORAGE_ENGINE} == "wiredtiger" ]; then
-    echo "Currently no customized settings for WIREDTIGER."
-elif [ ${MYSQL_STORAGE_ENGINE} == "rocksdb" ]; then
-    if [ -z "$ROCKSDB_CACHE" ]; then
-        echo "Need to set ROCKSDB_CACHE"
-        exit 1
-    fi
+if [ -z "$INNODB_CACHE" ]; then
+  echo "Need to set INNODB_CACHE"
+  exit 1
+fi
+export INNODB_COMPRESSION=N
+export INNODB_KEY_BLOCK_SIZE=8
+export INNODB_BUFFER_POOL_SIZE=${INNODB_CACHE}
+# O_DIRECT, O_DSYNC, **default is special case and not yet supported by this script**
+export INNODB_FLUSH_METHOD=O_DIRECT
+if [ -z "$TARBALL" ]; then
+  export TARBALL=blank-mysql5529
+fi
+if [ ${INNODB_COMPRESSION} == "Y" ]; then
+  if [ -z "$BENCH_ID" ]; then
+    export BENCH_ID=118.compressed.${INNODB_KEY_BLOCK_SIZE}
+  fi
+  IIBENCH_EXTRA_ARGS="--innodb_compression --innodb_key_block_size=${INNODB_KEY_BLOCK_SIZE}"
 else
-    # pick your basement node size: 64k=65536, 128K=131072
-    if [ -z "$TOKUDB_READ_BLOCK_SIZE" ]; then
-        export TOKUDB_READ_BLOCK_SIZE=65536
-    fi
-    
-    if [ -z "$TOKUDB_COMPRESSION" ]; then
-        export TOKUDB_COMPRESSION=quicklz
-    fi
-    
-    export TOKUDB_ROW_FORMAT=tokudb_${TOKUDB_COMPRESSION}
-    
-    if [ -z "$TARBALL" ]; then
-        export TARBALL=blank-toku665.54176.backup-mysql-5.5.28
-    fi
-    if [ -z "$BENCH_ID" ]; then
-        export BENCH_ID=665.54176.backup
-    fi
+  if [ -z "$BENCH_ID" ]; then
+    export BENCH_ID=118
+  fi
 fi
 
 export MYSQL_USER=root
@@ -201,7 +165,6 @@ LOG_NAME=${MACHINE_NAME}-${MYSQL_NAME}-${MYSQL_VERSION}-${MYSQL_STORAGE_ENGINE}-
 
 rm -f $LOG_NAME
 
-
 # ---------------------------------------------------------------------------
 # create the database, start it, update global defaults
 # ---------------------------------------------------------------------------
@@ -212,71 +175,31 @@ if [ ${SKIP_DB_CREATE} == "N" ]; then
     # ---------------------------------------------------------------------------
     
     if [ -e "${DB_DIR}/bin/mysqladmin" ]; then
-        ${DB_DIR}/bin/mysqladmin --user=${MYSQL_USER} --socket=${MYSQL_SOCKET} shutdown
+       ${DB_DIR}/bin/mysqladmin --user=${MYSQL_USER} --socket=${DB_DIR}/node1/pxc-mysql.sock shutdown >/dev/null 2>&1
+       ${DB_DIR}/bin/mysqladmin --user=${MYSQL_USER} --socket=${DB_DIR}/node2/pxc-mysql.sock shutdown >/dev/null 2>&1
+       ${DB_DIR}/bin/mysqladmin --user=${MYSQL_USER} --socket=${DB_DIR}/node3/pxc-mysql.sock shutdown >/dev/null 2>&1
+       ps -ef | grep 'pxc-mysql.sock' | grep ${BUILD_NUMBER} | grep -v grep | awk '{print $2}' | xargs kill -9 >/dev/null 2>&1 || true
     fi
 
     echo "Creating database from ${TARBALL} in ${DB_DIR}"
-    if [ ${MYSQL_STORAGE_ENGINE} == "innodb" ]; then
-        MYSQL_OPTS="--innodb_buffer_pool_size=${INNODB_CACHE} --innodb_flush_method=${INNODB_FLUSH_METHOD}"
-    elif [ ${MYSQL_STORAGE_ENGINE} == "rocksdb" ]; then
-        MYSQL_OPTS="--rocksdb-block-cache-size=${ROCKSDB_CACHE} --plugin-load-add=rocksdb=ha_rocksdb.so --init-file=${SCRIPT_DIR}/MyRocks.sql --default-storage-engine=ROCKSDB --rocksdb_block_size=16384"
-    elif [ ${MYSQL_STORAGE_ENGINE} == "deepdb" ]; then
-        MYSQL_OPTS="deepdb_cache_size=${DEEBDB_CACHE_SIZE}"
-        #echo "[mysqld_safe]" >> my.cnf
-        #echo "malloc-lib=$PWD/lib/plugin/libtcmalloc_minimal.so" >> my.cnf
-    elif [ ${MYSQL_STORAGE_ENGINE} == "wiredtiger" ]; then
-        # no customizations for wiredtiger, yet.
-        tempWtVar=1
-    else
-        MYSQL_OPTS="--tokudb_read_block_size=${TOKUDB_READ_BLOCK_SIZE} --tokudb_row_format=${TOKUDB_ROW_FORMAT} --tokudb_cache_size=${TOKUDB_DIRECTIO_CACHE} --plugin-load=tokudb=ha_tokudb.so --init-file=${SCRIPT_DIR}/TokuDB.sql"
-        if [ ${DIRECTIO} == "Y" ]; then
-            echo "tokudb_directio=1" >> my.cnf
-            MYSQL_OPTS="$MYSQL_OPTS --tokudb_directio=1"
-        fi
-    fi
-    rm -Rf  ${DB_DIR}/data/*
-    mkdir -p  ${DB_DIR}/tmp
+    MYSQL_OPTS="--innodb_buffer_pool_size=${INNODB_CACHE}"
     BIN=`find ${DB_DIR} -maxdepth 2 -name mysqld -type f -o -name mysqld-debug -type f | head -1`;if [ -z $BIN ]; then echo "Assert! mysqld binary '$BIN' could not be read";exit 1;fi
-    MID=`find ${DB_DIR} -maxdepth 2 -name mysql_install_db`;if [ -z $MID ]; then echo "Assert! mysql_install_db '$MID' could not be read";exit 1;fi
-
-    if [ "`$BIN --version | grep -oe '5\.[1567]' | head -n1`" == "5.7" ]; then 
-      VERSION_CHK=`$BIN  --version | grep -oe '5\.[1567]\.[0-9]*' | cut -f3 -d'.' | head -n1`
-      if [[ $VERSION_CHK -ge 5 ]]; then
-        MID_OPTIONS="--initialize-insecure"
-      else
-        MID_OPTIONS="--insecure"
-      fi
-    elif [ "`$BIN --version | grep -oe '5\.[1567]' | head -n1`" == "5.6" ]; then 
-      MID_OPTIONS='--force'; 
-    elif [ "`$BIN --version | grep -oe '5\.[1567]' | head -n1`" == "5.5" ]; then 
-      MID_OPTIONS='--force';
-    else 
-      MID_OPTIONS=''; 
-    fi
-
-    if [ "${MID_OPTIONS}" == "--initialize-insecure" ]; then
-      MID="${DB_DIR}/bin/mysqld"
-    else
-      MID="${DB_DIR}/bin/mysql_install_db"
-    fi
-    
-    $MID --no-defaults --basedir=${DB_DIR} --datadir=${DB_DIR}/data $MID_OPTIONS > ${DB_DIR}/mysqld_install.out  2>&1
-    mkdir -p  ${DB_DIR}/data/test
     ## Starting mysqld
-    if [ "${JEMALLOC}" != "" -a -r "${JEMALLOC}" ]; then export LD_PRELOAD=${JEMALLOC}
-    elif [ -r /usr/lib64/libjemalloc.so.1 ]; then export LD_PRELOAD=/usr/lib64/libjemalloc.so.1
-    elif [ -r /usr/lib/x86_64-linux-gnu/libjemalloc.so.1 ]; then export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.1
-    elif [ -r ${DB_DIR}/lib/mysql/libjemalloc.so.1 ]; then export LD_PRELOAD=${DB_DIR}/lib/mysql/libjemalloc.so.1
-    else echo 'Warning: jemalloc was not loaded as it was not found (this is fine for MS, but do check ./1430715139_DB_DIR to set correct jemalloc location for PS)'; fi
-    $BIN --no-defaults ${MYEXTRA} --basedir=${DB_DIR} --datadir=${DB_DIR}/data ${MYSQL_OPTS}  --port=${MYSQL_PORT} --pid-file=${DB_DIR}/data/pid.pid --core-file --socket=${MYSQL_SOCKET} --log-error=${DB_DIR}/data/error.log.out >  ${DB_DIR}/data/mysqld.out 2>&1 &
-    for X in $(seq 0 60); do
-      sleep 1
-      if ${DB_DIR}/bin/mysqladmin -uroot -S${MYSQL_SOCKET} ping > /dev/null 2>&1; then
-        break
-      fi
-    done
+    export MYEXTRA="${MYEXTRA} ${MYSQL_OPTS}"
+    ${SCRIPT_DIR}/pxc-startup.sh startup
+    #$BIN --no-defaults ${MYEXTRA} --basedir=${DB_DIR} --datadir=${DB_DIR}/data ${MYSQL_OPTS}  --port=${MYSQL_PORT} --pid-file=${DB_DIR}/data/pid.pid --core-file --socket=${MYSQL_SOCKET} --log-error=${DB_DIR}/data/error.log.out >  ${DB_DIR}/data/mysqld.out 2>&1 &
 
 fi
+
+
+if [ ${RUN_ARBITRARY_SQL} == "Y" ]; then
+    LOG_NAME_SQL=${MACHINE_NAME}.txt.arbitrary-sql
+    if [ -z "$arbitrarySqlWaitSeconds" ]; then
+        export arbitrarySqlWaitSeconds=300
+    fi
+    mysql-run-arbitrary-sql ${arbitrarySqlWaitSeconds} "create index idx_hot_test on purchases_index (productid,customerid,cashregisterid);" ${LOG_NAME_SQL} &
+fi
+
 
 # ---------------------------------------------------------------------------
 # run the benchmark
@@ -306,8 +229,12 @@ python iibench.py ${CREATE_TABLE_STRING} --db_socket=${MYSQL_SOCKET} --db_name=$
 if [ ${SHUTDOWN_MYSQL} == "Y" ]; then
     # ---------------------------------------------------------------------------
     # stop mysql (leave things as you found them)
-    # --------------------------------------------------------------------------- 
-    ${DB_DIR}/bin/mysqladmin --user=${MYSQL_USER} --socket=${MYSQL_SOCKET} shutdown
+    # ---------------------------------------------------------------------------
+    ${DB_DIR}/bin/mysqladmin --user=${MYSQL_USER} --socket=${DB_DIR}/node1/pxc-mysql.sock shutdown >/dev/null 2>&1
+    ${DB_DIR}/bin/mysqladmin --user=${MYSQL_USER} --socket=${DB_DIR}/node2/pxc-mysql.sock shutdown >/dev/null 2>&1
+    ${DB_DIR}/bin/mysqladmin --user=${MYSQL_USER} --socket=${DB_DIR}/node3/pxc-mysql.sock shutdown >/dev/null 2>&1
+    ps -ef | grep 'pxc-mysql.sock' | grep ${BUILD_NUMBER} | grep -v grep | awk '{print $2}' | xargs kill -9 >/dev/null 2>&1 || true
+    sleep 2;sync
 fi
 
 sleep 15
@@ -325,5 +252,5 @@ else
 fi
 echo "[ '${BUILD_NUMBER}', ${result_set[*]} $avg_result ]," >> ${WORKSPACE_LOC}/iibench_${BENCH_ID}_perf_result_set.txt
  
-rm -f ${MACHINE_NAME}* ${tarFileName}  
+rm -f ${MACHINE_NAME}* ${tarFileName}
 

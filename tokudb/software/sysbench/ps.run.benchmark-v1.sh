@@ -144,5 +144,5 @@ cp ${tarFileName} ${SCP_TARGET}
 
 for i in {0..7}; do if [ -z ${result_set[i]} ]; then  result_set[i]=',0' ; fi; done
 echo "[ '${BUILD_NUMBER}' ${result_set[*]} ]," >> ${WORKSPACE_LOC}/sysbench_${BENCH_ID}_perf_result_set.txt
-rm -f ${MACHINE_NAME}*
+rm -f ${MACHINE_NAME}* ${tarFileName}
 

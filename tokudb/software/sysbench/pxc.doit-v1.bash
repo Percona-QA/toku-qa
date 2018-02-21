@@ -73,10 +73,8 @@ if [ -z "$INNODB_CACHE" ]; then
   echo "Need to set INNODB_CACHE"
   exit 1
 fi
-if [ ${DIRECTIO} == "N" ]; then
-  MYSQL_OPTS="--innodb_flush_method=${INNODB_FLUSH_METHOD}"
-fi
-MYSQL_OPTS="$MYSQL_OPTS --innodb_buffer_pool_size=${INNODB_CACHE} --max_connections=2048"
+
+MYSQL_OPTS="$MYSQL_OPTS --innodb_buffer_pool_size=${INNODB_CACHE}"
 
 if [ ${SKIP_DB_CREATE} == "N" ]; then
   timeout --signal=9 20s ${DB_DIR}/bin/mysqladmin -uroot --socket=${DB_DIR}/node1/pxc-mysql.sock shutdown > /dev/null 2>&1
