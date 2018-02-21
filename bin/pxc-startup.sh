@@ -144,6 +144,9 @@ pxc_startup(){
       elif [ "$(sysbench --version | cut -d ' ' -f2 | grep -oe '[0-9]\.[0-9]')" == "1.0" ]; then
         sysbench /usr/share/sysbench/oltp_insert.lua --mysql-storage-engine=$MYSQL_STORAGE_ENGINE --rand-type=$RAND_TYPE  --threads=${NUM_TABLES} --tables=${NUM_TABLES}  --table-size=${NUM_ROWS} --mysql-db=test --mysql-user=root    --db-driver=mysql --mysql-socket=${node1}/pxc-mysql.sock prepare > $WORK_DIR/sysbench_prepare.log 2>&1
       fi
+      #Purging binary log files to clear the space 
+      ${DB_DIR}/bin/mysql --socket=${node1}/pxc-mysql.sock -uroot -e"select @ttime := from_unixtime(unix_timestamp(now())-60);purge binary logs before @ttime;" 2>&1
+
       timeout --signal=9 20s ${DB_DIR}/bin/mysqladmin -uroot --socket=${node1}/pxc-mysql.sock shutdown > /dev/null 2>&1
       timeout --signal=9 20s ${DB_DIR}/bin/mysqladmin -uroot --socket=${node2}/pxc-mysql.sock shutdown > /dev/null 2>&1
       timeout --signal=9 20s ${DB_DIR}/bin/mysqladmin -uroot --socket=${node3}/pxc-mysql.sock shutdown > /dev/null 2>&1
@@ -212,6 +215,9 @@ psmode_startup(){
       elif [ "$(sysbench --version | cut -d ' ' -f2 | grep -oe '[0-9]\.[0-9]')" == "1.0" ]; then
         sysbench /usr/share/sysbench/oltp_insert.lua --mysql-storage-engine=$MYSQL_STORAGE_ENGINE --rand-type=$RAND_TYPE  --threads=${NUM_TABLES} --tables=${NUM_TABLES}  --table-size=${NUM_ROWS} --mysql-db=test --mysql-user=root    --db-driver=mysql --mysql-socket=${node1}/pxc-mysql.sock prepare > $WORK_DIR/sysbench_prepare.log 2>&1
       fi
+      #Purging binary log files to clear the space 
+      ${DB_DIR}/bin/mysql --socket=${node1}/pxc-mysql.sock -uroot -e"select @ttime := from_unixtime(unix_timestamp(now())-60);purge binary logs before @ttime;" 2>&1
+
       timeout --signal=9 20s ${DB_DIR}/bin/mysqladmin -uroot --socket=${node1}/pxc-mysql.sock shutdown > /dev/null 2>&1
     fi
   fi

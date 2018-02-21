@@ -95,6 +95,9 @@ if [ ${SKIP_DB_CREATE} == "N" ]; then
     cp -r ${BIG_DIR}/sysbench_data_template/node2 ${DB_DIR}/node2
     cp -r ${BIG_DIR}/sysbench_data_template/node3 ${DB_DIR}/node3
   fi
+  ## Clearing OS cache
+  ECHO=$(which echo)
+  sudo sync;sudo sh -c "$ECHO 3 > /proc/sys/vm/drop_caches"
   ## Starting pxc nodes 
   ${SCRIPT_DIR}/pxc-startup.sh
 else
@@ -111,8 +114,9 @@ else
     echo "Assert! could not find data directory template.."
     exit 1
   fi
-  ## Starting pxc nodes
-  #BIN=`find ${DB_DIR} -maxdepth 2 -name mysqld -type f -o -name mysqld-debug -type f | head -1`;if [ -z $BIN ]; then echo "Assert! mysqld binary '$BIN' could not be read";exit 1;fi
+  ## Clearing OS cache
+  ECHO=$(which echo)
+  sudo sync;sudo sh -c "$ECHO 3 > /proc/sys/vm/drop_caches"
   ${SCRIPT_DIR}/pxc-startup.sh
 fi
 
