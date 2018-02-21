@@ -219,7 +219,7 @@ psmode_startup(){
 }
 
 if [ ${PS_MODE} -eq 1 ];then
-  psmode_startup ${MYEXTRA}
+  psmode_startup "${MYEXTRA}"
 else
-  pxc_startup ${MYEXTRA}
+  pxc_startup "${MYEXTRA}"
 fi
