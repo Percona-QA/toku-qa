@@ -309,7 +309,7 @@ dataload_run(){
   export CGROUP_MEM=15G
   export RAND_TYPE=uniform
   export BENCH_ID=${MYSQL_STORAGE_ENGINE}.dataload
-  export NUM_ROWS=1000000
+  export NUM_ROWS=100000
   export BENCHMARK_NUMBER=008
   export threadCountList="1 4 16 64 128 256 512 1024"
       
