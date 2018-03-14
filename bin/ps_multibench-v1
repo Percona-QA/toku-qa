@@ -73,9 +73,9 @@ do
     --benchmark )
     BENCHMARK="$2"
     shift 2
-    if [ "$BENCHMARK" != "sysbench" ] && [ "$BENCHMARK" != "iibench" ] && [ "$BENCHMARK" != "all" ]; then
+    if [ "$BENCHMARK" != "sysbench" ] && [ "$BENCHMARK" != "iibench" ] && [ "$BENCHMARK" != "dataload" ] && [ "$BENCHMARK" != "all" ]; then
       echo "ERROR: Invalid --benchmark passed:"
-      echo "  Please choose any of these benchmark options: sysbench, iibench, all"
+      echo "  Please choose any of these benchmark options: sysbench, iibench, dataload, all"
       exit 1
     fi
     ;;
@@ -297,6 +297,26 @@ sysbench_run(){
   unset threadCountList
 }   
 
+dataload_run(){
+  # **********************************************************************************************
+  # sysbench
+  # **********************************************************************************************
+  # CPU bound performance run
+  export BENCH_SUITE=dataload_run
+  export INNODB_CACHE=10G
+  export TOKUDB_DIRECTIO_CACHE=10G
+  export ROCKSDB_CACHE=10G
+  export CGROUP_MEM=15G
+  export RAND_TYPE=uniform
+  export BENCH_ID=${MYSQL_STORAGE_ENGINE}.dataload
+  export NUM_ROWS=1000000
+  export BENCHMARK_NUMBER=008
+  export threadCountList="1 4 16 64 128 256 512 1024"
+      
+  ${SCRIPT_DIR}/ps.dataload.benchmark-v1.sh
+  unset threadCountList
+}   
+
 if [[ "$BENCHMARK" == "all" ]] ; then
   echo "Initiated iibench/sysbench performance run"
   iibench_run
@@ -307,6 +327,9 @@ elif [[ "$BENCHMARK" == "iibench" ]] ; then
 elif [[ "$BENCHMARK" == "sysbench" ]] ; then
   echo "Initiated sysbench performance run"
   sysbench_run
+elif [[ "$BENCHMARK" == "dataload" ]] ; then
+  echo "Initiated dataload performance run"
+  dataload_run
 fi
     #Generate graph
 VERSION_INFO=`$DB_DIR/bin/mysqld --version | cut -d' ' -f2-`
