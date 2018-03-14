@@ -137,7 +137,7 @@ if [ ${MYSQL_STORAGE_ENGINE} == "rocksdb" ]; then
 fi
 
 echo "Running bulk dataload benchmark"
-for i in `seq 1 10000`; do
+for i in `seq 1 1000`; do
   STR1=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
   STR2=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
   STR3=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
