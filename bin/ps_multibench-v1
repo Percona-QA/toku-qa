@@ -321,6 +321,7 @@ if [[ "$BENCHMARK" == "all" ]] ; then
   echo "Initiated iibench/sysbench performance run"
   iibench_run
   sysbench_run
+  dataload_run
 elif [[ "$BENCHMARK" == "iibench" ]] ; then
   echo "Initiated iibench performance run"
   iibench_run

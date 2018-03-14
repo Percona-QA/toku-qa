@@ -136,7 +136,25 @@ if [ ${MYSQL_STORAGE_ENGINE} == "rocksdb" ]; then
   sudo cgclassify -g memory:DBLimitedGroup `pidof mysqld`
 fi
 
-echo "Running benchmark"
+echo "Running bulk dataload benchmark"
+for i in `seq 1 10000`; do
+  STR1=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
+  STR2=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
+  STR3=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
+  yes "$RANDOM,$STR1,$STR2" | head -n 100000 >> ${DB_DIR}/big_data.csv
+done
+
+${DB_DIR}/bin/mysql -uroot -S${MYSQL_SOCKET} -e"CREATE TABLE IF NOT EXISTS test.random_text ( random_id int NOT NULL, random_str1 varchar(33) NOT NULL, random_str2 varchar(33) NOT NULL, random_str3 varchar(33) NOT NULL );" > /dev/null 2>&1;
+bulk_load_time=$( { time -p  ${DB_DIR}/bin/mysql -uroot -S${MYSQL_SOCKET} -e"LOAD DATA LOCAL INFILE '${DB_DIR}/big_data.csv' INTO TABLE test.random_text FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n'; " > /dev/null 2>&1; } 2>&1 )
+bulk_load_time=(`echo $bulk_load_time | grep -o "real.*" | awk '{print $2}'`)
+echo "[ '${BUILD_NUMBER}' ${bulk_load_time} ]," >> ${WORKSPACE_LOC}/${BENCH_ID}_load_data_perf_result_set.txt
+
+echo "Running mysqldump benchmark"
+mysqlump_time=$( { time -p  ${DB_DIR}/bin/mysqldump -uroot -S${MYSQL_SOCKET} test > ${DB_DIR}/backup.sql 2>&1; } 2>&1 )
+mysqlump_time=(`echo $mysqlump_time | grep -o "real.*" | awk '{print $2}'`)
+echo "[ '${BUILD_NUMBER}' ${mysqlump_time} ]," >> ${WORKSPACE_LOC}/${BENCH_ID}_mysqldump_perf_result_set.txt
+
+echo "Running sysbench dataload benchmark"
 # run for real
 for num_threads in ${threadCountList}; do
     if [ "$(sysbench --version | cut -d ' ' -f2 | grep -oe '[0-9]\.[0-9]')" == "0.5" ]; then
@@ -153,11 +171,11 @@ for num_threads in ${threadCountList}; do
 done
 
 for i in {0..7}; do if [ -z ${result_set[i]} ]; then  result_set[i]=',0' ; fi; done
-echo "[ '${BUILD_NUMBER}' ${result_set[*]} ]," >> ${WORKSPACE_LOC}/${BENCH_ID}_perf_result_set.txt
+echo "[ '${BUILD_NUMBER}' ${result_set[*]} ]," >> ${WORKSPACE_LOC}/${BENCH_ID}_sysbench_perf_result_set.txt
 
 DATE=`date +"%Y%m%d%H%M%S"`
-tarFileName="{BENCH_ID}_perf_result_set_${DATE}.tar.gz"
-tar czvf ${tarFileName} ${DB_DIR}/data/error.log.out ${WORKSPACE_LOC}/${BENCH_ID}_perf_result_set.txt
+tarFileName="${BENCH_ID}_perf_result_set_${DATE}.tar.gz"
+tar czvf ${tarFileName} ${DB_DIR}/data/error.log.out ${WORKSPACE_LOC}/${BENCH_ID}_*.txt
 cp ${tarFileName} ${SCP_TARGET}
 
 echo "Stopping database"
