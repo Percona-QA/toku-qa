@@ -141,7 +141,7 @@ for i in `seq 1 1000`; do
   STR1=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
   STR2=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
   STR3=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
-  yes "$RANDOM,$STR1,$STR2" | head -n 100000 >> ${DB_DIR}/big_data.csv
+  yes "$RANDOM,$STR1,$STR2,$STR3" | head -n 100000 >> ${DB_DIR}/big_data.csv
 done
 
 ${DB_DIR}/bin/mysql -uroot -S${MYSQL_SOCKET} -e"CREATE TABLE IF NOT EXISTS test.random_text ( random_id int NOT NULL, random_str1 varchar(33) NOT NULL, random_str2 varchar(33) NOT NULL, random_str3 varchar(33) NOT NULL ) engine=${MYSQL_STORAGE_ENGINE};" > /dev/null 2>&1;
