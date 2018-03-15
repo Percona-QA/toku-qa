@@ -144,7 +144,7 @@ for i in `seq 1 1000`; do
   yes "$RANDOM,$STR1,$STR2,$STR3" | head -n 100000 >> ${DB_DIR}/big_data.csv
 done
 
-${DB_DIR}/bin/mysql -uroot -S${MYSQL_SOCKET} -e"CREATE TABLE IF NOT EXISTS test.random_text ( random_id int NOT NULL, random_str1 varchar(33) NOT NULL, random_str2 varchar(33) NOT NULL, random_str3 varchar(33) NOT NULL ) engine=${MYSQL_STORAGE_ENGINE};" > /dev/null 2>&1;
+${DB_DIR}/bin/mysql -uroot -S${MYSQL_SOCKET} -e"CREATE TABLE IF NOT EXISTS test.random_text ( random_id int, random_str1 varchar(33) NOT NULL, random_str2 varchar(33) NOT NULL, random_str3 varchar(33) NOT NULL ) engine=${MYSQL_STORAGE_ENGINE};" > /dev/null 2>&1;
 bulk_load_time=$( { time -p  ${DB_DIR}/bin/mysql -uroot -S${MYSQL_SOCKET} -e"LOAD DATA LOCAL INFILE '${DB_DIR}/big_data.csv' INTO TABLE test.random_text FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n'; " > /dev/null 2>&1; } 2>&1 )
 bulk_load_time=(`echo $bulk_load_time | grep -o "real.*" | awk '{print $2}'`)
 echo "[ '${BUILD_NUMBER}' ${bulk_load_time} ]," >> ${WORKSPACE_LOC}/${BENCH_ID}_load_data_perf_result_set.txt
