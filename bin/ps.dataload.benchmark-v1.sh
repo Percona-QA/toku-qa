@@ -54,6 +54,9 @@ fi
 if [ -z "$READONLY" ]; then
     export READONLY=off
 fi
+if [ -z "$MYSQL_PORT" ]; then
+    export MYSQL_PORT=$((( RANDOM%21 + 10 ) * 1000 ))
+fi
 
 export BENCHMARK_LOGGING=Y
 export LOADER_LOGGING=Y
