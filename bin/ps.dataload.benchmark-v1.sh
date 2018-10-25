@@ -66,6 +66,35 @@ export MYSQL_USER=root
 
 export TOKUDB_ROW_FORMAT=tokudb_${TOKUDB_COMPRESSION}
 
+#Format version string (thanks to wsrep_sst_xtrabackup-v2) 
+normalize_version(){
+  local major=0
+  local minor=0
+  local patch=0
+  
+  # Only parses purely numeric version numbers, 1.2.3
+  # Everything after the first three values are ignored
+  if [[ $1 =~ ^([0-9]+)\.([0-9]+)\.?([0-9]*)([\.0-9])*$ ]]; then
+    major=${BASH_REMATCH[1]}
+    minor=${BASH_REMATCH[2]}
+    patch=${BASH_REMATCH[3]}
+  fi
+  printf %02d%02d%02d $major $minor $patch
+}
+
+#Version comparison script (thanks to wsrep_sst_xtrabackup-v2) 
+check_for_version()
+{
+  local local_version_str="$( normalize_version $1 )"
+  local required_version_str="$( normalize_version $2 )"
+  
+  if [[ "$local_version_str" < "$required_version_str" ]]; then
+    return 1
+  else
+    return 0
+  fi
+}
+
 if [ ${MYSQL_STORAGE_ENGINE} == "innodb" ]; then
   if [ -z "$INNODB_CACHE" ]; then
     echo "Need to set INNODB_CACHE"
@@ -91,27 +120,15 @@ else
   fi
 fi
 
-if [ "`${DB_DIR}/bin/mysqld --version | grep -oe '5\.[1567]' | head -n1`" == "5.7" ]; then 
-  VERSION_CHK=`${DB_DIR}/bin/mysqld  --version | grep -oe '5\.[1567]\.[0-9]*' | cut -f3 -d'.' | head -n1`
-  if [[ $VERSION_CHK -ge 5 ]]; then
-    MID_OPTIONS="--initialize-insecure"
-  else
-    MID_OPTIONS="--insecure"
-  fi
-elif [ "`${DB_DIR}/bin/mysqld --version | grep -oe '5\.[1567]' | head -n1`" == "5.6" ]; then 
-  MID_OPTIONS='--force';
-else 
-  MID_OPTIONS=''; 
-fi
-
-if [ "${MID_OPTIONS}" == "--initialize-insecure" ]; then
-  MID="${DB_DIR}/bin/mysqld"
+declare MYSQL_VERSION=$(${DB_DIR}/bin/mysqld --version 2>&1 | grep -oe '[0-9]\.[0-9][\.0-9]*' | head -n1)
+#mysql install db check
+if ! check_for_version $MYSQL_VERSION "5.7.0" ; then 
+  MID="${DB_DIR}/scripts/mysql_install_db --no-defaults --basedir=${DB_DIR}"
 else
-  MID="${DB_DIR}/bin/mysql_install_db"
+  MID="${DB_DIR}/bin/mysqld --no-defaults --initialize-insecure --basedir=${DB_DIR}"
 fi
 
-$MID --no-defaults --basedir=${DB_DIR} --datadir=${DB_DIR}/data $MID_OPTIONS > ${DB_DIR}/mysqld_install.out  2>&1
-mkdir -p  ${DB_DIR}/data/test
+$MID  --datadir=${DB_DIR}/data > ${DB_DIR}/mysqld_install.out  2>&1
 	
 timeout --signal=9 20s ${DB_DIR}/bin/mysqladmin -uroot --socket=${MYSQL_SOCKET} shutdown > /dev/null 2>&1
 ## Starting mysqld
@@ -126,6 +143,8 @@ MPID="$!"
 for X in $(seq 0 60); do
   sleep 1
   if ${DB_DIR}/bin/mysqladmin -uroot -S${MYSQL_SOCKET} ping > /dev/null 2>&1; then
+    ${DB_DIR}/bin/mysql -uroot -S${MYSQL_SOCKET} -e"DROP DATABASE IF EXISTS test; CREATE DATABASE test;"  > /dev/null 2>&1;
+    ${DB_DIR}/bin/mysql -uroot -S${MYSQL_SOCKET} -e"CREATE USER IF NOT EXISTS sysbench_user@'%' identified with mysql_native_password by 'test';GRANT ALL ON *.* TO sysbench_user@'%';"  > /dev/null 2>&1;
     break
   fi
 done
@@ -161,13 +180,13 @@ echo "Running sysbench dataload benchmark"
 # run for real
 for num_threads in ${threadCountList}; do
     if [ "$(sysbench --version | cut -d ' ' -f2 | grep -oe '[0-9]\.[0-9]')" == "0.5" ]; then
-      real_time=$( { time -p sysbench --test=/usr/share/doc/sysbench/tests/db/parallel_prepare.lua --mysql-table-engine=${MYSQL_STORAGE_ENGINE} --rand-type=$RAND_TYPE --num-threads=${num_threads} --oltp-tables-count=${num_threads}  --oltp-table-size=${NUM_ROWS} --mysql-db=test --mysql-user=root  --db-driver=mysql --mysql-socket=$MYSQL_SOCKET  run > /dev/null ; } 2>&1 )
+      real_time=$( { time -p sysbench --test=/usr/share/doc/sysbench/tests/db/parallel_prepare.lua --mysql-table-engine=${MYSQL_STORAGE_ENGINE} --rand-type=$RAND_TYPE --num-threads=${num_threads} --oltp-tables-count=${num_threads}  --oltp-table-size=${NUM_ROWS} --mysql-db=test --mysql-user=sysbench_user --mysql-password=test   --db-driver=mysql --mysql-socket=$MYSQL_SOCKET  run > ${DB_DIR}/sysbench_prepare ; } 2>&1 )
       
-      sysbench --test=/usr/share/doc/sysbench/tests/db/parallel_prepare.lua --mysql-table-engine=${MYSQL_STORAGE_ENGINE} --rand-type=$RAND_TYPE --num-threads=${num_threads} --oltp-tables-count=${num_threads}  --oltp-table-size=${NUM_ROWS} --mysql-db=test --mysql-user=root  --db-driver=mysql --mysql-socket=$MYSQL_SOCKET  cleanup > ${DB_DIR}/sysbench_cleanup 2>&1;
+      sysbench --test=/usr/share/doc/sysbench/tests/db/parallel_prepare.lua --mysql-table-engine=${MYSQL_STORAGE_ENGINE} --rand-type=$RAND_TYPE --num-threads=${num_threads} --oltp-tables-count=${num_threads}  --oltp-table-size=${NUM_ROWS} --mysql-db=test --mysql-user=sysbench_user --mysql-password=test   --db-driver=mysql --mysql-socket=$MYSQL_SOCKET  cleanup > ${DB_DIR}/sysbench_cleanup 2>&1;
     elif [ "$(sysbench --version | cut -d ' ' -f2 | grep -oe '[0-9]\.[0-9]')" == "1.0" ]; then
-      real_time=$( { time -p sysbench /usr/share/sysbench/oltp_insert.lua --mysql-storage-engine=${MYSQL_STORAGE_ENGINE} --rand-type=$RAND_TYPE  --threads=${num_threads} --tables=${num_threads}  --table-size=${NUM_ROWS} --mysql-db=test --mysql-user=root    --db-driver=mysql --mysql-socket=$MYSQL_SOCKET prepare > /dev/null; } 2>&1 )
+      real_time=$( { time -p sysbench /usr/share/sysbench/oltp_insert.lua --mysql-storage-engine=${MYSQL_STORAGE_ENGINE} --rand-type=$RAND_TYPE  --threads=${num_threads} --tables=${num_threads}  --table-size=${NUM_ROWS} --mysql-db=test --mysql-user=sysbench_user --mysql-password=test     --db-driver=mysql --mysql-socket=$MYSQL_SOCKET prepare > ${DB_DIR}/sysbench_prepare; } 2>&1 )
       
-      sysbench /usr/share/sysbench/oltp_insert.lua --mysql-storage-engine=${MYSQL_STORAGE_ENGINE} --rand-type=$RAND_TYPE  --threads=${num_threads} --tables=${num_threads}  --table-size=${NUM_ROWS} --mysql-db=test --mysql-user=root    --db-driver=mysql --mysql-socket=$MYSQL_SOCKET cleanup > ${DB_DIR}/sysbench_cleanup 2>&1
+      sysbench /usr/share/sysbench/oltp_insert.lua --mysql-storage-engine=${MYSQL_STORAGE_ENGINE} --rand-type=$RAND_TYPE  --threads=${num_threads} --tables=${num_threads}  --table-size=${NUM_ROWS} --mysql-db=test --mysql-user=sysbench_user --mysql-password=test     --db-driver=mysql --mysql-socket=$MYSQL_SOCKET cleanup > ${DB_DIR}/sysbench_cleanup 2>&1
     fi
     sleep 6
 	result_set+=(`echo $real_time | grep -o "real.*" | awk '{print $2}'`)
