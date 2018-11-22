@@ -5,6 +5,8 @@ rocksdb_max_total_wal_size=4G
 rocksdb_block_size=16384
 rocksdb_table_cache_numshardbits=6
 rocksdb_merge_buf_size=4G
+rocksdb_bulk_load=1
+rocksdb_commit_in_the_middle=1
 
 # rate limiter
 rocksdb_bytes_per_sync=4194304
