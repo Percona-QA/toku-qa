@@ -184,7 +184,7 @@ for num_threads in ${threadCountList}; do
       
       sysbench --test=/usr/share/doc/sysbench/tests/db/parallel_prepare.lua --mysql-table-engine=${MYSQL_STORAGE_ENGINE} --rand-type=$RAND_TYPE --num-threads=${num_threads} --oltp-tables-count=${num_threads}  --oltp-table-size=${NUM_ROWS} --mysql-db=test --mysql-user=sysbench_user --mysql-password=test   --db-driver=mysql --mysql-socket=$MYSQL_SOCKET  cleanup > ${DB_DIR}/sysbench_cleanup 2>&1;
     elif [ "$(sysbench --version | cut -d ' ' -f2 | grep -oe '[0-9]\.[0-9]')" == "1.0" ]; then
-      real_time=$( { time -p sysbench /usr/share/sysbench/oltp_insert.lua --mysql-storage-engine=${MYSQL_STORAGE_ENGINE} --rand-type=$RAND_TYPE  --threads=${num_threads} --tables=${num_threads}  --table-size=${NUM_ROWS} --mysql-db=test --mysql-user=sysbench_user --mysql-password=test     --db-driver=mysql --mysql-socket=$MYSQL_SOCKET prepare > ${DB_DIR}/sysbench_prepare; } 2>&1 )
+      real_time=$( { time -p sysbench /usr/share/sysbench/oltp_insert.lua --mysql-storage-engine=${MYSQL_STORAGE_ENGINE} --rand-type=$RAND_TYPE  --threads=${num_threads} --tables=${num_threads} ${SYSBENCH_OPTIONS}  --table-size=${NUM_ROWS} --mysql-db=test --mysql-user=sysbench_user --mysql-password=test     --db-driver=mysql --mysql-socket=$MYSQL_SOCKET prepare > ${DB_DIR}/sysbench_prepare; } 2>&1 )
       
       sysbench /usr/share/sysbench/oltp_insert.lua --mysql-storage-engine=${MYSQL_STORAGE_ENGINE} --rand-type=$RAND_TYPE  --threads=${num_threads} --tables=${num_threads}  --table-size=${NUM_ROWS} --mysql-db=test --mysql-user=sysbench_user --mysql-password=test     --db-driver=mysql --mysql-socket=$MYSQL_SOCKET cleanup > ${DB_DIR}/sysbench_cleanup 2>&1
     fi

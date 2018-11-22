@@ -17,12 +17,13 @@ usage () {
   echo "  --build-number                       Specify work build directory"
   echo "  --basedir                            Specify base directory name"
   echo "  --benchmark=[sysbench|iibench|all]   Specify benchmark name"
+  echo "  --sysbench-options                   Specify sysbench extra options"
 }
 
 # Check if we have a functional getopt(1)
 if ! getopt --test
   then
-  go_out="$(getopt --options=edv --longoptions=workdir:,mysql-name:,mysql-version:,storage-engine:,build-number:,basedir:,benchmark:,help \
+  go_out="$(getopt --options=edv --longoptions=workdir:,mysql-name:,mysql-version:,storage-engine:,build-number:,basedir:,benchmark:,sysbench-options:,help \
   --name="$(basename "$0")" -- "$@")"
   test $? -eq 0 || exit 1
   eval set -- "$go_out"
@@ -78,6 +79,10 @@ do
       echo "  Please choose any of these benchmark options: sysbench, iibench, dataload, all"
       exit 1
     fi
+    ;;
+    --sysbench-options )
+    export SYSBENCH_OPTIONS="$2"
+    shift 2
     ;;
     --help )
     usage
